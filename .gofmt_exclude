@@ -4,4 +4,4 @@ design/.*
 vendor/.*
 app/.*
 client/.*
-tool/cli/.*
+tool/.*

@@ -122,7 +122,7 @@ DOCKER_COMPOSE_FILE = $(CUR_DIR)/.make/docker-compose.integration-test.yaml
 ALL_PKGS_EXCLUDE_PATTERN = 'vendor\|app\|tool\/cli\|design\|client\|test'
 
 # This pattern excludes some folders from the go code analysis
-GOANALYSIS_PKGS_EXCLUDE_PATTERN="vendor|app|client|tool/cli"
+GOANALYSIS_PKGS_EXCLUDE_PATTERN="vendor|app|client|tool"
 GOANALYSIS_DIRS=$(shell go list -f {{.Dir}} ./... | grep -v -E $(GOANALYSIS_PKGS_EXCLUDE_PATTERN))
 
 #-------------------------------------------------------------------------------

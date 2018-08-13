@@ -24,7 +24,7 @@ coverage:
    - "app/*"
    - "client/*"
    - "swagger/*"
-   - "tool/cli/*"
+   - "tool/*"
    - "design/*"
 
 # See http://docs.codecov.io/docs/pull-request-comments-1

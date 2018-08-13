@@ -241,7 +241,7 @@ These files and directories are generated and should not be edited:
  * `./app/`
  * `./client/`
  * `./swagger/`
- * `./tool/cli/`
+ * `./tool/`
 
 == Developer setup
 

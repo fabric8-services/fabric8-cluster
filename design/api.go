@@ -42,13 +42,6 @@ var _ = a.API("cluster", func() {
 		a.ContentType("application/vnd.api+json")
 	})
 
-	a.Trait("conditional", func() {
-		a.Headers(func() {
-			a.Header("If-Modified-Since", d.String)
-			a.Header("If-None-Match", d.String)
-		})
-	})
-
 	a.JWTSecurity("jwt", func() {
 		a.Description("JWT Token Auth")
 		a.TokenURL("/api/login")

@@ -47,21 +47,6 @@
   version = "v3.9.0"
 
 [[projects]]
-  name = "github.com/fabric8-services/fabric8-notification"
-  packages = ["design"]
-  revision = "907d3253a9e8ae42f61ce7c931fd920df20ee0ec"
-
-[[projects]]
-  name = "github.com/fabric8-services/fabric8-tenant"
-  packages = ["design"]
-  revision = "7e149ee841ea9fe7d439f206781b51cacde5d4d3"
-
-[[projects]]
-  name = "github.com/fabric8-services/fabric8-wit"
-  packages = ["design"]
-  revision = "b59d0dc8ae9b2bfea1fb5dc6ff3552c42b735756"
-
-[[projects]]
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
@@ -299,11 +284,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  name = "github.com/sergi/go-diff"
-  packages = ["diffmatchpatch"]
-  revision = "feef008d51ad2b3778f85d387ccf91735543008d"
-
-[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c078b1e43f58d563c74cebe63c85789e76ddb627"
@@ -367,8 +347,6 @@
 [[projects]]
   name = "golang.org/x/crypto"
   packages = [
-    "bcrypt",
-    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519"
   ]
@@ -386,7 +364,6 @@
   name = "golang.org/x/oauth2"
   packages = [
     ".",
-    "github",
     "internal"
   ]
   revision = "da3ce8d62a7f77aadfda06cb82bd604d6469c645"
@@ -449,6 +426,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f9ae70a421ff438b6fba3b3902de326a3e8b79ec5dd098a849fccbb3a4722b9f"
+  inputs-digest = "ffaa8a2d41de47250e40dce9302e8cdd5760168268805e3c0458f4e64cd842f7"
   solver-name = "gps-cdcl"
   solver-version = 1

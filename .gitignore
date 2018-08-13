@@ -67,14 +67,14 @@ _testmain.go
 # fabric8-cluster binaries
 bin/
 
-# Glide package manager
+# Package manager
 vendor/
 
 # Generated assets
 app/
 client/
 swagger/
-tool/cli/
+tool/
 migration/sqlbindata.go
 migration/sqlbindata_test.go
 configuration/confbindata.go
