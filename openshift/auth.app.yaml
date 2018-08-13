@@ -29,142 +29,47 @@ objects:
         containers:
         - image: ${IMAGE}:${IMAGE_TAG}
           env:
-          - name: AUTH_POSTGRES_HOST
+          - name: CLUSTER_POSTGRES_HOST
             valueFrom:
               secretKeyRef:
                 name: cluster
                 key: db.host
-          - name: AUTH_POSTGRES_PORT
+          - name: CLUSTER_POSTGRES_PORT
             valueFrom:
               secretKeyRef:
                 name: cluster
                 key: db.port
-          - name: AUTH_POSTGRES_USER
+          - name: CLUSTER_POSTGRES_USER
             valueFrom:
               secretKeyRef:
                 name: cluster
                 key: db.user
-          - name: AUTH_POSTGRES_PASSWORD
+          - name: CLUSTER_POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: cluster
                 key: db.password
-          - name: AUTH_KEYCLOAK_REALM
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: keycloak.realm
-          - name: AUTH_KEYCLOAK_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: keycloak.secret
-          - name: AUTH_SERVICEACCOUNT_PRIVATEKEY
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: serviceaccount.privatekey
-          - name: AUTH_SERVICEACCOUNT_PRIVATEKEYID
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: serviceaccount.privatekeyid
-          - name: AUTH_USERACCOUNT_PRIVATEKEY
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: useraccount.privatekey
-          - name: AUTH_USERACCOUNT_PRIVATEKEYID
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: useraccount.privatekeyid
-          - name: AUTH_GITHUB_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: github.client.id
-          - name: AUTH_GITHUB_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: github.client.secret
-          - name: AUTH_SENTRY_DSN
+          - name: CLUSTER_SENTRY_DSN
             valueFrom:
               secretKeyRef:
                 name: cluster
                 key: sentry.dsn
-          - name: AUTH_OSO_CLIENT_APIURL
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: oso.client.apiurl
-          - name: AUTH_TENANT_SERVICEURL
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: tenantsvc.url
-          - name: AUTH_OSO_REGAPP_SERVICEURL
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: oso.regapp.url
-          - name: AUTH_OSO_REGAPP_ADMIN_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: oso.regapp.admin.username
-          - name: AUTH_OSO_REGAPP_ADMIN_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: cluster
-                key: oso.regapp.admin.token
-          - name: AUTH_POSTGRES_SSLMODE
+          - name: CLUSTER_POSTGRES_SSLMODE
             valueFrom:
               configMapKeyRef:
                 name: cluster
                 key: postgres.sslmode
-          - name: AUTH_POSTGRES_CONNECTION_MAXIDLE
+          - name: CLUSTER_POSTGRES_CONNECTION_MAXIDLE
             valueFrom:
               configMapKeyRef:
                 name: cluster
                 key: postgres.connection.maxidle
-          - name: AUTH_POSTGRES_CONNECTION_MAXOPEN
+          - name: CLUSTER_POSTGRES_CONNECTION_MAXOPEN
             valueFrom:
               configMapKeyRef:
                 name: cluster
                 key: postgres.connection.maxopen
-          - name: AUTH_NOTAPPROVED_REDIRECT
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: notapproved_redirect
-          - name: AUTH_REDIRECT_VALID
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: redirect.valid
-          - name: AUTH_KEYCLOAK_URL
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: keycloak.url
-          - name: AUTH_NOTIFICATION_SERVICEURL
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: notification.serviceurl
-          - name: AUTH_EMAIL_VERIFY_URL
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: email.verify.url
-          - name: AUTH_INVITATION_ACCEPTED_URL
-            valueFrom:
-              configMapKeyRef:
-                name: cluster
-                key: invitation.accepted.url
-          - name: AUTH_ENVIRONMENT
+          - name: CLUSTER_ENVIRONMENT
             valueFrom:
               configMapKeyRef:
                 name: cluster
@@ -211,8 +116,6 @@ objects:
           secret:
             secretName: cluster-config-files
             items:
-            - key: service.account.secrets
-              path: service-account-secrets.conf
             - key: oso.clusters
               path: oso-clusters.conf
         dnsPolicy: ClusterFirst
