@@ -45,10 +45,6 @@ required = [
 ]
 
 [[constraint]]
-  name = "github.com/ajg/form"
-  version = "1.5.0"
-
-[[constraint]]
   name = "github.com/dgrijalva/jwt-go"
   version = "3.0.0"
 

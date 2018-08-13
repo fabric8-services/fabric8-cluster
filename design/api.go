@@ -6,20 +6,13 @@ import (
 )
 
 var _ = a.API("cluster", func() {
-	a.Title("fabric8-cluster: One to rule them all")
-	a.Description("The next big thing")
+	a.Title("fabric8-cluster: Cluster Management Service for OpenShift.io")
 	a.Version("1.0")
 	a.Host("openshift.io")
 	a.Scheme("http")
 	a.BasePath("/api")
 	a.Consumes("application/json")
-	a.Consumes("application/x-www-form-urlencoded", func() {
-		a.Package("github.com/goadesign/goa/encoding/form")
-	})
 	a.Produces("application/json")
-	a.Produces("application/x-www-form-urlencoded", func() {
-		a.Package("github.com/goadesign/goa/encoding/form")
-	})
 
 	a.License(func() {
 		a.Name("Apache License Version 2.0")
@@ -27,7 +20,7 @@ var _ = a.API("cluster", func() {
 	})
 	a.Origin("/[.*openshift.io|localhost]/", func() {
 		a.Methods("GET", "POST", "PUT", "PATCH", "DELETE")
-		a.Headers("X-Request-Id", "Content-Type", "Authorization", "If-None-Match", "If-Modified-Since")
+		a.Headers("X-Request-Id", "Content-Type", "Authorization")
 		a.MaxAge(600)
 		a.Credentials()
 	})
@@ -42,9 +35,15 @@ var _ = a.API("cluster", func() {
 		a.ContentType("application/vnd.api+json")
 	})
 
+	a.Trait("conditional", func() {
+		a.Headers(func() {
+			a.Header("If-Modified-Since", d.String)
+			a.Header("If-None-Match", d.String)
+		})
+	})
+
 	a.JWTSecurity("jwt", func() {
 		a.Description("JWT Token Auth")
-		a.TokenURL("/api/login")
 		a.Header("Authorization")
 	})
 

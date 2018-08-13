@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/ajg/form"
-  packages = ["."]
-  revision = "cc2954064ec9ea8d93917f0f87456e11d7b881ad"
-  version = "v1.5"
-
-[[projects]]
   name = "github.com/armon/go-metrics"
   packages = ["."]
   revision = "9a4b6e10bed6220a1665955aa2b75afc91eb10b3"
@@ -426,6 +420,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ffaa8a2d41de47250e40dce9302e8cdd5760168268805e3c0458f4e64cd842f7"
+  inputs-digest = "e349bea1b87cd43af5cdd042fac461ede782d6af704c6eb04a840b3f1081a094"
   solver-name = "gps-cdcl"
   solver-version = 1

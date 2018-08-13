@@ -5,8 +5,8 @@ import (
 	a "github.com/goadesign/goa/design/apidsl"
 )
 
-// AuthStatus defines the status of the current running Auth instance
-var AuthStatus = a.MediaType("application/vnd.status+json", func() {
+// Status defines the status of the current running Cluster instance
+var Status = a.MediaType("application/vnd.status+json", func() {
 	a.Description("The status of the current running instance")
 	a.Attributes(func() {
 		a.Attribute("commit", d.String, "Commit SHA this build is based on")
@@ -29,7 +29,7 @@ var AuthStatus = a.MediaType("application/vnd.status+json", func() {
 
 var _ = a.Resource("status", func() {
 
-	a.DefaultMedia(AuthStatus)
+	a.DefaultMedia(Status)
 	a.BasePath("/status")
 
 	a.Action("show", func() {
@@ -38,6 +38,6 @@ var _ = a.Resource("status", func() {
 		)
 		a.Description("Show the status of the current running instance")
 		a.Response(d.OK)
-		a.Response(d.ServiceUnavailable, AuthStatus)
+		a.Response(d.ServiceUnavailable, Status)
 	})
 })
