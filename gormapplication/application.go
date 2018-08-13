@@ -4,19 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
-	account "github.com/fabric8-services/fabric8-cluster/account/repository"
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 	"github.com/fabric8-services/fabric8-cluster/application/service/factory"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
-	"github.com/fabric8-services/fabric8-cluster/auth"
-	invitation "github.com/fabric8-services/fabric8-cluster/authorization/invitation/repository"
-	resource "github.com/fabric8-services/fabric8-cluster/authorization/resource/repository"
-	resourcetype "github.com/fabric8-services/fabric8-cluster/authorization/resourcetype/repository"
-	role "github.com/fabric8-services/fabric8-cluster/authorization/role/repository"
-	token "github.com/fabric8-services/fabric8-cluster/authorization/token/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/token/provider"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -77,105 +69,13 @@ type GormDB struct {
 	serviceFactory *factory.ServiceFactory
 }
 
-// Identities creates new Identity repository
-func (g *GormBase) Identities() account.IdentityRepository {
-	return account.NewIdentityRepository(g.db)
-}
+//// Identities creates new Identity repository
+//func (g *GormBase) Identities() account.IdentityRepository {
+//	return account.NewIdentityRepository(g.db)
+//}
 
-// Users creates new user repository
-func (g *GormBase) Users() account.UserRepository {
-	return account.NewUserRepository(g.db)
-}
-
-// OauthStates returns an oauth state reference repository
-func (g *GormBase) OauthStates() auth.OauthStateReferenceRepository {
-	return auth.NewOauthStateReferenceRepository(g.db)
-}
-
-// ExternalTokens returns an ExternalTokens repository
-func (g *GormBase) ExternalTokens() provider.ExternalTokenRepository {
-	return provider.NewExternalTokenRepository(g.db)
-}
-
-// VerificationCodes returns an VerificationCodes repository
-func (g *GormBase) VerificationCodes() account.VerificationCodeRepository {
-	return account.NewVerificationCodeRepository(g.db)
-}
-
-func (g *GormBase) InvitationRepository() invitation.InvitationRepository {
-	return invitation.NewInvitationRepository(g.db)
-}
-
-func (g *GormBase) ResourceRepository() resource.ResourceRepository {
-	return resource.NewResourceRepository(g.db)
-}
-
-func (g *GormBase) ResourceTypeRepository() resourcetype.ResourceTypeRepository {
-	return resourcetype.NewResourceTypeRepository(g.db)
-}
-
-func (g *GormBase) ResourceTypeScopeRepository() resourcetype.ResourceTypeScopeRepository {
-	return resourcetype.NewResourceTypeScopeRepository(g.db)
-}
-
-func (g *GormBase) RoleRepository() role.RoleRepository {
-	return role.NewRoleRepository(g.db)
-}
-
-func (g *GormBase) IdentityRoleRepository() role.IdentityRoleRepository {
-	return role.NewIdentityRoleRepository(g.db)
-}
-
-func (g *GormBase) DefaultRoleMappingRepository() role.DefaultRoleMappingRepository {
-	return role.NewDefaultRoleMappingRepository(g.db)
-}
-
-func (g *GormBase) RoleMappingRepository() role.RoleMappingRepository {
-	return role.NewRoleMappingRepository(g.db)
-}
-
-func (g *GormBase) TokenRepository() token.TokenRepository {
-	return token.NewTokenRepository(g.db)
-}
-
-func (g *GormDB) InvitationService() service.InvitationService {
-	return g.serviceFactory.InvitationService()
-}
-
-func (g *GormDB) OrganizationService() service.OrganizationService {
-	return g.serviceFactory.OrganizationService()
-}
-
-func (g *GormDB) PermissionService() service.PermissionService {
-	return g.serviceFactory.PermissionService()
-}
-
-func (g *GormDB) RoleManagementService() service.RoleManagementService {
-	return g.serviceFactory.RoleManagementService()
-}
-
-func (g *GormDB) TeamService() service.TeamService {
-	return g.serviceFactory.TeamService()
-}
-
-func (g *GormDB) ResourceService() service.ResourceService {
-	return g.serviceFactory.ResourceService()
-}
-
-func (g *GormDB) SpaceService() service.SpaceService {
-	return g.serviceFactory.SpaceService()
-}
-
-func (g *GormDB) UserService() service.UserService {
-	return g.serviceFactory.UserService()
-}
-
-func (g *GormDB) NotificationService() service.NotificationService {
-	return g.serviceFactory.NotificationService()
-}
-
-func (g *GormDB) WITService() service.WITService {
-	return g.serviceFactory.WITService()
+func (g *GormDB) FooService() service.FooService {
+	return g.serviceFactory.FooService()
 }
 
 func (g *GormBase) DB() *gorm.DB {

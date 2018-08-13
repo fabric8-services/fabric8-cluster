@@ -4,22 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	userservice "github.com/fabric8-services/fabric8-cluster/account/service"
 	"github.com/fabric8-services/fabric8-cluster/application/repository"
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
-	invitationservice "github.com/fabric8-services/fabric8-cluster/authorization/invitation/service"
-	organizationservice "github.com/fabric8-services/fabric8-cluster/authorization/organization/service"
-	permissionservice "github.com/fabric8-services/fabric8-cluster/authorization/permission/service"
-	resourceservice "github.com/fabric8-services/fabric8-cluster/authorization/resource/service"
-	roleservice "github.com/fabric8-services/fabric8-cluster/authorization/role/service"
-	spaceservice "github.com/fabric8-services/fabric8-cluster/authorization/space/service"
-	teamservice "github.com/fabric8-services/fabric8-cluster/authorization/team/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/log"
-	notificationservice "github.com/fabric8-services/fabric8-cluster/notification/service"
-	witservice "github.com/fabric8-services/fabric8-cluster/wit/service"
+
 	"github.com/pkg/errors"
 )
 
@@ -125,25 +116,13 @@ type ServiceContextProducer func() context.ServiceContext
 type ServiceFactory struct {
 	contextProducer ServiceContextProducer
 	config          *configuration.ConfigurationData
-	witServiceFunc  func() service.WITService // the function to call when `WITService()` is called on this factory
 }
 
 // Option an option to configure the Service Factory
 type Option func(f *ServiceFactory)
 
-func WithWITService(s service.WITService) Option {
-	return func(f *ServiceFactory) {
-		f.witServiceFunc = func() service.WITService {
-			return s
-		}
-	}
-}
 func NewServiceFactory(producer ServiceContextProducer, config *configuration.ConfigurationData, options ...Option) *ServiceFactory {
 	f := &ServiceFactory{contextProducer: producer, config: config}
-	// default function to return an instance of WIT Service
-	f.witServiceFunc = func() service.WITService {
-		return witservice.NewWITService(f.getContext(), f.config)
-	}
 	log.Info(nil, map[string]interface{}{}, "configuring a new service factory with %d options", len(options))
 	// and options
 	for _, opt := range options {
@@ -156,42 +135,7 @@ func (f *ServiceFactory) getContext() context.ServiceContext {
 	return f.contextProducer()
 }
 
-func (f *ServiceFactory) OrganizationService() service.OrganizationService {
-	return organizationservice.NewOrganizationService(f.getContext())
-}
-
-func (f *ServiceFactory) InvitationService() service.InvitationService {
-	return invitationservice.NewInvitationService(f.getContext(), f.config)
-}
-
-func (f *ServiceFactory) PermissionService() service.PermissionService {
-	return permissionservice.NewPermissionService(f.getContext())
-}
-
-func (f *ServiceFactory) ResourceService() service.ResourceService {
-	return resourceservice.NewResourceService(f.getContext())
-}
-
-func (f *ServiceFactory) RoleManagementService() service.RoleManagementService {
-	return roleservice.NewRoleManagementService(f.getContext())
-}
-
-func (f *ServiceFactory) SpaceService() service.SpaceService {
-	return spaceservice.NewSpaceService(f.getContext())
-}
-
-func (f *ServiceFactory) TeamService() service.TeamService {
-	return teamservice.NewTeamService(f.getContext())
-}
-
-func (f *ServiceFactory) UserService() service.UserService {
-	return userservice.NewUserService(f.getContext())
-}
-
-func (f *ServiceFactory) NotificationService() service.NotificationService {
-	return notificationservice.NewNotificationService(f.getContext(), f.config)
-}
-
-func (f *ServiceFactory) WITService() service.WITService {
-	return f.witServiceFunc()
+func (f *ServiceFactory) FooService() service.FooService {
+	//return organizationservice.NewOrganizationService(f.getContext())
+	return nil
 }
