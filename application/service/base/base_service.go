@@ -1,7 +1,7 @@
 package base
 
 import (
-	"github.com/fabric8-services/fabric8-auth/application/service/context"
+	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 )
 
 // BaseService provides transaction control and other common features for service implementations

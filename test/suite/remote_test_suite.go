@@ -1,7 +1,7 @@
 package suite
 
 import (
-	"github.com/fabric8-services/fabric8-auth/resource"
+	"github.com/fabric8-services/fabric8-cluster/resource"
 )
 
 // NewRemoteTestSuite instantiates a new RemoteTestSuite

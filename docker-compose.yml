@@ -4,18 +4,18 @@ services:
   db:
     image: registry.centos.org/postgresql/postgresql:9.6
     ports:
-      - "5433:5432"
+      - "5434:5432"
     environment:
       POSTGRESQL_ADMIN_PASSWORD: mysecretpassword
     networks:
       - default
-  auth:
-    image: fabric8-services/fabric8-auth:latest
-    command: -config /usr/local/auth/etc/config.yaml
+  cluster:
+    image: fabric8-services/fabric8-cluster:latest
+    command: -config /usr/local/cluster/etc/config.yaml
     environment:
       AUTH_POSTGRES_HOST: db
     ports:
-      - "8089:8089"
+      - "8087:8087"
     networks:
       - default
     depends_on:

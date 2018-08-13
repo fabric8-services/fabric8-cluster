@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultPackageName = "github.com/fabric8-services/fabric8-auth/"
+const defaultPackageName = "github.com/fabric8-services/fabric8-cluster/"
 
 var (
 	logger = &log.Logger{

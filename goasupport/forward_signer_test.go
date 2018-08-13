@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/fabric8-services/fabric8-auth/goasupport"
-	testsuite "github.com/fabric8-services/fabric8-auth/test/suite"
-	"github.com/fabric8-services/fabric8-auth/test/token"
+	"github.com/fabric8-services/fabric8-cluster/goasupport"
+	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
+	"github.com/fabric8-services/fabric8-cluster/test/token"
 
 	goajwt "github.com/goadesign/goa/middleware/security/jwt"
 	"github.com/satori/go.uuid"

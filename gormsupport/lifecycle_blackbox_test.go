@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fabric8-services/fabric8-auth/convert"
-	"github.com/fabric8-services/fabric8-auth/gormsupport"
-	"github.com/fabric8-services/fabric8-auth/resource"
+	"github.com/fabric8-services/fabric8-cluster/convert"
+	"github.com/fabric8-services/fabric8-cluster/gormsupport"
+	"github.com/fabric8-services/fabric8-cluster/resource"
 	"github.com/stretchr/testify/assert"
 )
 

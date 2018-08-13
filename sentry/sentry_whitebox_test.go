@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/resource"
-	testtoken "github.com/fabric8-services/fabric8-auth/test/token"
-	"github.com/fabric8-services/fabric8-auth/token/tokencontext"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/resource"
+	testtoken "github.com/fabric8-services/fabric8-cluster/test/token"
+	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/raven-go"

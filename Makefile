@@ -1,4 +1,4 @@
-PROJECT_NAME=fabric8-auth
+PROJECT_NAME=fabric8-cluster
 CUR_DIR=$(shell pwd)
 TMP_PATH=$(CUR_DIR)/tmp
 INSTALL_PREFIX=$(CUR_DIR)/bin
@@ -12,8 +12,6 @@ SOURCE_DIR ?= .
 SOURCES := $(shell find $(SOURCE_DIR) -path $(SOURCE_DIR)/vendor -prune -o -name '*.go' -print)
 DESIGN_DIR=design
 DESIGNS := $(shell find $(SOURCE_DIR)/$(DESIGN_DIR) -path $(SOURCE_DIR)/vendor -prune -o -name '*.go' -print)
-DOCS_DIR=docs
-DOCS_SOURCE_DIR=$(DOCS_DIR)/source
 
 # Find all required tools:
 GIT_BIN := $(shell command -v $(GIT_BIN_NAME) 2> /dev/null)
@@ -24,7 +22,6 @@ DEP_VERSION=v0.4.1
 GO_BIN := $(shell command -v $(GO_BIN_NAME) 2> /dev/null)
 DOCKER_COMPOSE_BIN := $(shell command -v $(DOCKER_COMPOSE_BIN_NAME) 2> /dev/null)
 DOCKER_BIN := $(shell command -v $(DOCKER_BIN_NAME) 2> /dev/null)
-ASCIIDOCTOR_BIN := $(shell command -v $(ASCIIDOCTOR_BIN_NAME) 2> /dev/null)
 
 # Define and get the vakue for UNAME_S variable from shell
 UNAME_S := $(shell uname -s)
@@ -37,7 +34,7 @@ export GIT_COMMITTER_NAME
 export GIT_COMMITTER_EMAIL
 
 # Used as target and binary output names... defined in includes
-CLIENT_DIR=tool/auth-cli
+CLIENT_DIR=tool/cluster-cli
 
 COMMIT=$(shell git rev-parse HEAD)
 GITUNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
@@ -46,7 +43,7 @@ COMMIT := $(COMMIT)-dirty
 endif
 BUILD_TIME=`date -u '+%Y-%m-%dT%H:%M:%SZ'`
 
-PACKAGE_NAME := github.com/fabric8-services/fabric8-auth
+PACKAGE_NAME := github.com/fabric8-services/fabric8-cluster
 
 # For the global "clean" target all targets in this variable will be executed
 CLEAN_TARGETS =
@@ -227,8 +224,6 @@ clean-generated:
 	-rm -f ./migration/sqlbindata.go
 	-rm -f ./migration/sqlbindata_test.go
 	-rm -f ./configuration/confbindata.go
-	-rm -rf wit/witservice
-	-rm -rf ./account/tenant
 
 CLEAN_TARGETS += clean-vendor
 .PHONY: clean-vendor
@@ -267,9 +262,6 @@ app/controllers.go: $(DESIGNS) $(GOAGEN_BIN) $(VENDOR_DIR)
 	$(GOAGEN_BIN) gen -d ${PACKAGE_NAME}/${DESIGN_DIR} --pkg-path=${PACKAGE_NAME}/goasupport/conditional_request --out app
 	$(GOAGEN_BIN) client -d ${PACKAGE_NAME}/${DESIGN_DIR}
 	$(GOAGEN_BIN) swagger -d ${PACKAGE_NAME}/${DESIGN_DIR}
-	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-wit/design --notool --pkg witservice -o wit
-	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-tenant/design --notool --pkg tenant -o account
-	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-notification/design --notool --pkg client -o notification
 
 .PHONY: migrate-database
 ## Compiles the server and runs the database migration with it
@@ -287,7 +279,7 @@ regenerate: clean-generated generate
 .PHONY: dev
 dev: prebuild-check deps generate $(FRESH_BIN)
 	docker-compose up -d db
-	AUTH_DEVELOPER_MODE_ENABLED=true $(FRESH_BIN)
+	CLUSTER_DEVELOPER_MODE_ENABLED=true $(FRESH_BIN)
 
 include ./.make/test.mk
 include ./.make/Makefile.dev
@@ -305,46 +297,6 @@ $(INSTALL_PREFIX):
 $(TMP_PATH):
 	mkdir -p $(TMP_PATH)
 	
-.PHONY: deploy-auth-openshift
-deploy-auth-openshift: prebuild-check deps generate $(FRESH_BIN)
-	minishift start --cpus 4
-	./minishift/check_hosts.sh
-	-eval `minishift oc-env` &&  oc login -u developer -p developer && oc new-project auth-openshift
-	AUTH_DEVELOPER_MODE_ENABLED=true \
-	kedge apply -f minishift/kedge/db-auth.yml -f minishift/kedge/auth.yml
-
-.PHONY: dev-db-openshift
-dev-db-openshift: prebuild-check deps generate $(FRESH_BIN)
-	minishift start --cpus 4
-	./minishift/check_hosts.sh
-	-eval `minishift oc-env` &&  oc login -u developer -p developer && oc new-project auth-openshift
-	AUTH_DEVELOPER_MODE_ENABLED=true \
-	kedge apply -f minishift/kedge/db-auth.yml
-	sleep 5s
-	AUTH_POSTGRES_HOST=minishift.local \
-	AUTH_POSTGRES_PORT=31001 \
-	AUTH_POSTGRES_USERNAME=postgres \
-	AUTH_POSTGRES_PASSWORD=mysecretpassword \
-	$(FRESH_BIN)
-
-.PHONY: dev-openshift
-dev-openshift: prebuild-check deps generate build bin/docker/fabric8-auth-linux
-	minishift start --cpus 4
-	./minishift/check_hosts.sh
-	-eval `minishift oc-env` &&  oc login -u developer -p developer && oc new-project auth-openshift
-	AUTH_DEVELOPER_MODE_ENABLED=true \
-	kedge apply -f minishift/kedge/db-auth.yml
-	sleep 5s
-	-eval `minishift docker-env` && docker login -u developer -p $$(oc whoami -t) $$(minishift openshift registry) && docker build -t fabric8/fabric8-auth:dev bin/docker
-	-kedge delete -f minishift/kedge/auth-local.yml
-	kedge apply -f minishift/kedge/auth-local.yml
-	
-.PHONY: clean-openshift
-clean-openshift:
-	-eval `minishift oc-env` &&  oc login -u developer -p developer
-	-kedge delete -f minishift/kedge/auth.yml -f minishift/kedge/db-auth.yml
-	-eval oc delete project auth-openshift --grace-period=1
-
 .PHONY: show-info
 show-info:
 	$(call log-info,"$(shell go version)")
@@ -371,17 +323,6 @@ else
 	@go build -o $(CHECK_GOPATH_BIN) .make/check_gopath.go
 endif
 
-.PHONY: docs
-docs: asciidoctorbin-check
-	@$(ASCIIDOCTOR_BIN) "$(DOCS_DIR)/source/**/*.adoc" -D $(DOCS_DIR)
-
-.PHONY: asciidoctorbin-check
-asciidoctorbin-check:
-# Check that the asciidoctor tool is found
-ifndef ASCIIDOCTOR_BIN
-	$(error The "$(ASCIIDOCTOR_BIN_NAME)" executable could not be found in your PATH)
-endif	
-
 # Keep this "clean" target here at the bottom
 .PHONY: clean
 ## Runs all clean-* targets.
@@ -392,11 +333,8 @@ bin/docker: Dockerfile.dev
 	mkdir -p bin/docker
 	cp Dockerfile.dev bin/docker/Dockerfile
 
-bin/docker/fabric8-auth-linux: bin/docker $(SOURCES)
-	GO15VENDOREXPERIMENT=1 GOARCH=amd64 GOOS=linux go build -o bin/docker/fabric8-auth-linux
+bin/docker/fabric8-cluster-linux: bin/docker $(SOURCES)
+	GO15VENDOREXPERIMENT=1 GOARCH=amd64 GOOS=linux go build -o bin/docker/fabric8-cluster-linux
 
-fast-docker: bin/docker/fabric8-auth-linux
-	docker build -t fabric8/fabric8-auth:dev bin/docker
-
-kube-redeploy: fast-docker
-	kubectl delete pod -l service=auth
+fast-docker: bin/docker/fabric8-cluster-linux
+	docker build -t fabric8/fabric8-cluster:dev bin/docker

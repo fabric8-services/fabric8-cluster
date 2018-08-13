@@ -8,15 +8,15 @@ import (
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/application"
-	"github.com/fabric8-services/fabric8-auth/application/repository"
-	"github.com/fabric8-services/fabric8-auth/application/transaction"
-	"github.com/fabric8-services/fabric8-auth/gormapplication"
-	"github.com/fabric8-services/fabric8-auth/gormsupport/cleaner"
-	gormbench "github.com/fabric8-services/fabric8-auth/gormtestsupport/benchmark"
-	"github.com/fabric8-services/fabric8-auth/migration"
-	testsupport "github.com/fabric8-services/fabric8-auth/test"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/application"
+	"github.com/fabric8-services/fabric8-cluster/application/repository"
+	"github.com/fabric8-services/fabric8-cluster/application/transaction"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
+	"github.com/fabric8-services/fabric8-cluster/gormsupport/cleaner"
+	gormbench "github.com/fabric8-services/fabric8-cluster/gormtestsupport/benchmark"
+	"github.com/fabric8-services/fabric8-cluster/migration"
+	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 )
 
 type BenchTransactional struct {

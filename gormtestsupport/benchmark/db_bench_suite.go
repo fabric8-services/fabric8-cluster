@@ -3,10 +3,10 @@ package benchmark
 import (
 	"os"
 
-	config "github.com/fabric8-services/fabric8-auth/configuration"
-	"github.com/fabric8-services/fabric8-auth/log"
-	"github.com/fabric8-services/fabric8-auth/resource"
-	"github.com/fabric8-services/fabric8-auth/test"
+	config "github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-cluster/resource"
+	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq" // need to import postgres driver
 )

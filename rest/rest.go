@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fabric8-services/fabric8-auth/errors"
+	"github.com/fabric8-services/fabric8-cluster/errors"
 
 	"context"
 	"github.com/goadesign/goa"

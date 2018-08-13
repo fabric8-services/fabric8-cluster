@@ -1,18 +1,18 @@
 kind: Template
 apiVersion: v1
 metadata:
-  name: auth
+  name: cluster
 objects:
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
     labels:
-      service: auth
-    name: auth
+      service: cluster
+    name: cluster
   spec:
     replicas: ${{REPLICAS}}
     selector:
-      service: auth
+      service: cluster
     strategy:
       rollingParams:
         intervalSeconds: 1
@@ -24,7 +24,7 @@ objects:
     template:
       metadata:
         labels:
-          service: auth
+          service: cluster
       spec:
         containers:
         - image: ${IMAGE}:${IMAGE_TAG}
@@ -32,153 +32,153 @@ objects:
           - name: AUTH_POSTGRES_HOST
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: db.host
           - name: AUTH_POSTGRES_PORT
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: db.port
           - name: AUTH_POSTGRES_USER
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: db.user
           - name: AUTH_POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: db.password
           - name: AUTH_KEYCLOAK_REALM
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: keycloak.realm
           - name: AUTH_KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: keycloak.secret
           - name: AUTH_SERVICEACCOUNT_PRIVATEKEY
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: serviceaccount.privatekey
           - name: AUTH_SERVICEACCOUNT_PRIVATEKEYID
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: serviceaccount.privatekeyid
           - name: AUTH_USERACCOUNT_PRIVATEKEY
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: useraccount.privatekey
           - name: AUTH_USERACCOUNT_PRIVATEKEYID
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: useraccount.privatekeyid
           - name: AUTH_GITHUB_CLIENT_ID
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: github.client.id
           - name: AUTH_GITHUB_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: github.client.secret
           - name: AUTH_SENTRY_DSN
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: sentry.dsn
           - name: AUTH_OSO_CLIENT_APIURL
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: oso.client.apiurl
           - name: AUTH_TENANT_SERVICEURL
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: tenantsvc.url
           - name: AUTH_OSO_REGAPP_SERVICEURL
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: oso.regapp.url
           - name: AUTH_OSO_REGAPP_ADMIN_USERNAME
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: oso.regapp.admin.username
           - name: AUTH_OSO_REGAPP_ADMIN_TOKEN
             valueFrom:
               secretKeyRef:
-                name: auth
+                name: cluster
                 key: oso.regapp.admin.token
           - name: AUTH_POSTGRES_SSLMODE
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: postgres.sslmode
           - name: AUTH_POSTGRES_CONNECTION_MAXIDLE
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: postgres.connection.maxidle
           - name: AUTH_POSTGRES_CONNECTION_MAXOPEN
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: postgres.connection.maxopen
           - name: AUTH_NOTAPPROVED_REDIRECT
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: notapproved_redirect
           - name: AUTH_REDIRECT_VALID
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: redirect.valid
           - name: AUTH_KEYCLOAK_URL
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: keycloak.url
           - name: AUTH_NOTIFICATION_SERVICEURL
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: notification.serviceurl
           - name: AUTH_EMAIL_VERIFY_URL
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: email.verify.url
           - name: AUTH_INVITATION_ACCEPTED_URL
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: invitation.accepted.url
           - name: AUTH_ENVIRONMENT
             valueFrom:
               configMapKeyRef:
-                name: auth
+                name: cluster
                 key: environment
           imagePullPolicy: Always
-          name: auth
+          name: cluster
           ports:
-          - containerPort: 8089
+          - containerPort: 8087
             protocol: TCP
           livenessProbe:
             failureThreshold: 3
             httpGet:
               path: /api/status
-              port: 8089
+              port: 8087
               scheme: HTTP
             initialDelaySeconds: 1
             periodSeconds: 10
@@ -188,7 +188,7 @@ objects:
             failureThreshold: 3
             httpGet:
               path: /api/status
-              port: 8089
+              port: 8087
               scheme: HTTP
             initialDelaySeconds: 1
             periodSeconds: 10
@@ -204,12 +204,12 @@ objects:
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /etc/fabric8/
-            name: auth-configs
+            name: cluster-configs
             readOnly: true
         volumes:
-        - name: auth-configs
+        - name: cluster-configs
           secret:
-            secretName: auth-config-files
+            secretName: cluster-config-files
             items:
             - key: service.account.secrets
               path: service-account-secrets.conf
@@ -229,22 +229,22 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: auth
+    name: cluster
     labels:
-      service: auth
+      service: cluster
   spec:
     ports:
-      - name: "8089"
+      - name: "8087"
         protocol: TCP
         port: 80
-        targetPort: 8089
+        targetPort: 8087
     selector:
-      service: auth
+      service: cluster
     type: ClusterIP
     sessionAffinity: null
 parameters:
 - name: IMAGE
-  value: quay.io/openshiftio/rhel-fabric8-services-fabric8-auth
+  value: quay.io/openshiftio/rhel-fabric8-services-fabric8-cluster
 - name: IMAGE_TAG
   value: latest
 - description: Number of deployment replicas

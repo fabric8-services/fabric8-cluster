@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/app"
-	"github.com/fabric8-services/fabric8-auth/authorization"
-	"github.com/fabric8-services/fabric8-auth/authorization/invitation"
-	resource "github.com/fabric8-services/fabric8-auth/authorization/resource/repository"
-	"github.com/fabric8-services/fabric8-auth/authorization/role"
-	rolerepo "github.com/fabric8-services/fabric8-auth/authorization/role/repository"
-	"github.com/fabric8-services/fabric8-auth/notification"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/app"
+	"github.com/fabric8-services/fabric8-cluster/authorization"
+	"github.com/fabric8-services/fabric8-cluster/authorization/invitation"
+	resource "github.com/fabric8-services/fabric8-cluster/authorization/resource/repository"
+	"github.com/fabric8-services/fabric8-cluster/authorization/role"
+	rolerepo "github.com/fabric8-services/fabric8-cluster/authorization/role/repository"
+	"github.com/fabric8-services/fabric8-cluster/notification"
 
-	"github.com/fabric8-services/fabric8-auth/wit"
+	"github.com/fabric8-services/fabric8-cluster/wit"
 	"github.com/satori/go.uuid"
 )
 

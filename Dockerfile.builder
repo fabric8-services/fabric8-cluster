@@ -1,6 +1,6 @@
 FROM centos:7
 LABEL maintainer "Devtools <devtools@redhat.com>"
-LABEL author "Konrad Kleine <kkleine@redhat.com>"
+LABEL author "Devtools <devtools@redhat.com>"
 ENV LANG=en_US.utf8
 ARG USE_GO_VERSION_FROM_WEBSITE=0
 

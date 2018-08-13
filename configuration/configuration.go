@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fabric8-services/fabric8-auth/rest"
+	"github.com/fabric8-services/fabric8-cluster/rest"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/goadesign/goa"
@@ -671,7 +671,7 @@ func (c *ConfigurationData) setConfigDefaults() {
 	c.v.SetTypeByDefaultValue(true)
 
 	c.v.SetDefault(varPostgresHost, "localhost")
-	c.v.SetDefault(varPostgresPort, 5433)
+	c.v.SetDefault(varPostgresPort, 5434)
 	c.v.SetDefault(varPostgresUser, "postgres")
 	c.v.SetDefault(varPostgresDatabase, "postgres")
 	c.v.SetDefault(varPostgresPassword, defaultDBPassword)
@@ -689,8 +689,8 @@ func (c *ConfigurationData) setConfigDefaults() {
 	//-----
 	// HTTP
 	//-----
-	c.v.SetDefault(varHTTPAddress, "0.0.0.0:8089")
-	c.v.SetDefault(varMetricsHTTPAddress, "0.0.0.0:8089")
+	c.v.SetDefault(varHTTPAddress, "0.0.0.0:8087")
+	c.v.SetDefault(varMetricsHTTPAddress, "0.0.0.0:8087")
 	c.v.SetDefault(varHeaderMaxLength, defaultHeaderMaxLength)
 
 	//-----
@@ -842,7 +842,7 @@ func (c *ConfigurationData) GetPostgresConfigString() string {
 }
 
 // GetHTTPAddress returns the HTTP address (as set via default, config file, or environment variable)
-// that the auth server binds to (e.g. "0.0.0.0:8089")
+// that the auth server binds to (e.g. "0.0.0.0:8087")
 func (c *ConfigurationData) GetHTTPAddress() string {
 	return c.v.GetString(varHTTPAddress)
 }
@@ -1058,7 +1058,7 @@ func (c *ConfigurationData) GetNotificationServiceURL() string {
 	return c.v.GetString(varNotificationServiceURL)
 }
 
-// GetSentryDSN returns the secret needed to securely communicate with https://errortracking.prod-preview.openshift.io/openshift_io/fabric8-auth/
+// GetSentryDSN returns the secret needed to securely communicate with https://errortracking.prod-preview.openshift.io/openshift_io/fabric8-cluster/
 func (c *ConfigurationData) GetSentryDSN() string {
 	return c.v.GetString(varSentryDSN)
 }

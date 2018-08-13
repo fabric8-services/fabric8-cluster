@@ -7,15 +7,15 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/net/context"
 
-	"github.com/fabric8-services/fabric8-auth/application"
-	"github.com/fabric8-services/fabric8-auth/gormapplication"
-	"github.com/fabric8-services/fabric8-auth/gormsupport"
-	"github.com/fabric8-services/fabric8-auth/gormsupport/cleaner"
-	gormbench "github.com/fabric8-services/fabric8-auth/gormtestsupport/benchmark"
-	"github.com/fabric8-services/fabric8-auth/migration"
-	testsupport "github.com/fabric8-services/fabric8-auth/test"
+	"github.com/fabric8-services/fabric8-cluster/application"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
+	"github.com/fabric8-services/fabric8-cluster/gormsupport"
+	"github.com/fabric8-services/fabric8-cluster/gormsupport/cleaner"
+	gormbench "github.com/fabric8-services/fabric8-cluster/gormtestsupport/benchmark"
+	"github.com/fabric8-services/fabric8-cluster/migration"
+	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 )

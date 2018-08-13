@@ -35,7 +35,7 @@ pmnsadd -n root prometheus
 # Add our lone prometheus source
 URLSD=$PCP_PMDAS_DIR/prometheus/urls.d
 mkdir -p $URLSD
-echo 'http://localhost:8089/metrics' > $URLSD/wit.url
+echo 'http://localhost:8087/metrics' > $URLSD/wit.url
 
 cd $PCP_LOG_DIR
 
@@ -49,4 +49,4 @@ exec /usr/libexec/pcp/bin/pmcd -l /dev/force-logging-to-stderr -f -A -H $PCP_HOS
 sleep 5 # give time for pmcd's startup messages, so it doesn't intermix with Auth's
 
 
-exec bin/auth ${1+"$@"}
+exec bin/cluster ${1+"$@"}

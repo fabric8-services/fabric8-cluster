@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fabric8-services/fabric8-auth/app/test"
-	"github.com/fabric8-services/fabric8-auth/configuration"
-	. "github.com/fabric8-services/fabric8-auth/controller"
-	"github.com/fabric8-services/fabric8-auth/gormtestsupport"
-	"github.com/fabric8-services/fabric8-auth/resource"
+	"github.com/fabric8-services/fabric8-cluster/app/test"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	. "github.com/fabric8-services/fabric8-cluster/controller"
+	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
+	"github.com/fabric8-services/fabric8-cluster/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/pkg/errors"

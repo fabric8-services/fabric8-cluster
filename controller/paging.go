@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fabric8-services/fabric8-auth/app"
-	"github.com/fabric8-services/fabric8-auth/rest"
+	"github.com/fabric8-services/fabric8-cluster/app"
+	"github.com/fabric8-services/fabric8-cluster/rest"
 	"github.com/goadesign/goa"
 	errs "github.com/pkg/errors"
 )

@@ -8,23 +8,23 @@ import (
 	"runtime"
 	"time"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	accountservice "github.com/fabric8-services/fabric8-auth/account/service"
-	"github.com/fabric8-services/fabric8-auth/app"
-	"github.com/fabric8-services/fabric8-auth/application/transaction"
-	"github.com/fabric8-services/fabric8-auth/configuration"
-	"github.com/fabric8-services/fabric8-auth/controller"
-	"github.com/fabric8-services/fabric8-auth/goamiddleware"
-	"github.com/fabric8-services/fabric8-auth/gormapplication"
-	"github.com/fabric8-services/fabric8-auth/jsonapi"
-	"github.com/fabric8-services/fabric8-auth/log"
-	"github.com/fabric8-services/fabric8-auth/login"
-	keycloaklink "github.com/fabric8-services/fabric8-auth/login/link"
-	"github.com/fabric8-services/fabric8-auth/migration"
-	"github.com/fabric8-services/fabric8-auth/sentry"
-	"github.com/fabric8-services/fabric8-auth/token"
-	"github.com/fabric8-services/fabric8-auth/token/keycloak"
-	"github.com/fabric8-services/fabric8-auth/token/link"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	accountservice "github.com/fabric8-services/fabric8-cluster/account/service"
+	"github.com/fabric8-services/fabric8-cluster/app"
+	"github.com/fabric8-services/fabric8-cluster/application/transaction"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-cluster/controller"
+	"github.com/fabric8-services/fabric8-cluster/goamiddleware"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
+	"github.com/fabric8-services/fabric8-cluster/jsonapi"
+	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-cluster/login"
+	keycloaklink "github.com/fabric8-services/fabric8-cluster/login/link"
+	"github.com/fabric8-services/fabric8-cluster/migration"
+	"github.com/fabric8-services/fabric8-cluster/sentry"
+	"github.com/fabric8-services/fabric8-cluster/token"
+	"github.com/fabric8-services/fabric8-cluster/token/keycloak"
+	"github.com/fabric8-services/fabric8-cluster/token/link"
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
@@ -142,7 +142,7 @@ func main() {
 	}
 
 	// Create service
-	service := goa.New("auth")
+	service := goa.New("cluster")
 
 	// Mount middleware
 	service.Use(middleware.RequestID())

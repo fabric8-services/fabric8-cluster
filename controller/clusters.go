@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"github.com/fabric8-services/fabric8-auth/app"
-	"github.com/fabric8-services/fabric8-auth/configuration"
-	"github.com/fabric8-services/fabric8-auth/errors"
-	"github.com/fabric8-services/fabric8-auth/jsonapi"
-	"github.com/fabric8-services/fabric8-auth/log"
-	"github.com/fabric8-services/fabric8-auth/rest"
-	"github.com/fabric8-services/fabric8-auth/token"
+	"github.com/fabric8-services/fabric8-cluster/app"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-cluster/errors"
+	"github.com/fabric8-services/fabric8-cluster/jsonapi"
+	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-cluster/rest"
+	"github.com/fabric8-services/fabric8-cluster/token"
 
 	"github.com/goadesign/goa"
 )

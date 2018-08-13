@@ -104,7 +104,7 @@ function tag_push() {
   local tag
 
   tag=$1
-  docker tag fabric8-auth-deploy $tag
+  docker tag fabric8-cluster-deploy $tag
   docker push $tag
 }
 
@@ -118,17 +118,17 @@ function deploy() {
     echo "Could not login, missing credentials for the registry"
   fi
 
-  # Build fabric8-auth-deploy
+  # Build fabric8-cluster-deploy
   make docker-image-deploy
 
   TAG=$(echo $GIT_COMMIT | cut -c1-${DEVSHIFT_TAG_LEN})
 
   if [ "$TARGET" = "rhel" ]; then
-    tag_push ${REGISTRY}/openshiftio/rhel-fabric8-services-fabric8-auth:$TAG
-    tag_push ${REGISTRY}/openshiftio/rhel-fabric8-services-fabric8-auth:latest
+    tag_push ${REGISTRY}/openshiftio/rhel-fabric8-services-fabric8-cluster:$TAG
+    tag_push ${REGISTRY}/openshiftio/rhel-fabric8-services-fabric8-cluster:latest
   else
-    tag_push ${REGISTRY}/openshiftio/fabric8-services-fabric8-auth:$TAG
-    tag_push ${REGISTRY}/openshiftio/fabric8-services-fabric8-auth:latest
+    tag_push ${REGISTRY}/openshiftio/fabric8-services-fabric8-cluster:$TAG
+    tag_push ${REGISTRY}/openshiftio/fabric8-services-fabric8-cluster:latest
   fi
 
   echo 'CICO: Image pushed, ready to update deployed app'

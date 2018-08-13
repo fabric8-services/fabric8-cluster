@@ -15,7 +15,7 @@ import (
 // under GOPATH[i]/src/packageName.
 func main() {
 	var packageName string
-	flag.StringVar(&packageName, "packageName", "github.com/fabric8-services/fabric8-auth", "Package Name (e.g.)")
+	flag.StringVar(&packageName, "packageName", "github.com/fabric8-services/fabric8-cluster", "Package Name (e.g.)")
 	flag.Parse()
 
 	wd, err := os.Getwd()

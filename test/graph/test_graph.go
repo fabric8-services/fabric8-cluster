@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/fabric8-services/fabric8-auth/application"
+	"github.com/fabric8-services/fabric8-cluster/application"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"

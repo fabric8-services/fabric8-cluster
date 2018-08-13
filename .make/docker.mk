@@ -41,8 +41,8 @@ docker-image-deploy:
 .PHONY: docker-publish-deploy
 ## Tags the runnable image and pushes it to the docker hub.
 docker-publish-deploy:
-	docker tag $(DOCKER_IMAGE_DEPLOY) fabric8-services/fabric8-auth:latest
-	docker push fabric8-services/fabric8-auth:latest
+	docker tag $(DOCKER_IMAGE_DEPLOY) fabric8-services/fabric8-cluster:latest
+	docker push fabric8-services/fabric8-cluster:latest
 
 .PHONY: docker-build-dir
 ## Creates the docker build directory.
@@ -84,7 +84,7 @@ else
 		-t \
 		$(DOCKER_RUN_INTERACTIVE_SWITCH) \
 		--name="$(DOCKER_CONTAINER_NAME)" \
-		-e AUTH_POSTGRES_PORT=5432 \
+		-e CLUSTER_POSTGRES_PORT=5432 \
 		-v $(CUR_DIR):$(PACKAGE_PATH):Z \
 		-u $(shell id -u $(USER)):$(shell id -g $(USER)) \
 		-e GOPATH=$(GOPATH_IN_CONTAINER) \
@@ -114,8 +114,8 @@ endif
 ifeq ($(strip $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' make_postgres_integration_test_1 2>/dev/null)),)
 	$(error Failed to find PostgreSQL container. Try running "make integration-test-env-prepare")
 endif
-	$(eval AUTH_POSTGRES_HOST := $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' make_postgres_integration_test_1 2>/dev/null))
-	docker exec -t $(DOCKER_RUN_INTERACTIVE_SWITCH) "$(DOCKER_CONTAINER_NAME)" bash -ec 'export AUTH_POSTGRES_HOST=$(AUTH_POSTGRES_HOST); make $(makecommand)'
+	$(eval CLUSTER_POSTGRES_HOST := $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' make_postgres_integration_test_1 2>/dev/null))
+	docker exec -t $(DOCKER_RUN_INTERACTIVE_SWITCH) "$(DOCKER_CONTAINER_NAME)" bash -ec 'export CLUSTER_POSTGRES_HOST=$(CLUSTER_POSTGRES_HOST); make $(makecommand)'
 
 # This is a wildcard target to let you call any make target from the normal makefile
 # but it will run inside the docker container. This target will only get executed if

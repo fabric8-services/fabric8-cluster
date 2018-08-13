@@ -1,14 +1,14 @@
 package repository
 
 import (
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/auth"
-	invitation "github.com/fabric8-services/fabric8-auth/authorization/invitation/repository"
-	resource "github.com/fabric8-services/fabric8-auth/authorization/resource/repository"
-	resourcetype "github.com/fabric8-services/fabric8-auth/authorization/resourcetype/repository"
-	role "github.com/fabric8-services/fabric8-auth/authorization/role/repository"
-	token "github.com/fabric8-services/fabric8-auth/authorization/token/repository"
-	"github.com/fabric8-services/fabric8-auth/token/provider"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/auth"
+	invitation "github.com/fabric8-services/fabric8-cluster/authorization/invitation/repository"
+	resource "github.com/fabric8-services/fabric8-cluster/authorization/resource/repository"
+	resourcetype "github.com/fabric8-services/fabric8-cluster/authorization/resourcetype/repository"
+	role "github.com/fabric8-services/fabric8-cluster/authorization/role/repository"
+	token "github.com/fabric8-services/fabric8-cluster/authorization/token/repository"
+	"github.com/fabric8-services/fabric8-cluster/token/provider"
 )
 
 //Repositories stands for a particular implementation of the business logic of our application

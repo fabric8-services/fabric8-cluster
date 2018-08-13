@@ -3,12 +3,12 @@ package controller_test
 import (
 	"testing"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/app/test"
-	. "github.com/fabric8-services/fabric8-auth/controller"
-	authrest "github.com/fabric8-services/fabric8-auth/rest"
-	testsupport "github.com/fabric8-services/fabric8-auth/test"
-	testsuite "github.com/fabric8-services/fabric8-auth/test/suite"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/app/test"
+	. "github.com/fabric8-services/fabric8-cluster/controller"
+	authrest "github.com/fabric8-services/fabric8-cluster/rest"
+	testsupport "github.com/fabric8-services/fabric8-cluster/test"
+	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
 
 	"github.com/goadesign/goa"
 	"github.com/stretchr/testify/require"

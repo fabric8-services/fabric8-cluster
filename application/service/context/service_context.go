@@ -1,8 +1,8 @@
 package context
 
 import (
-	"github.com/fabric8-services/fabric8-auth/application/repository"
-	"github.com/fabric8-services/fabric8-auth/application/service"
+	"github.com/fabric8-services/fabric8-cluster/application/repository"
+	"github.com/fabric8-services/fabric8-cluster/application/service"
 )
 
 type ServiceContext interface {

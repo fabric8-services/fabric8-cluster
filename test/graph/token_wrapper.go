@@ -1,7 +1,7 @@
 package graph
 
 import (
-	tokenRepo "github.com/fabric8-services/fabric8-auth/authorization/token/repository"
+	tokenRepo "github.com/fabric8-services/fabric8-cluster/authorization/token/repository"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 )

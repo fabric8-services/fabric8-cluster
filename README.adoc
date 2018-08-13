@@ -4,22 +4,22 @@
 :sectnums:
 :experimental:
 
-image:https://ci.centos.org/buildStatus/icon?job=devtools-fabric8-auth-build-master[Jenkins,link="https://ci.centos.org/view/Devtools/job/devtools-fabric8-auth-build-master/lastBuild/"]
-image:https://goreportcard.com/badge/github.com/fabric8-services/fabric8-auth[Go Report Card, link="https://goreportcard.com/report/github.com/fabric8-services/fabric8-auth"]
-image:https://godoc.org/github.com/fabric8-services/fabric8-auth?status.png[GoDoc,link="https://godoc.org/github.com/fabric8-services/fabric8-auth"]
-image:https://codecov.io/gh/fabric8-services/fabric8-auth/branch/master/graph/badge.svg[Codecov.io,link="https://codecov.io/gh/fabric8-services/fabric8-auth"]
+image:https://ci.centos.org/buildStatus/icon?job=devtools-fabric8-cluster-build-master[Jenkins,link="https://ci.centos.org/view/Devtools/job/devtools-fabric8-cluster-build-master/lastBuild/"]
+image:https://goreportcard.com/badge/github.com/fabric8-services/fabric8-cluster[Go Report Card, link="https://goreportcard.com/report/github.com/fabric8-services/fabric8-cluster"]
+image:https://godoc.org/github.com/fabric8-services/fabric8-cluster?status.png[GoDoc,link="https://godoc.org/github.com/fabric8-services/fabric8-cluster"]
+image:https://codecov.io/gh/fabric8-services/fabric8-cluster/branch/master/graph/badge.svg[Codecov.io,link="https://codecov.io/gh/fabric8-services/fabric8-cluster"]
 
 == Documentation [[docs]]
 
 You can find both reference documentation and developer documentation in the following location:
 
-link:https://fabric8-services.github.io/fabric8-auth/index.html[fabric8-auth docs].
+link:https://fabric8-services.github.io/fabric8-cluster/index.html[fabric8-cluster docs].
 
 == Building from source [[building]]
 
 The following guide is mainly targeted towards a Linux or Mac OSX development
 machine. If you are on Windows, we recommend to take a look at
-link:docs/source/getting-started-win.adoc[Getting started with fabric8-auth development on Windows].
+link:docs/source/getting-started-win.adoc[Getting started with fabric8-cluster development on Windows].
 
 === Prerequisites [[prerequisites]]
 
@@ -56,7 +56,7 @@ how to build.
 Check out the code
 
 ----
-$ git clone https://github.com/fabric8-services/fabric8-auth $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ git clone https://github.com/fabric8-services/fabric8-cluster $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 ----
 
 === Build [[build]]
@@ -71,7 +71,7 @@ To fetch the dependencies, generate code and finally build the project you can
 type `make` in a freshly clone repository of this project.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make
 ----
 If you are getting the following error
@@ -105,7 +105,7 @@ called `vendor`. This way we can ensure that every developer and our CI system
 is using the same version.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make deps
 ----
 
@@ -119,7 +119,7 @@ You need to run this command if you just checked out the code and later if
 you've modified the designs.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make generate
 ----
 
@@ -128,7 +128,7 @@ $ make generate
 If you want to just build the Auth server and client, run `make build`.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make build
 ----
 
@@ -138,7 +138,7 @@ This removes all downloaded dependencies, all generated code and compiled
 artifacts.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make clean
 ----
 
@@ -157,7 +157,7 @@ unit-tests::
 Unit tests have the minimum requirement on time and environment setup.
 +
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make test-unit
 ----
 
@@ -166,7 +166,7 @@ Integration tests demand more setup (i.e. the PostgreSQL DB must be already
 running) and probably time. We recommend that you use `docker-compose up -d db`.
 +
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make test-integration
 ----
 
@@ -174,7 +174,7 @@ all::
 To run both, the unit and the integration tests you can run
 +
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make test-all
 ----
 
@@ -206,7 +206,7 @@ Here's how the <placeholders> expand
 
 [horizontal]
 `<package>`::
-something like `github.com/fabric8-services/fabric8-auth/models`
+something like `github.com/fabric8-services/fabric8-cluster/models`
 
 `<test>`::
 `unit` or `integration`
@@ -248,19 +248,19 @@ These files and directories are generated and should not be edited:
 Start up dependent docker services using `docker-compose` and runs auto reload on source change tool `fresh`.
 
 ----
-$ cd $GOPATH/src/github.com/fabric8-services/fabric8-auth
+$ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make dev
 ----
 
-The above steps start the API Server on port 8089.
+The above steps start the API Server on port 8087.
 
 Test out the build by executing CLI commands in a different terminal.
 
-NOTE: The CLI needs the API Server which was started on executing `make dev`  to be up and running. Please do not kill the process. Alternatively if you haven't run `make dev` you could just start the server by running `./bin/auth`.
+NOTE: The CLI needs the API Server which was started on executing `make dev`  to be up and running. Please do not kill the process. Alternatively if you haven't run `make dev` you could just start the server by running `./bin/cluster`.
 
 Generate a token for future use.
 ----
-./bin/auth-cli generate token -H localhost:8089 --pp
+./bin/cluster-cli generate token -H localhost:8087 --pp
 ----
 
 You should get Token in response, save this token in your favourite editor as you need to use this token for POST API calls
@@ -279,6 +279,6 @@ In case you have mulitple `fabric8*` running use `docker ps` to locate the conta
 
 == Rapid development on Minishift
 
-See the following README in the minishift directory for instructions on running fabric8-auth in minishift:
+See the following README in the minishift directory for instructions on running fabric8-cluster in minishift:
 
 link:minishift/README.md[Minishift README].

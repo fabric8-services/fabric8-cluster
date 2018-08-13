@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/fabric8-services/fabric8-auth/log"
+	"github.com/fabric8-services/fabric8-cluster/log"
 
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"

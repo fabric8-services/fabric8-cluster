@@ -8,8 +8,8 @@ import (
 	"net/textproto"
 	"testing"
 
-	testsuite "github.com/fabric8-services/fabric8-auth/test/suite"
-	testtoken "github.com/fabric8-services/fabric8-auth/test/token"
+	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
+	testtoken "github.com/fabric8-services/fabric8-cluster/test/token"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"

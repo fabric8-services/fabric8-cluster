@@ -60,15 +60,14 @@ _testmain.go
 *.test
 *.prof
 
-# Fabric8-auth specific artifacts
+# fabric8-cluster specific artifacts
 /debug
 **/debug.test
 
-# Fabric8-auth binaries
+# fabric8-cluster binaries
 bin/
 
 # Glide package manager
-.glide
 vendor/
 
 # Generated assets

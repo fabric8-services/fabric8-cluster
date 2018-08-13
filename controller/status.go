@@ -3,8 +3,8 @@ package controller
 import (
 	"time"
 
-	"github.com/fabric8-services/fabric8-auth/app"
-	"github.com/fabric8-services/fabric8-auth/log"
+	"github.com/fabric8-services/fabric8-cluster/app"
+	"github.com/fabric8-services/fabric8-cluster/log"
 
 	"fmt"
 	"github.com/goadesign/goa"

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	account "github.com/fabric8-services/fabric8-auth/account/repository"
-	"github.com/fabric8-services/fabric8-auth/configuration"
-	"github.com/fabric8-services/fabric8-auth/token"
-	"github.com/fabric8-services/fabric8-auth/token/tokencontext"
+	account "github.com/fabric8-services/fabric8-cluster/account/repository"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-cluster/token"
+	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"
@@ -91,7 +91,7 @@ func GenerateTokenWithClaims(claims map[string]interface{}) (string, error) {
 	token.Claims.(jwt.MapClaims)["exp"] = time.Now().Unix() + 60*60*24*30
 
 	token.Claims.(jwt.MapClaims)["nbf"] = 0
-	token.Claims.(jwt.MapClaims)["iss"] = "fabric8-auth"
+	token.Claims.(jwt.MapClaims)["iss"] = "fabric8-cluster"
 	token.Claims.(jwt.MapClaims)["typ"] = "Bearer"
 
 	token.Claims.(jwt.MapClaims)["approved"] = true

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/fabric8-services/fabric8-auth/rest"
+	"github.com/fabric8-services/fabric8-cluster/rest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
