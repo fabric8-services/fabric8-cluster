@@ -2,26 +2,20 @@ package configuration_test
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/resource"
+
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io"
-)
-
-const (
-	varTokenPrivateKey = "token.privatekey"
 )
 
 var reqLong *goa.RequestData
@@ -46,174 +40,8 @@ func resetConfiguration() {
 	// calling NewConfigurationData("") is same as GetConfigurationData()
 	config, err = configuration.GetConfigurationData()
 	if err != nil {
-		panic(fmt.Errorf("Failed to setup the configuration: %s", err.Error()))
+		panic(fmt.Errorf("failed to setup the configuration: %s", err.Error()))
 	}
-}
-
-func TestGetKeycloakEndpointSetByUrlEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	env := os.Getenv("AUTH_KEYCLOAK_URL")
-	defer func() {
-		os.Setenv("AUTH_KEYCLOAK_URL", env)
-		resetConfiguration()
-	}()
-
-	os.Setenv("AUTH_KEYCLOAK_URL", "http://xyz.io")
-	resetConfiguration()
-
-	url, err := config.GetKeycloakEndpointAuth(reqLong)
-	require.Nil(t, err)
-	require.Equal(t, "http://xyz.io/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/auth", url)
-
-	url, err = config.GetKeycloakEndpointLogout(reqLong)
-	require.Nil(t, err)
-	require.Equal(t, "http://xyz.io/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/logout", url)
-
-	url, err = config.GetKeycloakEndpointToken(reqLong)
-	require.Nil(t, err)
-	require.Equal(t, "http://xyz.io/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/token", url)
-
-	url, err = config.GetKeycloakEndpointUserInfo(reqLong)
-	require.Nil(t, err)
-	require.Equal(t, "http://xyz.io/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/userinfo", url)
-}
-
-func TestGetKeycloakEndpointAdminDevModeOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/admin/realms/"+config.GetKeycloakRealm(), config.GetKeycloakEndpointAdmin)
-}
-
-func TestGetKeycloakEndpointAdminSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_ADMIN", config.GetKeycloakEndpointAdmin)
-}
-
-func TestGetKeycloakEndpointAuthDevModeOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/auth", config.GetKeycloakEndpointAuth)
-}
-
-func TestGetKeycloakEndpointAuthSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_AUTH", config.GetKeycloakEndpointAuth)
-}
-
-func TestGetKeycloakEndpointLogoutDevModeOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/logout", config.GetKeycloakEndpointLogout)
-}
-
-func TestGetKeycloakEndpointLogoutSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_LOGOUT", config.GetKeycloakEndpointLogout)
-}
-
-func TestGetKeycloakEndpointTokenOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/token", config.GetKeycloakEndpointToken)
-}
-
-func TestGetKeycloakEndpointTokenSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_TOKEN", config.GetKeycloakEndpointToken)
-}
-
-func TestGetKeycloakEndpointUserInfoOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/protocol/openid-connect/userinfo", config.GetKeycloakEndpointUserInfo)
-}
-
-func TestGetKeycloakEndpointLinkIDPOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	sampleID := "1234"
-	idp := "openshift-v3"
-	expectedEndpoint := config.GetKeycloakDevModeURL() + "/auth/admin/realms/" + config.GetKeycloakRealm() + "/users/" + sampleID + "/federated-identity/" + idp
-	url, err := config.GetKeycloakEndpointLinkIDP(reqLong, sampleID, idp)
-	assert.Nil(t, err)
-	// In dev mode it's always the default value regardless of the request
-	assert.Equal(t, expectedEndpoint, url)
-
-	url, err = config.GetKeycloakEndpointLinkIDP(reqShort, sampleID, idp)
-	assert.Nil(t, err)
-	// In dev mode it's always the default value regardless of the request
-	assert.Equal(t, expectedEndpoint, url)
-}
-
-func TestGetKeycloakEndpointUsersOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/admin/realms/"+config.GetKeycloakRealm()+"/users", config.GetKeycloakEndpointUsers)
-}
-
-func TestGetKeycloakEndpointUserInfoSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_USERINFO", config.GetKeycloakEndpointUserInfo)
-}
-
-func TestGetKeycloakEndpointBrokerOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/broker", config.GetKeycloakEndpointBroker)
-}
-
-func TestGetKeycloakEndpointBrokerSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_BROKER", config.GetKeycloakEndpointBroker)
-}
-
-func TestGetKeycloakUserInfoEndpointOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	t.Parallel()
-	checkGetKeycloakEndpointOK(t, config.GetKeycloakDevModeURL()+"/auth/realms/"+config.GetKeycloakRealm()+"/account", config.GetKeycloakAccountEndpoint)
-}
-
-func TestGetKeycloakUserInfoEndpointOKrSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	checkGetKeycloakEndpointSetByEnvVariableOK(t, "AUTH_KEYCLOAK_ENDPOINT_ACCOUNT", config.GetKeycloakAccountEndpoint)
-}
-
-func TestGetWITURLNotDevModeOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	existingWITprefix := os.Getenv("AUTH_WIT_DOMAIN_PREFIX")
-	existingDevMode := os.Getenv("AUTH_DEVELOPER_MODE_ENABLED")
-	existingWITURL := os.Getenv("AUTH_WIT_URL")
-	existingAuthURL := os.Getenv("AUTH_AUTH_URL")
-	defer func() {
-		os.Setenv("AUTH_WIT_DOMAIN_PREFIX", existingWITprefix)
-		os.Setenv("AUTH_DEVELOPER_MODE_ENABLED", existingDevMode)
-		os.Setenv("AUTH_WIT_URL", existingWITURL)
-		os.Setenv("AUTH_AUTH_URL", existingAuthURL)
-		resetConfiguration()
-	}()
-
-	// Default in dev mode
-	os.Setenv("AUTH_DEVELOPER_MODE_ENABLED", "true")
-	os.Unsetenv("AUTH_WIT_URL")
-	resetConfiguration()
-	computedWITURL, err := config.GetWITURL()
-	assert.Nil(t, err)
-	assert.Equal(t, "http://localhost:8080", computedWITURL)
-
-	// Constructed from Auth URL
-	os.Setenv("AUTH_DEVELOPER_MODE_ENABLED", "false")
-	os.Setenv("AUTH_AUTH_URL", "https://auth.forwiturltest.io")
-	resetConfiguration()
-	computedWITURL, err = config.GetWITURL()
-	assert.Nil(t, err)
-	assert.Equal(t, "https://api.forwiturltest.io", computedWITURL)
-
-	// Explicitly set via AUTH_WIT_URL env var
-	os.Setenv("AUTH_WIT_URL", "https://api.some.wit.io")
-	resetConfiguration()
-	computedWITURL, err = config.GetWITURL()
-	assert.Nil(t, err)
-	assert.Equal(t, "https://api.some.wit.io", computedWITURL)
 }
 
 func TestGetEnvironmentOK(t *testing.T) {
@@ -239,14 +67,14 @@ func TestGetEnvironmentOK(t *testing.T) {
 	// Environment not set
 	saConfig, err := configuration.GetConfigurationData()
 	require.NoError(t, err)
-	assert.Equal(t, "http://localhost", saConfig.GetAuthServiceURL())
+	assert.Equal(t, "http://localhost", saConfig.GetClusterServiceURL())
 	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "environment is expected to be set to 'production' or 'prod-preview'")
 
 	// Environment set to some unknown value
 	os.Setenv(constAuthEnvironment, "somethingelse")
 	saConfig, err = configuration.GetConfigurationData()
 	require.NoError(t, err)
-	assert.Equal(t, "http://localhost", saConfig.GetAuthServiceURL())
+	assert.Equal(t, "http://localhost", saConfig.GetClusterServiceURL())
 	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "environment is expected to be set to 'production' or 'prod-preview'")
 
 	// Environment set to prod-preview
@@ -254,7 +82,7 @@ func TestGetEnvironmentOK(t *testing.T) {
 	saConfig, err = configuration.GetConfigurationData()
 	require.NoError(t, err)
 	assert.Equal(t, "prod-preview", saConfig.GetEnvironment())
-	assert.Equal(t, "https://auth.prod-preview.openshift.io", saConfig.GetAuthServiceURL())
+	assert.Equal(t, "https://cluster.prod-preview.openshift.io", saConfig.GetClusterServiceURL())
 	assert.NotContains(t, saConfig.DefaultConfigurationError().Error(), "environment is expected to be set to 'production' or 'prod-preview'")
 
 	// Environment set to production
@@ -262,16 +90,12 @@ func TestGetEnvironmentOK(t *testing.T) {
 	saConfig, err = configuration.GetConfigurationData()
 	require.NoError(t, err)
 	assert.Equal(t, "production", saConfig.GetEnvironment())
-	assert.Equal(t, "https://auth.openshift.io", saConfig.GetAuthServiceURL())
+	assert.Equal(t, "https://cluster.openshift.io", saConfig.GetClusterServiceURL())
 	assert.NotContains(t, saConfig.DefaultConfigurationError().Error(), "environment is expected to be set to 'production' or 'prod-preview'")
 }
 
-func TestNotificationServiceURL(t *testing.T) {
-	checkURLValidation(t, "AUTH_NOTIFICATION_SERVICEURL", "notification service")
-}
-
-func TestOSORegistrationAppURL(t *testing.T) {
-	checkURLValidation(t, "AUTH_OSO_REGAPP_SERVICEURL", "OSO Reg App")
+func TestAuthServiceURL(t *testing.T) {
+	checkURLValidation(t, "CLUSTER_AUTH_SERVICEURL", "auth service")
 }
 
 func checkURLValidation(t *testing.T, envName, serviceName string) {
@@ -318,113 +142,6 @@ func TestGetSentryDSNOK(t *testing.T) {
 	assert.Equal(t, "something", config.GetSentryDSN())
 }
 
-func checkGetKeycloakEndpointOK(t *testing.T, expectedEndpoint string, getEndpoint func(req *goa.RequestData) (string, error)) {
-	url, err := getEndpoint(reqLong)
-	assert.Nil(t, err)
-	// In dev mode it's always the default value regardless of the request
-	assert.Equal(t, expectedEndpoint, url)
-
-	url, err = getEndpoint(reqShort)
-	assert.Nil(t, err)
-	// In dev mode it's always the default value regardless of the request
-	assert.Equal(t, expectedEndpoint, url)
-}
-
-func TestGetTokenPrivateKeyFromConfigFile(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	envKey := generateEnvKey(varTokenPrivateKey)
-	realEnvValue := os.Getenv(envKey) // could be "" as well.
-
-	os.Unsetenv(envKey)
-	defer func() {
-		os.Setenv(envKey, realEnvValue)
-		resetConfiguration()
-	}()
-
-	resetConfiguration()
-	// env variable NOT set, so we check with config.yaml's value
-
-	viperValue, kid := config.GetServiceAccountPrivateKey()
-	assert.NotEqual(t, "", kid)
-	require.NotNil(t, viperValue)
-
-	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(viperValue)
-	require.Nil(t, err)
-	assert.NotNil(t, parsedKey)
-}
-
-func TestGetMaxHeaderSizeUsingDefaults(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	viperValue := config.GetHeaderMaxLength()
-	require.NotNil(t, viperValue)
-	assert.Equal(t, int64(5000), viperValue)
-}
-
-func TestGetMaxHeaderSizeSetByEnvVariableOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-	envName := "AUTH_HEADER_MAXLENGTH"
-	envValue := time.Now().Unix()
-	env := os.Getenv(envName)
-	defer func() {
-		os.Setenv(envName, env)
-		resetConfiguration()
-	}()
-
-	os.Setenv(envName, strconv.FormatInt(envValue, 10))
-	resetConfiguration()
-
-	viperValue := config.GetHeaderMaxLength()
-	require.NotNil(t, viperValue)
-	assert.Equal(t, envValue, viperValue)
-}
-
-func TestLoadDefaultServiceAccountConfiguration(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
-	accounts := config.GetServiceAccounts()
-	checkServiceAccountConfiguration(t, accounts)
-}
-
-func TestLoadServiceAccountConfigurationFromFile(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
-	saConfig, err := configuration.NewConfigurationData("", "./conf-files/service-account-secrets.conf", "")
-	require.Nil(t, err)
-	accounts := saConfig.GetServiceAccounts()
-	checkServiceAccountConfiguration(t, accounts)
-}
-
-func TestLoadServiceAccountConfigurationWithMissingExpectedSAReportsError(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
-	saConfig, err := configuration.NewConfigurationData("", "./conf-files/tests/service-account-missing-expected.conf", "")
-	require.Nil(t, err)
-	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "service account name is empty in service account config")
-	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "test-service service account ID is empty in service account config;")
-	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "test-service service account secret array is empty in service account config;")
-	assert.Contains(t, saConfig.DefaultConfigurationError().Error(), "some expected service accounts are missing in service account config;")
-}
-
-func TestGetPublicClientID(t *testing.T) {
-	require.Equal(t, "740650a2-9c44-4db5-b067-a3d1b2cd2d01", config.GetPublicOauthClientID())
-}
-
-func checkServiceAccountConfiguration(t *testing.T, accounts map[string]configuration.ServiceAccount) {
-	checkServiceAccount(t, accounts, configuration.ServiceAccount{
-		ID:      "5dec5fdb-09e3-4453-b73f-5c828832b28e",
-		Name:    "fabric8-wit",
-		Secrets: []string{"$2a$04$nI7z7Re4pbx.V5vwm14n5.velhB.nbMgxdZ0vSomWVxcct34zbH9e"}})
-	checkServiceAccount(t, accounts, configuration.ServiceAccount{
-		ID:      "c211f1bd-17a7-4f8c-9f80-0917d167889d",
-		Name:    "fabric8-tenant",
-		Secrets: []string{"$2a$04$ynqM/syKMYowMIn5cyqHuevWnfzIQqtyY4m.61B02qltY5SOyGIOe", "$2a$04$sbC/AfW2c33hv8orGA.1D.LXa/.IY76VWhsfqxCVhrhFkDfL0/XGK"}})
-}
-
-func checkServiceAccount(t *testing.T, accounts map[string]configuration.ServiceAccount, expected configuration.ServiceAccount) {
-	assert.Contains(t, accounts, expected.ID)
-	assert.Equal(t, expected, accounts[expected.ID])
-}
-
 func TestLoadDefaultClusterConfiguration(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
@@ -444,7 +161,7 @@ func TestLoadDefaultClusterConfiguration(t *testing.T) {
 func TestLoadClusterConfigurationFromFile(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	clusterConfig, err := configuration.NewConfigurationData("", "", "./conf-files/oso-clusters.conf")
+	clusterConfig, err := configuration.NewConfigurationData("", "./conf-files/oso-clusters.conf")
 	require.Nil(t, err)
 	clusters := clusterConfig.GetOSOClusters()
 	checkClusterConfiguration(t, clusters)
@@ -453,7 +170,7 @@ func TestLoadClusterConfigurationFromFile(t *testing.T) {
 func TestClusterConfigurationWithMissingKeys(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	_, err := configuration.NewConfigurationData("", "", "./conf-files/tests/oso-clusters-missing-keys.conf")
+	_, err := configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-missing-keys.conf")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "key name is missing")
 	assert.Contains(t, err.Error(), "key app-dns is missing")
@@ -468,7 +185,7 @@ func TestClusterConfigurationWithMissingKeys(t *testing.T) {
 func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	clusterConfig, err := configuration.NewConfigurationData("", "", "./conf-files/tests/oso-clusters-custom-urls.conf")
+	clusterConfig, err := configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-custom-urls.conf")
 	require.Nil(t, err)
 	checkCluster(t, clusterConfig.GetOSOClusters(), configuration.OSOCluster{
 		Name:                   "us-east-2",
@@ -489,7 +206,7 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 func TestClusterConfigurationWithEmptyArray(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	_, err := configuration.NewConfigurationData("", "", "./conf-files/tests/oso-clusters-empty.conf")
+	_, err := configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-empty.conf")
 	require.Error(t, err)
 	assert.Equal(t, err.Error(), "empty cluster config file")
 }
@@ -497,11 +214,11 @@ func TestClusterConfigurationWithEmptyArray(t *testing.T) {
 func TestClusterConfigurationFromInvalidFile(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	_, err := configuration.NewConfigurationData("", "", "./conf-files/tests/oso-clusters-invalid.conf")
+	_, err := configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-invalid.conf")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load the JSON config file")
 
-	_, err = configuration.NewConfigurationData("", "", "./conf-files/tests/oso-clusters-wrong-json.conf")
+	_, err = configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-wrong-json.conf")
 	require.Error(t, err)
 	assert.Equal(t, err.Error(), "empty cluster config file")
 }
@@ -514,7 +231,7 @@ func TestClusterConfigurationWatcher(t *testing.T) {
 	defer os.Remove(tmpFileName)
 
 	// Load configuration from the temp file
-	config, err := configuration.NewConfigurationData("", "", tmpFileName)
+	config, err := configuration.NewConfigurationData("", tmpFileName)
 	require.NoError(t, err)
 	cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
 	require.NotNil(t, cluster)
@@ -653,55 +370,4 @@ func checkCluster(t *testing.T, clusters map[string]configuration.OSOCluster, ex
 	require.Equal(t, expected, clusters[expected.APIURL])
 	_, err := uuid.FromString(clusters[expected.APIURL].TokenProviderID)
 	require.Nil(t, err)
-}
-
-func TestExpiresIn(t *testing.T) {
-	checkExpiresIn(t, "AUTH_USERACCOUNT_TOKEN_ACCESS_EXPIRESIN", "too short lifespan of access tokens")
-	checkExpiresIn(t, "AUTH_USERACCOUNT_TOKEN_REFRESH_EXPIRESIN", "too short lifespan of refresh tokens")
-}
-
-func checkExpiresIn(t *testing.T, envVarName, expectedErrorMessage string) {
-	resource.Require(t, resource.UnitTest)
-
-	tokenExpiresIn := os.Getenv(envVarName)
-	defer func() {
-		os.Setenv(envVarName, tokenExpiresIn)
-		resetConfiguration()
-	}()
-
-	// There should be an error message if expiresIn is less than 3 minutes
-	os.Setenv(envVarName, "179")
-	resetConfiguration()
-
-	assert.Contains(t, config.DefaultConfigurationError().Error(), expectedErrorMessage)
-
-	// No error message if expiresIn is >= 3 minutes
-	os.Setenv(envVarName, "180")
-	resetConfiguration()
-
-	assert.NotContains(t, config.DefaultConfigurationError().Error(), expectedErrorMessage)
-}
-
-func generateEnvKey(yamlKey string) string {
-	return "AUTH_" + strings.ToUpper(strings.Replace(yamlKey, ".", "_", -1))
-}
-
-func checkGetKeycloakEndpointSetByEnvVariableOK(t *testing.T, envName string, getEndpoint func(req *goa.RequestData) (string, error)) {
-	envValue := uuid.NewV4().String()
-	env := os.Getenv(envName)
-	defer func() {
-		os.Setenv(envName, env)
-		resetConfiguration()
-	}()
-
-	os.Setenv(envName, envValue)
-	resetConfiguration()
-
-	url, err := getEndpoint(reqLong)
-	require.Nil(t, err)
-	require.Equal(t, envValue, url)
-
-	url, err = getEndpoint(reqShort)
-	require.Nil(t, err)
-	require.Equal(t, envValue, url)
 }
