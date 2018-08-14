@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	expectedDefaultConfDevModeErrorMessage  = "Error: /etc/fabric8/service-account-secrets.conf is not used; /etc/fabric8/oso-clusters.conf is not used; developer Mode is enabled; default service account private key is used; default service account private key ID is used; default user account private key is used; default user account private key ID is used; default DB password is used; default Keycloak client secret is used; default GitHub client secret is used; no restrictions for valid redirect URLs; notification service url is empty; OSO Reg App url is empty; OSO Reg App admin username is empty; OSO Reg App admin token is empty; environment is expected to be set to 'production' or 'prod-preview'; Sentry DSN is empty"
-	expectedDefaultConfProdModeErrorMessage = "Error: /etc/fabric8/service-account-secrets.conf is not used; /etc/fabric8/oso-clusters.conf is not used; default service account private key is used; default service account private key ID is used; default user account private key is used; default user account private key ID is used; default DB password is used; default Keycloak client secret is used; default GitHub client secret is used; notification service url is empty; OSO Reg App url is empty; OSO Reg App admin username is empty; OSO Reg App admin token is empty; environment is expected to be set to 'production' or 'prod-preview'; Sentry DSN is empty"
+	expectedDefaultConfDevModeErrorMessage  = "Error: /etc/fabric8/oso-clusters.conf is not used; developer Mode is enabled; default service account private key is used; default service account private key ID is used; default user account private key is used; default user account private key ID is used; default DB password is used; default Keycloak client secret is used; default GitHub client secret is used; no restrictions for valid redirect URLs; notification service url is empty; OSO Reg App url is empty; OSO Reg App admin username is empty; OSO Reg App admin token is empty; environment is expected to be set to 'production' or 'prod-preview'; Sentry DSN is empty"
+	expectedDefaultConfProdModeErrorMessage = "Error: /etc/fabric8/oso-clusters.conf is not used; default service account private key is used; default service account private key ID is used; default user account private key is used; default user account private key ID is used; default DB password is used; default Keycloak client secret is used; default GitHub client secret is used; notification service url is empty; OSO Reg App url is empty; OSO Reg App admin username is empty; OSO Reg App admin token is empty; environment is expected to be set to 'production' or 'prod-preview'; Sentry DSN is empty"
 )
 
 type TestStatusREST struct {
@@ -67,13 +67,13 @@ func (rest *TestStatusREST) TestShowStatusWithoutDBFails() {
 }
 
 func (rest *TestStatusREST) TestShowStatusWithDefaultConfigInProdModeFails() {
-	existingDevMode := os.Getenv("AUTH_DEVELOPER_MODE_ENABLED")
+	existingDevMode := os.Getenv("CLUSTER_DEVELOPER_MODE_ENABLED")
 	defer func() {
-		os.Setenv("AUTH_DEVELOPER_MODE_ENABLED", existingDevMode)
+		os.Setenv("CLUSTER_DEVELOPER_MODE_ENABLED", existingDevMode)
 		rest.resetConfiguration()
 	}()
 
-	os.Setenv("AUTH_DEVELOPER_MODE_ENABLED", "false")
+	os.Setenv("CLUSTER_DEVELOPER_MODE_ENABLED", "false")
 	rest.resetConfiguration()
 	svc, ctrl := rest.UnSecuredController()
 	_, res := test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)

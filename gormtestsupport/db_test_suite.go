@@ -8,9 +8,9 @@ import (
 	config "github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormsupport/cleaner"
-	"github.com/fabric8-services/fabric8-cluster/log"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/resource"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"github.com/fabric8-services/fabric8-cluster/test/graph"
 

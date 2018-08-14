@@ -9,7 +9,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"github.com/pkg/errors"
 )

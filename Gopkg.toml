@@ -100,3 +100,7 @@ required = [
 [[constraint]]
   name = "github.com/fsnotify/fsnotify"
   version = "1.4.7"
+
+[[constraint]]
+  name = "github.com/fabric8-services/fabric8-common"
+  revision = "aa42fc1fd2a2a33c70a0cdca50fb5d621ae0b71b"

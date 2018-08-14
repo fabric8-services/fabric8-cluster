@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/ajg/form"
+  packages = ["."]
+  revision = "cc2954064ec9ea8d93917f0f87456e11d7b881ad"
+  version = "v1.5"
+
+[[projects]]
   name = "github.com/armon/go-metrics"
   packages = ["."]
   revision = "9a4b6e10bed6220a1665955aa2b75afc91eb10b3"
@@ -39,6 +45,16 @@
   packages = ["."]
   revision = "13dde8a00d96b369e7398490fd8a3af9ca114b84"
   version = "v3.9.0"
+
+[[projects]]
+  name = "github.com/fabric8-services/fabric8-common"
+  packages = [
+    "configuration",
+    "errors",
+    "httpsupport",
+    "log"
+  ]
+  revision = "aa42fc1fd2a2a33c70a0cdca50fb5d621ae0b71b"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -420,6 +436,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e349bea1b87cd43af5cdd042fac461ede782d6af704c6eb04a840b3f1081a094"
+  inputs-digest = "6e865b37e54814f3c311c2b6df79d0dbd26d80e61008763e165825a8fcf738e6"
   solver-name = "gps-cdcl"
   solver-version = 1

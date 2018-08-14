@@ -4,7 +4,7 @@ import (
 	"os"
 
 	config "github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-cluster/resource"
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/jinzhu/gorm"

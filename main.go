@@ -17,7 +17,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/goamiddleware"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/jsonapi"
-	"github.com/fabric8-services/fabric8-cluster/log"
 	"github.com/fabric8-services/fabric8-cluster/login"
 	keycloaklink "github.com/fabric8-services/fabric8-cluster/login/link"
 	"github.com/fabric8-services/fabric8-cluster/migration"
@@ -25,6 +24,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/token"
 	"github.com/fabric8-services/fabric8-cluster/token/keycloak"
 	"github.com/fabric8-services/fabric8-cluster/token/link"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"

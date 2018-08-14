@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/application/repository"
-	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"github.com/pkg/errors"
 )

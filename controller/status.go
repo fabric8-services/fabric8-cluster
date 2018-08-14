@@ -4,9 +4,10 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
-	"github.com/fabric8-services/fabric8-cluster/log"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"fmt"
+
 	"github.com/goadesign/goa"
 	"github.com/jinzhu/gorm"
 )

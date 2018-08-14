@@ -2,8 +2,9 @@ package signer
 
 import (
 	"context"
-	"github.com/fabric8-services/fabric8-cluster/log"
+
 	"github.com/fabric8-services/fabric8-cluster/token"
+	"github.com/fabric8-services/fabric8-common/log"
 	goaclient "github.com/goadesign/goa/client"
 )
 

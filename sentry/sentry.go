@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fabric8-services/fabric8-cluster/log"
 	"github.com/fabric8-services/fabric8-cluster/token"
+	"github.com/fabric8-services/fabric8-common/log"
 
 	"github.com/getsentry/raven-go"
 	goajwt "github.com/goadesign/goa/middleware/security/jwt"
