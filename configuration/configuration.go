@@ -540,7 +540,7 @@ func (c *ConfigurationData) setConfigDefaults() {
 	// prod-preview or prod
 	c.v.SetDefault(varEnvironment, "local")
 
-	c.v.SetDefault(varAuthKeysPath, "/token/keys")
+	c.v.SetDefault(varAuthKeysPath, "/api/token/keys")
 }
 
 // GetPostgresHost returns the postgres host as set via default, config file, or environment variable

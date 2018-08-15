@@ -25,6 +25,7 @@ import (
 	"github.com/goadesign/goa/middleware/gzip"
 	"github.com/goadesign/goa/middleware/security/jwt"
 	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -72,9 +73,11 @@ func main() {
 	for {
 		db, err = gorm.Open("postgres", config.GetPostgresConfigString())
 		if err != nil {
-			db.Close()
 			log.Logger().Errorf("ERROR: Unable to open connection to database %v", err)
 			log.Logger().Infof("Retrying to connect in %v...", config.GetPostgresConnectionRetrySleep())
+			if db != nil {
+				db.Close()
+			}
 			time.Sleep(config.GetPostgresConnectionRetrySleep())
 		} else {
 			defer db.Close()
