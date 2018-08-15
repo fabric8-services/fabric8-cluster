@@ -25,7 +25,7 @@ type TransactionalResources interface {
 	repository.Repositories
 }
 
-// Transaction represents an existing transaction.  It provides access to transactional resources, plus methods to commit or roll back the transaction
+// Transaction represents an existing transaction. It provides access to transactional resources, plus methods to commit or roll back the transaction
 type Transaction interface {
 	TransactionalResources
 	Commit() error

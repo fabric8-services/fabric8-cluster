@@ -1,21 +1,18 @@
 package transaction_test
 
 import (
-	"testing"
-	"time"
-
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/resource"
-	"github.com/stretchr/testify/assert"
+	"testing"
+
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
 type TestTransaction struct {
 	gormtestsupport.DBTestSuite
-	app *gormapplication.GormDB
 }
 
 func TestRunTransaction(t *testing.T) {
@@ -23,33 +20,17 @@ func TestRunTransaction(t *testing.T) {
 	suite.Run(t, &TestTransaction{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func (test *TestTransaction) SetupTest() {
-	test.DBTestSuite.SetupTest()
-	test.app = gormapplication.NewGormDB(test.DB)
-}
-
-func (test *TestTransaction) TestTransactionInTime() {
-	// given
-	computeTime := 10 * time.Second
-	// then
-	err := transaction.Transactional(test.app.TransactionManager(), func(tr transaction.TransactionalResources) error {
-		time.Sleep(computeTime)
+func (test *TestTransaction) TestTransactionOK() {
+	err := transaction.Transactional(test.Application, func(tr transaction.TransactionalResources) error {
 		return nil
 	})
-	// then
-	require.Nil(test.T(), err)
+	require.NoError(test.T(), err)
 }
 
-func (test *TestTransaction) TestTransactionOut() {
-	// given
-	computeTime := 6 * time.Minute
-	transaction.SetDatabaseTransactionTimeout(5 * time.Second)
-	// then
-	err := transaction.Transactional(test.app.TransactionManager(), func(tr transaction.TransactionalResources) error {
-		time.Sleep(computeTime)
-		return nil
+func (test *TestTransaction) TestTransactionFail() {
+	err := transaction.Transactional(test.Application, func(tr transaction.TransactionalResources) error {
+		return errors.New("Oopsie Woopsie")
 	})
 	// then
-	require.NotNil(test.T(), err)
-	assert.Contains(test.T(), err.Error(), "database transaction timeout!")
+	require.Error(test.T(), err)
 }

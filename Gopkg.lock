@@ -50,6 +50,7 @@
   name = "github.com/fabric8-services/fabric8-common"
   packages = [
     "configuration",
+    "convert",
     "errors",
     "httpsupport",
     "log"
@@ -436,6 +437,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "872c88680fa167f3b5bd938a28d4338511db3a38c5dcbeed679baaaacaee3a2d"
+  inputs-digest = "483962d7aa3fbc96c69d7fcfef8dff8d74c80569476c1f2a824a584f4499b194"
   solver-name = "gps-cdcl"
   solver-version = 1
