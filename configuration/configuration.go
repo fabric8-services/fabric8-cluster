@@ -60,8 +60,9 @@ const (
 	varPostgresConnectionMaxOpen    = "postgres.connection.maxopen"
 
 	// Other services URLs
-	varClusterURL = "cluster.url"
-	varAuthURL    = "cluster.auth.url"
+	varClusterServiceURL = "cluster.url"
+	varAuthURL           = "cluster.auth.url"
+	varAuthKeysPath      = "cluster.auth.keys.path"
 
 	// sentry
 	varEnvironment = "environment"
@@ -133,7 +134,7 @@ func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*
 	c.clusterConfigFilePath = clusterConfigFilePath
 
 	// Check sensitive default configuration
-	if c.IsPostgresDeveloperModeEnabled() {
+	if c.DeveloperModeEnabled() {
 		c.appendDefaultConfigErrorMessage("developer Mode is enabled")
 	}
 	if c.GetPostgresPassword() == defaultDBPassword {
@@ -143,6 +144,7 @@ func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*
 	if c.GetClusterServiceURL() == "http://localhost" {
 		c.appendDefaultConfigErrorMessage("environment is expected to be set to 'production' or 'prod-preview'")
 	}
+	c.validateURL(c.GetAuthServiceURL(), "Auth service")
 	if c.GetSentryDSN() == "" {
 		c.appendDefaultConfigErrorMessage("Sentry DSN is empty")
 	}
@@ -424,8 +426,8 @@ func (c *ConfigurationData) DefaultConfigurationError() error {
 
 // GetClusterServiceUrl returns Cluster Service URL
 func (c *ConfigurationData) GetClusterServiceURL() string {
-	if c.v.IsSet(varClusterURL) {
-		return c.v.GetString(varClusterURL)
+	if c.v.IsSet(varClusterServiceURL) {
+		return c.v.GetString(varClusterServiceURL)
 	}
 	switch c.GetEnvironment() {
 	case prodEnvironment:
@@ -435,6 +437,22 @@ func (c *ConfigurationData) GetClusterServiceURL() string {
 	default:
 		return "http://localhost"
 	}
+}
+
+// GetAuthServiceUrl returns Auth Service URL
+func (c *ConfigurationData) GetAuthServiceURL() string {
+	if c.v.IsSet(varAuthURL) {
+		return c.v.GetString(varAuthURL)
+	}
+	if c.DeveloperModeEnabled() {
+		return "https://auth.prod-preview.openshift.io"
+	}
+	return ""
+}
+
+// GetAuthKeysPath returns the path to auth keys endpoint
+func (c *ConfigurationData) GetAuthKeysPath() string {
+	return c.v.GetString(varAuthKeysPath)
 }
 
 // GetOSOClusters returns a map of OSO cluster configurations by cluster API URL
@@ -509,7 +527,7 @@ func (c *ConfigurationData) setConfigDefaults() {
 	// Misc
 	//-----
 
-	// Enable development related features, e.g. token generation endpoint
+	// Enable development related features
 	c.v.SetDefault(varDeveloperModeEnabled, false)
 
 	c.v.SetDefault(varLogLevel, defaultLogLevel)
@@ -521,6 +539,8 @@ func (c *ConfigurationData) setConfigDefaults() {
 
 	// prod-preview or prod
 	c.v.SetDefault(varEnvironment, "local")
+
+	c.v.SetDefault(varAuthKeysPath, "/token/keys")
 }
 
 // GetPostgresHost returns the postgres host as set via default, config file, or environment variable
@@ -606,9 +626,9 @@ func (c *ConfigurationData) GetMetricsHTTPAddress() string {
 	return c.v.GetString(varMetricsHTTPAddress)
 }
 
-// IsPostgresDeveloperModeEnabled returns if development related features (as set via default, config file, or environment variable),
+// DeveloperModeEnabled returns if development related features (as set via default, config file, or environment variable),
 // e.g. token generation endpoint are enabled
-func (c *ConfigurationData) IsPostgresDeveloperModeEnabled() bool {
+func (c *ConfigurationData) DeveloperModeEnabled() bool {
 	return c.v.GetBool(varDeveloperModeEnabled)
 }
 
@@ -626,7 +646,7 @@ func (c *ConfigurationData) IsDBLogsEnabled() bool {
 // For example a public key from Keycloak
 // Returns false if in in Dev Mode
 func (c *ConfigurationData) GetDevModePublicKey() (bool, []byte, string) {
-	if c.IsPostgresDeveloperModeEnabled() {
+	if c.DeveloperModeEnabled() {
 		return true, []byte(devModePublicKey), devModePublicKeyID
 	}
 	return false, nil, ""
@@ -647,7 +667,7 @@ func (c *ConfigurationData) IsLogJSON() bool {
 	if c.v.IsSet(varLogJSON) {
 		return c.v.GetBool(varLogJSON)
 	}
-	if c.IsPostgresDeveloperModeEnabled() {
+	if c.DeveloperModeEnabled() {
 		return false
 	}
 	return true

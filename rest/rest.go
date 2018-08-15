@@ -10,9 +10,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fabric8-services/fabric8-cluster/errors"
+	"github.com/fabric8-services/fabric8-common/errors"
 
 	"context"
+
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/client"
 )
@@ -28,7 +29,7 @@ type HttpClient interface {
 }
 
 type configuration interface {
-	IsPostgresDeveloperModeEnabled() bool
+	DeveloperModeEnabled() bool
 }
 
 // HttpClientDoer implements HttpDoer
@@ -49,7 +50,7 @@ func (d *HttpClientDoer) Do(ctx context.Context, req *http.Request) (*http.Respo
 // Host returns the host from the given request if run in prod mode or if config is nil
 // and "auth.openshift.io" if run in dev mode
 func Host(req *goa.RequestData, config configuration) string {
-	if config != nil && config.IsPostgresDeveloperModeEnabled() {
+	if config != nil && config.DeveloperModeEnabled() {
 		return "auth.openshift.io"
 	}
 	return req.Host

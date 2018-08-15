@@ -1,1 +1,0 @@
-UPDATE users SET feature_level = 'released' WHERE (feature_level = '' or feature_level is null)  and email like '%+preview%';

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fabric8-services/fabric8-cluster/errors"
+	"github.com/fabric8-services/fabric8-common/errors"
 
 	"github.com/jinzhu/gorm"
 	errs "github.com/pkg/errors"

@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-common/log"
-
-	"fmt"
 
 	"github.com/goadesign/goa"
 	"github.com/jinzhu/gorm"
@@ -22,7 +21,7 @@ var (
 )
 
 type statusConfiguration interface {
-	IsPostgresDeveloperModeEnabled() bool
+	DeveloperModeEnabled() bool
 	DefaultConfigurationError() error
 }
 
@@ -55,7 +54,7 @@ func (c *StatusController) Show(ctx *app.ShowStatusContext) error {
 		StartTime: StartTime,
 	}
 
-	devMode := c.config.IsPostgresDeveloperModeEnabled()
+	devMode := c.config.DeveloperModeEnabled()
 	if devMode {
 		res.DevMode = &devMode
 	}

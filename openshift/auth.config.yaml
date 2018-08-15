@@ -32,4 +32,5 @@ objects:
     postgres.connection.maxidle: "90"
     postgres.connection.maxopen: "90"
     environment: prod-preview
+    auth.url: https://auth.prod-preview.openshift.io
   

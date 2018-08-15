@@ -1,1 +1,0 @@
-ALTER TABLE invitation ADD COLUMN accept_code VARCHAR NOT NULL UNIQUE;

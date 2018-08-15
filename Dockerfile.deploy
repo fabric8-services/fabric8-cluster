@@ -2,7 +2,7 @@ FROM centos:7
 LABEL maintainer "Devtools <devtools@redhat.com>"
 LABEL author "Konrad Kleine <kkleine@redhat.com>"
 ENV LANG=en_US.utf8
-ENV AUTH_INSTALL_PREFIX=/usr/local/cluster
+ENV CLUSTER_INSTALL_PREFIX=/usr/local/cluster
 
 # Create a non-root user and a group with the same name: "cluster"
 ENV CLUSTER_USER_NAME=cluster

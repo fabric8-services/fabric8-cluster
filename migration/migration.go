@@ -33,21 +33,17 @@ type Migrations []steps
 // mutex variable to lock/unlock the population of common types
 var populateLocker = &sync.Mutex{}
 
-type MigrationConfiguration interface {
-	GetOpenShiftClientApiUrl() string
-}
-
 // Migrate executes the required migration of the database on startup.
 // For each successful migration, an entry will be written into the "version"
 // table, that states when a certain version was reached.
-func Migrate(db *sql.DB, catalog string, configuration MigrationConfiguration) error {
+func Migrate(db *sql.DB, catalog string) error {
 
 	var err error
 	if db == nil {
 		return errs.Errorf("Database handle is nil\n")
 	}
 
-	m := GetMigrations(configuration)
+	m := GetMigrations()
 
 	var tx *sql.Tx
 	for nextVersion := int64(0); nextVersion < int64(len(m)) && err == nil; nextVersion++ {
@@ -102,115 +98,11 @@ func Migrate(db *sql.DB, catalog string, configuration MigrationConfiguration) e
 // GetMigrations returns the migrations all the migrations we have.
 // Add your own migration to the end of this function.
 // IMPORTANT: ALWAYS APPEND AT THE END AND DON'T CHANGE THE ORDER OF MIGRATIONS!
-func GetMigrations(configuration MigrationConfiguration) Migrations {
+func GetMigrations() Migrations {
 	m := Migrations{}
 
 	// Version 0
 	m = append(m, steps{ExecuteSQLFile("000-bootstrap.sql")})
-
-	// Version 1
-	m = append(m, steps{ExecuteSQLFile("001-identities-users.sql")})
-
-	// Version 2
-	m = append(m, steps{ExecuteSQLFile("002-oauth-states.sql")})
-
-	// Version 3
-	m = append(m, steps{ExecuteSQLFile("003-space-resources.sql")})
-
-	// Version 4
-
-	m = append(m, steps{ExecuteSQLFile("004-unique-resource-space.sql")})
-
-	// Version 5
-	m = append(m, steps{ExecuteSQLFile("005-authorization.sql")})
-
-	// Version 6
-	m = append(m, steps{ExecuteSQLFile("006-external-provider.sql")})
-
-	// Version 7
-	m = append(m, steps{ExecuteSQLFile("007-external-provider-id-index.sql")})
-
-	// Version 8
-	m = append(m, steps{ExecuteSQLFile("008-rename-token-table.sql")})
-
-	// Version 9
-	m = append(m, steps{ExecuteSQLFile("009-external-token-hard-delete.sql")})
-
-	// Version 10
-	defaultCluster := configuration.GetOpenShiftClientApiUrl()
-	m = append(m, steps{ExecuteSQLFile("010-add-cluster-to-user.sql", defaultCluster)})
-
-	// Version 11
-	m = append(m, steps{ExecuteSQLFile("011-add-username-to-external-token.sql")})
-
-	// Version 12
-	m = append(m, steps{ExecuteSQLFile("012-hide-email.sql")})
-
-	// Version 13
-	m = append(m, steps{ExecuteSQLFile("013-add-email-verified.sql")})
-
-	// Version 14
-	m = append(m, steps{ExecuteSQLFile("014-add-user-feature-level.sql")})
-
-	// Version 15
-	m = append(m, steps{ExecuteSQLFile("015-clear-resources-create-resource-types.sql")})
-
-	// Version 16
-	m = append(m, steps{ExecuteSQLFile("016-add-state-to-auth-state-reference.sql")})
-
-	// Version 17
-	m = append(m, steps{ExecuteSQLFile("017-feature-level-not-null.sql")})
-
-	// Version 18
-	m = append(m, steps{ExecuteSQLFile("018-convert-user-feature-level.sql")})
-
-	// Version 19
-	m = append(m, steps{ExecuteSQLFile("019-authorization-part-2.sql")})
-
-	// Version 20
-	m = append(m, steps{ExecuteSQLFile("020-add-response-mode-to-auth-state-reference.sql")})
-
-	// Version 21
-	m = append(m, steps{ExecuteSQLFile("021-organizations-list-create.sql")})
-
-	// Version 22
-	m = append(m, steps{ExecuteSQLFile("022-add-deprovisioned-to-user.sql")})
-
-	// Version 23
-	m = append(m, steps{ExecuteSQLFile("023-resource-type-index.sql")})
-
-	// Version 24
-	m = append(m, steps{ExecuteSQLFile("024-role-mapping-and-team-and-group-identities.sql")})
-
-	// Version 25
-	m = append(m, steps{ExecuteSQLFile("025-fix-feature-level.sql")})
-
-	// Version 26
-	m = append(m, steps{ExecuteSQLFile("026-identities-users-indexes.sql")})
-
-	// Version 27
-	m = append(m, steps{ExecuteSQLFile("027-invitations.sql")})
-
-	// Version 28
-	m = append(m, steps{ExecuteSQLFile("028-make-organization-names-unique.sql")})
-
-	// Version 29
-	m = append(m, steps{ExecuteSQLFile("029-add-space-resourcetype.sql")})
-
-	// Version 30
-	m = append(m, steps{ExecuteSQLFile("030-add-team-admin-role.sql")})
-
-	// Version 31
-	m = append(m, steps{ExecuteSQLFile("031-clean-up-roles-scopes.sql")})
-
-	// Version 32
-	m = append(m, steps{ExecuteSQLFile("032-invitation-code.sql")})
-
-	// Version 33
-	m = append(m, steps{ExecuteSQLFile("033-drop-space-resources.sql")})
-
-	// Version 34
-	m = append(m, steps{ExecuteSQLFile("034-rename-token-table.sql")})
 
 	// Version N
 	//

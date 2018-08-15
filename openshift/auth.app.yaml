@@ -74,6 +74,11 @@ objects:
               configMapKeyRef:
                 name: cluster
                 key: environment
+          - name: CLUSTER_AUTH_URL
+            valueFrom:
+              configMapKeyRef:
+                name: cluster
+                key: auth.url
           imagePullPolicy: Always
           name: cluster
           ports:
