@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
-	"github.com/fabric8-services/fabric8-cluster/errors"
 	"github.com/fabric8-services/fabric8-cluster/jsonapi"
 	"github.com/fabric8-services/fabric8-cluster/resource"
+	"github.com/fabric8-services/fabric8-common/errors"
+
 	errs "github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )

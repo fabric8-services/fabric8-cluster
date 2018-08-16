@@ -16,7 +16,7 @@ type dummyConfig struct {
 	devMode bool
 }
 
-func (c *dummyConfig) IsPostgresDeveloperModeEnabled() bool {
+func (c *dummyConfig) DeveloperModeEnabled() bool {
 	return c.devMode
 }
 

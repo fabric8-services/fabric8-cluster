@@ -10,6 +10,7 @@ import (
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
 
 	"github.com/goadesign/goa"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -22,13 +23,13 @@ func TestRunClustersREST(t *testing.T) {
 	suite.Run(t, &ClustersTestSuite{UnitTestSuite: testsuite.NewUnitTestSuite()})
 }
 
-func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount account.Identity) (*goa.Service, *ClustersController) {
+func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount *testsupport.Identity) (*goa.Service, *ClustersController) {
 	svc := testsupport.ServiceAsServiceAccountUser("Token-Service", serviceAccount)
 	return svc, NewClustersController(svc, s.Config)
 }
 
 func (s *ClustersTestSuite) TestShowForServiceAccountsOK() {
-	require.True(rest.T(), len(rest.Config.GetOSOClusters()) > 0)
+	require.True(s.T(), len(s.Config.GetOSOClusters()) > 0)
 	s.checkShowForServiceAccount("fabric8-oso-proxy")
 	s.checkShowForServiceAccount("fabric8-tenant")
 	s.checkShowForServiceAccount("fabric8-jenkins-idler")
@@ -36,8 +37,9 @@ func (s *ClustersTestSuite) TestShowForServiceAccountsOK() {
 }
 
 func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
-	sa := account.Identity{
+	sa := &testsupport.Identity{
 		Username: saName,
+		ID:       uuid.NewV4(),
 	}
 	service, controller := s.SecuredControllerWithServiceAccount(sa)
 	_, clusters := test.ShowClustersOK(s.T(), service.Context, service, controller)
@@ -58,8 +60,9 @@ func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 }
 
 func (s *ClustersTestSuite) TestShowForUnknownSAFails() {
-	sa := account.Identity{
+	sa := &testsupport.Identity{
 		Username: "unknown-sa",
+		ID:       uuid.NewV4(),
 	}
 	service, controller := s.SecuredControllerWithServiceAccount(sa)
 	test.ShowClustersUnauthorized(s.T(), service.Context, service, controller)

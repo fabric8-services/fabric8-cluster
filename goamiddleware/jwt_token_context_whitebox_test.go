@@ -8,11 +8,10 @@ import (
 	"net/textproto"
 	"testing"
 
+	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
-	testtoken "github.com/fabric8-services/fabric8-cluster/test/token"
 
 	"github.com/goadesign/goa"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -32,7 +31,7 @@ func (s *TestJWTokenContextSuite) TestHandler() {
 
 	rw := httptest.NewRecorder()
 	rq := &http.Request{Header: make(map[string][]string)}
-	h := handler(testtoken.TokenManager, schema, dummyHandler, errUnauthorized)
+	h := handler(testsupport.TokenManager, schema, dummyHandler, errUnauthorized)
 
 	err := h(context.Background(), rw, rq)
 	require.Error(s.T(), err)
@@ -61,8 +60,7 @@ func (s *TestJWTokenContextSuite) TestHandler() {
 
 	// OK if token is valid
 	rw = httptest.NewRecorder()
-	t, err := testtoken.TokenManager.GenerateServiceAccountToken(uuid.NewV4().String(), "sa-name")
-	require.NoError(s.T(), err)
+	t, _ := testsupport.GenerateSignedServiceAccountToken(&testsupport.Identity{Username: "sa-name"})
 	rq.Header.Set("Authorization", "bearer "+t)
 	err = h(context.Background(), rw, rq)
 	require.Error(s.T(), err)

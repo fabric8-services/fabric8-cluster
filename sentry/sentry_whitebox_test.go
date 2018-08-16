@@ -5,15 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	account "github.com/fabric8-services/fabric8-cluster/account/repository"
 	"github.com/fabric8-services/fabric8-cluster/resource"
-	testtoken "github.com/fabric8-services/fabric8-cluster/test/token"
+	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/raven-go"
 	goajwt "github.com/goadesign/goa/middleware/security/jwt"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -32,7 +30,7 @@ func (s *TestWhiteboxSentry) TearDownSuite() {
 }
 
 func failOnNoToken(t *testing.T) context.Context {
-	return tokencontext.ContextWithTokenManager(context.Background(), testtoken.TokenManager)
+	return tokencontext.ContextWithTokenManager(context.Background(), testsupport.TokenManager)
 }
 
 func failOnParsingToken(t *testing.T) context.Context {
@@ -43,17 +41,8 @@ func failOnParsingToken(t *testing.T) context.Context {
 	return ctx
 }
 
-func validToken(t *testing.T, identity account.Identity) context.Context {
-	ctx, err := testtoken.EmbedIdentityInContext(identity)
-	require.Nil(t, err)
-	return ctx
-}
-
 func (s *TestWhiteboxSentry) TestExtractUserInfo() {
-	identity := account.Identity{
-		ID:       uuid.NewV4(),
-		Username: uuid.NewV4().String(),
-	}
+	identity := testsupport.NewIdentity()
 
 	tests := []struct {
 		name    string
@@ -78,7 +67,7 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 		},
 		{
 			name:    "pass on parsing token",
-			ctx:     validToken(s.T(), identity),
+			ctx:     testsupport.EmbedUserTokenInContext(nil, identity),
 			wantErr: false,
 			want: &raven.User{
 				Username: identity.Username,
@@ -117,11 +106,7 @@ func (s *TestWhiteboxSentry) TestInitialize() {
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), haltSentry)
 
-	identity := account.Identity{
-		ID:       uuid.NewV4(),
-		Username: uuid.NewV4().String(),
-	}
-	ctx := validToken(s.T(), identity)
+	ctx := testsupport.EmbedUserTokenInContext(nil, nil)
 
 	c := Sentry()
 	require.NotNil(s.T(), c)
