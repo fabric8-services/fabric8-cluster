@@ -1,10 +1,11 @@
 package transaction_test
 
 import (
+	"testing"
+
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/resource"
-	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
