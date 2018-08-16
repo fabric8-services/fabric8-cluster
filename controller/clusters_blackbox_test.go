@@ -3,10 +3,9 @@ package controller_test
 import (
 	"testing"
 
-	account "github.com/fabric8-services/fabric8-cluster/account/repository"
 	"github.com/fabric8-services/fabric8-cluster/app/test"
 	. "github.com/fabric8-services/fabric8-cluster/controller"
-	authrest "github.com/fabric8-services/fabric8-cluster/rest"
+	"github.com/fabric8-services/fabric8-cluster/rest"
 	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
 
@@ -15,53 +14,53 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestClustersREST struct {
+type ClustersTestSuite struct {
 	testsuite.UnitTestSuite
 }
 
 func TestRunClustersREST(t *testing.T) {
-	suite.Run(t, &TestClustersREST{UnitTestSuite: testsuite.NewUnitTestSuite()})
+	suite.Run(t, &ClustersTestSuite{UnitTestSuite: testsuite.NewUnitTestSuite()})
 }
 
-func (rest *TestClustersREST) SecuredControllerWithServiceAccount(serviceAccount account.Identity) (*goa.Service, *ClustersController) {
+func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount account.Identity) (*goa.Service, *ClustersController) {
 	svc := testsupport.ServiceAsServiceAccountUser("Token-Service", serviceAccount)
-	return svc, NewClustersController(svc, rest.Config)
+	return svc, NewClustersController(svc, s.Config)
 }
 
-func (rest *TestClustersREST) TestShowForServiceAccountsOK() {
+func (s *ClustersTestSuite) TestShowForServiceAccountsOK() {
 	require.True(rest.T(), len(rest.Config.GetOSOClusters()) > 0)
-	rest.checkShowForServiceAccount("fabric8-oso-proxy")
-	rest.checkShowForServiceAccount("fabric8-tenant")
-	rest.checkShowForServiceAccount("fabric8-jenkins-idler")
-	rest.checkShowForServiceAccount("fabric8-jenkins-proxy")
+	s.checkShowForServiceAccount("fabric8-oso-proxy")
+	s.checkShowForServiceAccount("fabric8-tenant")
+	s.checkShowForServiceAccount("fabric8-jenkins-idler")
+	s.checkShowForServiceAccount("fabric8-jenkins-proxy")
 }
 
-func (rest *TestClustersREST) checkShowForServiceAccount(saName string) {
+func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 	sa := account.Identity{
 		Username: saName,
 	}
-	service, controller := rest.SecuredControllerWithServiceAccount(sa)
-	_, clusters := test.ShowClustersOK(rest.T(), service.Context, service, controller)
-	require.NotNil(rest.T(), clusters)
-	require.NotNil(rest.T(), clusters.Data)
-	require.Equal(rest.T(), len(rest.Config.GetOSOClusters()), len(clusters.Data))
+	service, controller := s.SecuredControllerWithServiceAccount(sa)
+	_, clusters := test.ShowClustersOK(s.T(), service.Context, service, controller)
+	require.NotNil(s.T(), clusters)
+	require.NotNil(s.T(), clusters.Data)
+	require.Equal(s.T(), len(s.Config.GetOSOClusters()), len(clusters.Data))
 	for _, cluster := range clusters.Data {
-		configCluster := rest.Config.GetOSOClusterByURL(cluster.APIURL)
-		require.NotNil(rest.T(), configCluster)
-		require.Equal(rest.T(), configCluster.Name, cluster.Name)
-		require.Equal(rest.T(), authrest.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
-		require.Equal(rest.T(), authrest.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
-		require.Equal(rest.T(), authrest.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
-		require.Equal(rest.T(), authrest.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
-		require.Equal(rest.T(), configCluster.AppDNS, cluster.AppDNS)
-		require.Equal(rest.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
+		configCluster := s.Config.GetOSOClusterByURL(cluster.APIURL)
+		require.NotNil(s.T(), configCluster)
+		require.Equal(s.T(), configCluster.Name, cluster.Name)
+		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
+		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
+		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
+		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
+		require.Equal(s.T(), configCluster.AppDNS, cluster.AppDNS)
+		require.Equal(s.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
 	}
 }
 
-func (rest *TestClustersREST) TestShowForUnknownSAFails() {
+func (s *ClustersTestSuite) TestShowForUnknownSAFails() {
 	sa := account.Identity{
 		Username: "unknown-sa",
 	}
-	service, controller := rest.SecuredControllerWithServiceAccount(sa)
-	test.ShowClustersUnauthorized(rest.T(), service.Context, service, controller)
+	service, controller := s.SecuredControllerWithServiceAccount(sa)
+	test.ShowClustersUnauthorized(s.T(), service.Context, service, controller)
 }

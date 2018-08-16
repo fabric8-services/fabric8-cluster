@@ -642,16 +642,6 @@ func (c *ConfigurationData) IsDBLogsEnabled() bool {
 	return c.v.GetBool(varDBLogsEnabled)
 }
 
-// GetDevModePublicKey returns additional public key and its ID which should be used by the Cluster service in Dev Mode
-// For example a public key from Keycloak
-// Returns false if in in Dev Mode
-func (c *ConfigurationData) GetDevModePublicKey() (bool, []byte, string) {
-	if c.DeveloperModeEnabled() {
-		return true, []byte(devModePublicKey), devModePublicKeyID
-	}
-	return false, nil, ""
-}
-
 // GetSentryDSN returns the secret needed to securely communicate with https://errortracking.prod-preview.openshift.io/openshift_io/fabric8-cluster/
 func (c *ConfigurationData) GetSentryDSN() string {
 	return c.v.GetString(varSentryDSN)
@@ -678,4 +668,12 @@ func (c *ConfigurationData) IsLogJSON() bool {
 // `CLUSTER_ENVIRONMENT` is set.
 func (c *ConfigurationData) GetEnvironment() string {
 	return c.v.GetString(varEnvironment)
+}
+
+// GetDevModePrivateKey returns the private key and its ID used in tests
+func (c *ConfigurationData) GetDevModePrivateKey() []byte {
+	if !c.DeveloperModeEnabled() {
+		return nil
+	}
+	return []byte(c.v.GetString(devModePrivateKey))
 }
