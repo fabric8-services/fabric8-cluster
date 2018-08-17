@@ -672,8 +672,8 @@ func (c *ConfigurationData) GetEnvironment() string {
 
 // GetDevModePrivateKey returns the private key and its ID used in tests
 func (c *ConfigurationData) GetDevModePrivateKey() []byte {
-	if !c.DeveloperModeEnabled() {
-		return nil
+	if c.DeveloperModeEnabled() {
+		return []byte(devModePrivateKey)
 	}
-	return []byte(devModePrivateKey)
+	return nil
 }
