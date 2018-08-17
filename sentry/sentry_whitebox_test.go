@@ -72,7 +72,7 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 			want: &raven.User{
 				Username: identity.Username,
 				ID:       identity.ID.String(),
-				Email:    identity.Username,
+				Email:    identity.Email,
 			},
 		},
 	}

@@ -60,9 +60,9 @@ const (
 	varPostgresConnectionMaxOpen    = "postgres.connection.maxopen"
 
 	// Other services URLs
-	varClusterServiceURL = "cluster.url"
-	varAuthURL           = "cluster.auth.url"
-	varAuthKeysPath      = "cluster.auth.keys.path"
+	varClusterServiceURL = "clusterservice.url"
+	varAuthURL           = "auth.url"
+	varAuthKeysPath      = "auth.keys.path"
 
 	// sentry
 	varEnvironment = "environment"
@@ -675,5 +675,5 @@ func (c *ConfigurationData) GetDevModePrivateKey() []byte {
 	if !c.DeveloperModeEnabled() {
 		return nil
 	}
-	return []byte(c.v.GetString(devModePrivateKey))
+	return []byte(devModePrivateKey)
 }

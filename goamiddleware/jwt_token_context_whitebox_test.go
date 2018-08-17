@@ -55,7 +55,7 @@ func (s *TestJWTokenContextSuite) TestHandler() {
 	err = h(context.Background(), rw, rq)
 	require.Error(s.T(), err)
 	assert.Contains(s.T(), err.Error(), "401 token_validation_failed: token is invalid", err.Error())
-	assert.Equal(s.T(), "LOGIN url=http://localhost/api/login, description=\"re-login is required\"", rw.Header().Get("WWW-Authenticate"))
+	assert.Equal(s.T(), "LOGIN url=https://auth.prod-preview.openshift.io/api/login, description=\"re-login is required\"", rw.Header().Get("WWW-Authenticate"))
 	assert.Contains(s.T(), rw.Header().Get("Access-Control-Expose-Headers"), "WWW-Authenticate")
 
 	// OK if token is valid

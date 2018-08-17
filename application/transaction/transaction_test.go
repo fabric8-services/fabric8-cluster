@@ -32,6 +32,5 @@ func (test *TestTransaction) TestTransactionFail() {
 	err := transaction.Transactional(test.Application, func(tr transaction.TransactionalResources) error {
 		return errors.New("Oopsie Woopsie")
 	})
-	// then
 	require.Error(test.T(), err)
 }
