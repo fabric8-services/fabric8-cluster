@@ -1,18 +1,18 @@
 kind: Template
 apiVersion: v1
 metadata:
-  name: cluster
+  name: f8cluster
 objects:
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
     labels:
-      service: cluster
-    name: cluster
+      service: f8cluster
+    name: f8cluster
   spec:
     replicas: ${{REPLICAS}}
     selector:
-      service: cluster
+      service: f8cluster
     strategy:
       rollingParams:
         intervalSeconds: 1
@@ -24,63 +24,63 @@ objects:
     template:
       metadata:
         labels:
-          service: cluster
+          service: f8cluster
       spec:
         containers:
         - image: ${IMAGE}:${IMAGE_TAG}
           env:
-          - name: CLUSTER_POSTGRES_HOST
+          - name: F8CLUSTER_POSTGRES_HOST
             valueFrom:
               secretKeyRef:
-                name: cluster
+                name: f8cluster
                 key: db.host
-          - name: CLUSTER_POSTGRES_PORT
+          - name: F8CLUSTER_POSTGRES_PORT
             valueFrom:
               secretKeyRef:
-                name: cluster
+                name: f8cluster
                 key: db.port
-          - name: CLUSTER_POSTGRES_USER
+          - name: F8CLUSTER_POSTGRES_USER
             valueFrom:
               secretKeyRef:
-                name: cluster
+                name: f8cluster
                 key: db.user
-          - name: CLUSTER_POSTGRES_PASSWORD
+          - name: F8CLUSTER_POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: cluster
+                name: f8cluster
                 key: db.password
-          - name: CLUSTER_SENTRY_DSN
+          - name: F8CLUSTER_SENTRY_DSN
             valueFrom:
               secretKeyRef:
-                name: cluster
+                name: f8cluster
                 key: sentry.dsn
-          - name: CLUSTER_POSTGRES_SSLMODE
+          - name: F8CLUSTER_POSTGRES_SSLMODE
             valueFrom:
               configMapKeyRef:
-                name: cluster
+                name: f8cluster
                 key: postgres.sslmode
-          - name: CLUSTER_POSTGRES_CONNECTION_MAXIDLE
+          - name: F8CLUSTER_POSTGRES_CONNECTION_MAXIDLE
             valueFrom:
               configMapKeyRef:
-                name: cluster
+                name: f8cluster
                 key: postgres.connection.maxidle
-          - name: CLUSTER_POSTGRES_CONNECTION_MAXOPEN
+          - name: F8CLUSTER_POSTGRES_CONNECTION_MAXOPEN
             valueFrom:
               configMapKeyRef:
-                name: cluster
+                name: f8cluster
                 key: postgres.connection.maxopen
-          - name: CLUSTER_ENVIRONMENT
+          - name: F8CLUSTER_ENVIRONMENT
             valueFrom:
               configMapKeyRef:
-                name: cluster
+                name: f8cluster
                 key: environment
-          - name: CLUSTER_AUTH_URL
+          - name: F8CLUSTER_AUTH_URL
             valueFrom:
               configMapKeyRef:
-                name: cluster
+                name: f8cluster
                 key: auth.url
           imagePullPolicy: Always
-          name: cluster
+          name: f8cluster
           ports:
           - containerPort: 8087
             protocol: TCP
@@ -114,12 +114,12 @@ objects:
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /etc/fabric8/
-            name: cluster-configs
+            name: f8cluster-configs
             readOnly: true
         volumes:
-        - name: cluster-configs
+        - name: f8cluster-configs
           secret:
-            secretName: cluster-config-files
+            secretName: f8cluster-config-files
             items:
             - key: oso.clusters
               path: oso-clusters.conf
@@ -137,9 +137,9 @@ objects:
 - kind: Service
   apiVersion: v1
   metadata:
-    name: cluster
+    name: f8cluster
     labels:
-      service: cluster
+      service: f8cluster
   spec:
     ports:
       - name: "8087"
@@ -147,7 +147,7 @@ objects:
         port: 80
         targetPort: 8087
     selector:
-      service: cluster
+      service: f8cluster
     type: ClusterIP
     sessionAffinity: null
 parameters:

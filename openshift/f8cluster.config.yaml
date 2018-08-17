@@ -1,12 +1,12 @@
 kind: Template
 apiVersion: v1
 metadata:
-  name: cluster
+  name: f8cluster
 objects:
 - apiVersion: v1
   kind: Secret
   metadata:
-    name: cluster
+    name: f8cluster
   type: Opaque
   data:
     db.host: ZGI=
@@ -17,7 +17,7 @@ objects:
 - apiVersion: v1
   kind: Secret
   metadata:
-    name: cluster-config-files
+    name: f8cluster-config-files
   type: Opaque
   data:
     oso.clusters: >-
@@ -25,7 +25,7 @@ objects:
 - apiVersion: v1
   kind: ConfigMap
   metadata:
-    name: cluster
+    name: f8cluster
   type: Opaque
   data:
     postgres.sslmode: require
