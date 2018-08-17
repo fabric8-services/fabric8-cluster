@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-
-	"github.com/satori/go.uuid"
 )
 
 /*
@@ -18,17 +16,8 @@ Steps for adding a new Service:
    and use the factory method from the step #4
 */
 
-type InvitationService interface {
-	// Issue creates a new invitation for a user.
-	Issue(ctx context.Context, issuingUserID uuid.UUID, inviteTo string, invitations []invitation.Invitation) error
-	// Rescind revokes an invitation for a user.
-	Rescind(ctx context.Context, rescindingUserID, invitationID uuid.UUID) error
-	// Accept processes the invitation acceptance action from the user, converting the invitation into real memberships/roles
-	Accept(ctx context.Context, currentIdentityID uuid.UUID, token uuid.UUID) (string, error)
-}
-
 type FooService interface {
-	CreateOrganization(ctx context.Context, creatorIdentityID uuid.UUID, organizationName string) (*uuid.UUID, error)
+	Foo(ctx context.Context) error
 }
 
 //Services creates instances of service layer objects
