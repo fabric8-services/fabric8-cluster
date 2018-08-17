@@ -47,8 +47,8 @@ func resetConfiguration() {
 func TestGetEnvironmentOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	constAuthEnvironment := "CLUSTER_ENVIRONMENT"
-	constAuthSentryDSN := "CLUSTER_SENTRY_DSN"
+	constAuthEnvironment := "F8CLUSTER_ENVIRONMENT"
+	constAuthSentryDSN := "F8CLUSTER_SENTRY_DSN"
 	constLocalEnv := "local"
 
 	existingEnvironmentName := os.Getenv(constAuthEnvironment)
@@ -95,14 +95,14 @@ func TestGetEnvironmentOK(t *testing.T) {
 }
 
 func TestAuthServiceURL(t *testing.T) {
-	existingEnvironment := os.Getenv("CLUSTER_DEVELOPER_MODE_ENABLED")
+	existingEnvironment := os.Getenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
 	defer func() {
-		os.Setenv("CLUSTER_DEVELOPER_MODE_ENABLED", existingEnvironment)
+		os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", existingEnvironment)
 		resetConfiguration()
 	}()
-	os.Unsetenv("CLUSTER_DEVELOPER_MODE_ENABLED")
+	os.Unsetenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
 
-	checkURLValidation(t, "CLUSTER_AUTH_URL", "Auth service")
+	checkURLValidation(t, "F8CLUSTER_AUTH_URL", "Auth service")
 }
 
 func checkURLValidation(t *testing.T, envName, serviceName string) {
@@ -135,7 +135,7 @@ func checkURLValidation(t *testing.T, envName, serviceName string) {
 
 func TestGetSentryDSNOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
-	constSentryDSN := "CLUSTER_SENTRY_DSN"
+	constSentryDSN := "F8CLUSTER_SENTRY_DSN"
 	existingDSN := os.Getenv(constSentryDSN)
 	defer func() {
 		os.Setenv(constSentryDSN, existingDSN)

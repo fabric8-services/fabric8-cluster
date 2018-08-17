@@ -111,7 +111,7 @@ func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*
 	}
 
 	// Set up the main configuration
-	c.v.SetEnvPrefix("CLUSTER")
+	c.v.SetEnvPrefix("F8CLUSTER")
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	c.v.SetTypeByDefaultValue(true)
@@ -326,12 +326,12 @@ func pathExists(pathToCheck string) (string, error) {
 
 func getMainConfigFile() string {
 	// This was either passed as a env var or set inside main.go from --config
-	envConfigPath, _ := os.LookupEnv("CLUSTER_CONFIG_FILE_PATH")
+	envConfigPath, _ := os.LookupEnv("F8CLUSTER_CONFIG_FILE_PATH")
 	return envConfigPath
 }
 
 func getOSOClusterConfigFile() string {
-	envOSOClusterConfigFile, _ := os.LookupEnv("CLUSTER_OSO_CLUSTER_CONFIG_FILE")
+	envOSOClusterConfigFile, _ := os.LookupEnv("F8CLUSTER_OSO_CLUSTER_CONFIG_FILE")
 	return envOSOClusterConfigFile
 }
 
@@ -665,7 +665,7 @@ func (c *ConfigurationData) IsLogJSON() bool {
 
 // GetEnvironment returns the current environment application is deployed in
 // like 'production', 'prod-preview', 'local', etc as the value of environment variable
-// `CLUSTER_ENVIRONMENT` is set.
+// `F8CLUSTER_ENVIRONMENT` is set.
 func (c *ConfigurationData) GetEnvironment() string {
 	return c.v.GetString(varEnvironment)
 }

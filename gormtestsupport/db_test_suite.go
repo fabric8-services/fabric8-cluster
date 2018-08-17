@@ -76,7 +76,7 @@ func (s *DBTestSuite) SetupTest() {
 // TearDownTest implements suite.TearDownTest
 func (s *DBTestSuite) TearDownTest() {
 	// in some cases, we might need to keep the test data in the DB for inspecting/reproducing
-	// the SQL queries. In that case, the `CLUSTER_CLEAN_TEST_DATA` env variable should be set to `false`.
+	// the SQL queries. In that case, the `F8CLUSTER_CLEAN_TEST_DATA` env variable should be set to `false`.
 	// By default, test data will be removed from the DB after each test
 	if s.Configuration.IsCleanTestDataEnabled() {
 		s.cleanTest()
@@ -91,7 +91,7 @@ func (s *DBTestSuite) PopulateDBTestSuite(ctx context.Context) {
 // TearDownSuite implements suite.TearDownAllSuite
 func (s *DBTestSuite) TearDownSuite() {
 	// in some cases, we might need to keep the test data in the DB for inspecting/reproducing
-	// the SQL queries. In that case, the `CLUSTER_CLEAN_TEST_DATA` env variable should be set to `false`.
+	// the SQL queries. In that case, the `F8CLUSTER_CLEAN_TEST_DATA` env variable should be set to `false`.
 	// By default, test data will be removed from the DB after each test
 	if s.Configuration.IsCleanTestDataEnabled() {
 		s.cleanSuite()

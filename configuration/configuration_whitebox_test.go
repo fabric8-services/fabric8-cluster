@@ -40,7 +40,7 @@ func resetConfiguration() {
 func TestGetLogLevelOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	key := "CLUSTER_LOG_LEVEL"
+	key := "F8CLUSTER_LOG_LEVEL"
 	realEnvValue := os.Getenv(key)
 
 	os.Unsetenv(key)
@@ -60,7 +60,7 @@ func TestGetLogLevelOK(t *testing.T) {
 func TestGetTransactionTimeoutOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	key := "CLUSTER_POSTGRES_TRANSACTION_TIMEOUT"
+	key := "F8CLUSTER_POSTGRES_TRANSACTION_TIMEOUT"
 	realEnvValue := os.Getenv(key)
 
 	os.Unsetenv(key)

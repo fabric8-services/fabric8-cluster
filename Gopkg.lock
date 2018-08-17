@@ -365,19 +365,8 @@
 
 [[projects]]
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "websocket"
-  ]
+  packages = ["websocket"]
   revision = "b1a2d6e8c8b5fc8f601ead62536f02a8e1b6217d"
-
-[[projects]]
-  name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "internal"
-  ]
-  revision = "da3ce8d62a7f77aadfda06cb82bd604d6469c645"
 
 [[projects]]
   name = "golang.org/x/sys"
@@ -407,19 +396,6 @@
   revision = "a888bfdffa4526cc6987572bca9a2c6b7758290f"
 
 [[projects]]
-  name = "google.golang.org/appengine"
-  packages = [
-    "internal",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch"
-  ]
-  revision = "ca59ef35f409df61fa4a5f8290ff289b37eccfb8"
-
-[[projects]]
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -437,6 +413,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "de870cfe9c2bae6bfbc25455c98b65da04a1e3c530b08e6eaa1c45725a5fb714"
+  inputs-digest = "92ef3e88c05b2458aecc43d85572f62d7d0e94851eda9380eca70989efdabb5b"
   solver-name = "gps-cdcl"
   solver-version = 1

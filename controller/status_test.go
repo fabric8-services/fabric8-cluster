@@ -67,13 +67,13 @@ func (rest *TestStatusREST) TestShowStatusWithoutDBFails() {
 }
 
 func (rest *TestStatusREST) TestShowStatusWithDefaultConfigInProdModeFails() {
-	existingDevMode := os.Getenv("CLUSTER_DEVELOPER_MODE_ENABLED")
+	existingDevMode := os.Getenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
 	defer func() {
-		os.Setenv("CLUSTER_DEVELOPER_MODE_ENABLED", existingDevMode)
+		os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", existingDevMode)
 		rest.resetConfiguration()
 	}()
 
-	os.Setenv("CLUSTER_DEVELOPER_MODE_ENABLED", "false")
+	os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", "false")
 	rest.resetConfiguration()
 	svc, ctrl := rest.UnSecuredController()
 	_, res := test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)
