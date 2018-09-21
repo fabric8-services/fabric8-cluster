@@ -1,4 +1,4 @@
-= Fabric8 Auth
+= OpenShift.io Cluster Managment service
 :toc:
 :toc-placement: preamble
 :sectnums:
@@ -9,17 +9,10 @@ image:https://goreportcard.com/badge/github.com/fabric8-services/fabric8-cluster
 image:https://godoc.org/github.com/fabric8-services/fabric8-cluster?status.png[GoDoc,link="https://godoc.org/github.com/fabric8-services/fabric8-cluster"]
 image:https://codecov.io/gh/fabric8-services/fabric8-cluster/branch/master/graph/badge.svg[Codecov.io,link="https://codecov.io/gh/fabric8-services/fabric8-cluster"]
 
-== Documentation [[docs]]
-
-You can find both reference documentation and developer documentation in the following location:
-
-link:https://fabric8-services.github.io/fabric8-cluster/index.html[fabric8-cluster docs].
-
 == Building from source [[building]]
 
 The following guide is mainly targeted towards a Linux or Mac OSX development
-machine. If you are on Windows, we recommend to take a look at
-link:docs/source/getting-started-win.adoc[Getting started with fabric8-cluster development on Windows].
+machine.
 
 === Prerequisites [[prerequisites]]
 
@@ -73,17 +66,6 @@ type `make` in a freshly clone repository of this project.
 ----
 $ cd $GOPATH/src/github.com/fabric8-services/fabric8-cluster
 $ make
-----
-If you are getting the following error
-----
-[ERROR]	Failed to set references: Unable to update checked out version (Skip to cleanup)
-make: *** [vendor] Error 1
-----
-Try out this
-----
-$ glide cache-clear
-$ make clean deps
-$ make build
 ----
 
 ==== Special make targets
@@ -258,13 +240,6 @@ Test out the build by executing CLI commands in a different terminal.
 
 NOTE: The CLI needs the API Server which was started on executing `make dev`  to be up and running. Please do not kill the process. Alternatively if you haven't run `make dev` you could just start the server by running `./bin/cluster`.
 
-Generate a token for future use.
-----
-./bin/cluster-cli generate token -H localhost:8087 --pp
-----
-
-You should get Token in response, save this token in your favourite editor as you need to use this token for POST API calls
-
 === Reset Database
 
 The database are kept in a docker container that gets reused between restarts. Thus restarts will not clear out the database.
@@ -276,9 +251,3 @@ $ docker kill fabric8F8CLUSTER_db_1 && docker rm fabric8F8CLUSTER_db_1
 ----
 
 In case you have mulitple `fabric8*` running use `docker ps` to locate the container name.
-
-== Rapid development on Minishift
-
-See the following README in the minishift directory for instructions on running fabric8-cluster in minishift:
-
-link:minishift/README.md[Minishift README].
