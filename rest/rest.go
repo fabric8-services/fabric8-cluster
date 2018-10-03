@@ -104,10 +104,12 @@ func ReplaceDomainPrefix(host string, replaceBy string) (string, error) {
 }
 
 // ReadBody reads body from a ReadCloser and returns it as a string
-func ReadBody(body io.ReadCloser) string {
+func ReadBody(body io.ReadCloser) (string, error) {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(body)
-	return buf.String()
+	if _, err := buf.ReadFrom(body); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // CloseResponse reads the body and close the response. To be used to prevent file descriptor leaks.
