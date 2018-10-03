@@ -247,7 +247,19 @@ The database are kept in a docker container that gets reused between restarts. T
 To clear out the database kill the database like this:
 
 ----
-$ docker kill fabric8F8CLUSTER_db_1 && docker rm fabric8F8CLUSTER_db_1
+$ docker kill fabric8cluster_db_1 && docker rm fabric8cluster_db_1
 ----
 
 In case you have mulitple `fabric8*` running use `docker ps` to locate the container name.
+
+==== Code formatting
+
+To check if the code is properly formatted run:
+```
+$ make check-go-format
+```
+
+To format the code:
+```
+$ make format-go-code
+```
