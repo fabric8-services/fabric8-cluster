@@ -57,6 +57,11 @@ func TestAbsoluteURLOKWithProxyForward(t *testing.T) {
 		Request: &http.Request{Host: "api.service.domain.org"},
 	}
 
+	// HTTP
+	urlStr, err := ReplaceDomainPrefixInAbsoluteURL(req, "auth", "/testpath", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "http://auth.service.domain.org/testpath", urlStr)
+
 	// HTTPS
 	r, err := http.NewRequest("", "http://api.service.domain.org", nil)
 	require.Nil(t, err)
@@ -64,7 +69,7 @@ func TestAbsoluteURLOKWithProxyForward(t *testing.T) {
 	req = &goa.RequestData{
 		Request: r,
 	}
-	urlStr := AbsoluteURL(req, "/testpath2", nil)
+	urlStr = AbsoluteURL(req, "/testpath2", nil)
 	assert.Equal(t, "https://api.service.domain.org/testpath2", urlStr)
 }
 
