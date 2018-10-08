@@ -52,10 +52,10 @@
     "configuration",
     "convert",
     "errors",
-    "httpsupport",
-    "log"
+    "log",
+    "sentry"
   ]
-  revision = "aa42fc1fd2a2a33c70a0cdca50fb5d621ae0b71b"
+  revision = "71ac6a3cb9f5f835af9f69a17012ff89f0086d7c"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -72,7 +72,7 @@
 [[projects]]
   name = "github.com/getsentry/raven-go"
   packages = ["."]
-  revision = "563b81fc02b75d664e54da31f787c2cc2186780b"
+  revision = "master"
 
 [[projects]]
   name = "github.com/goadesign/goa"
@@ -413,6 +413,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f793ea7815d6e453395bc75ac12c92dcbaea03c9cf73288e045f47a0b788e0ac"
+  inputs-digest = "9ec44290b5ef95e8789b48f16958952a16322dbe279b0dd6ae2213251469ccd9"
   solver-name = "gps-cdcl"
   solver-version = 1
