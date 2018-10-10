@@ -5,123 +5,48 @@ import (
 	"fmt"
 
 	"github.com/fabric8-services/fabric8-cluster/token"
-	"github.com/fabric8-services/fabric8-common/log"
+	"github.com/fabric8-services/fabric8-common/sentry"
 
 	"github.com/getsentry/raven-go"
-	goajwt "github.com/goadesign/goa/middleware/security/jwt"
+	"github.com/goadesign/goa/middleware/security/jwt"
 )
 
-// client encapsulates client to Sentry service
-// also has mutex which controls access to the client
-type client struct {
-	c       *raven.Client
-	sendErr chan func()
+type configuration interface {
+	GetSentryDSN() string
+	GetEnvironment() string
 }
 
-var (
-	sentryClient *client
-)
+// Initialize initializes sentry client
+func Initialize(config configuration, commit string) (func(), error) {
+	sentryDSN := config.GetSentryDSN()
 
-// Sentry returns client declared inside package
-func Sentry() *client {
-	return sentryClient
+	return sentry.InitializeSentryClient(
+		&sentryDSN,
+		sentry.WithRelease(commit),
+		sentry.WithEnvironment(config.GetEnvironment()),
+		sentry.WithUser(extractUserInfo()))
 }
 
-// InitializeSentryClient initializes sentry client. This function returns
-// function that can be used to close the sentry client and error.
-func InitializeSentryClient(sentryDSN string, options ...func(*client)) (func(), error) {
-	c, err := raven.New(sentryDSN)
-	if err != nil {
-		return nil, err
-	}
-	sentryClient = &client{
-		c:       c,
-		sendErr: make(chan func()),
-	}
-	// set all options passed by user
-	for _, opt := range options {
-		opt(sentryClient)
-	}
-
-	// wait on errors to be sent on channel of client object
-	go sentryClient.loop()
-	return func() {
-		close(sentryClient.sendErr)
-	}, nil
-}
-
-// WithRelease helps you set release/commit of currently running
-// code while initializing sentry client using function InitializeSentryClient
-func WithRelease(release string) func(*client) {
-	return func(c *client) {
-		c.c.SetRelease(release)
-	}
-}
-
-// WithEnvironment helps you set environment the deployed code is
-// running in while initializing sentry client using function
-// InitializeSentryClient
-func WithEnvironment(env string) func(*client) {
-	return func(c *client) {
-		c.c.SetEnvironment(env)
-	}
-}
-
-// waits on functions to be sent on channel
-// which are then executed
-func (c *client) loop() {
-	for op := range c.sendErr {
-		op()
-	}
-}
-
-// CaptureError sends error 'err' to Sentry, meanwhile also sets user
-// information by extracting user information from the context provided
-func (c *client) CaptureError(ctx context.Context, err error) {
-	// if method called during test which has uninitialized client
-	if c == nil {
-		return
-	}
-	// Extract user information. Ignoring error here but then before using the
-	// object user make sure to check if it wasn't nil.
-	user, _ := extractUserInfo(ctx)
-	reqID := log.ExtractRequestID(ctx)
-
-	c.sendErr <- func() {
-		if user != nil {
-			c.c.SetUserContext(user)
+func extractUserInfo() func(ctx context.Context) (*raven.User, error) {
+	return func(ctx context.Context) (*raven.User, error) {
+		m, err := token.ReadManagerFromContext(ctx)
+		if err != nil {
+			return nil, err
 		}
 
-		additionalContext := make(map[string]string)
-		if reqID != "" {
-			additionalContext["req_ID"] = reqID
+		token := jwt.ContextJWT(ctx)
+		if token == nil {
+			return nil, fmt.Errorf("no token found in context")
+		}
+		t, err := m.ParseToken(ctx, token.Raw)
+		if err != nil {
+			return nil, err
 		}
 
-		c.c.CaptureError(err, additionalContext)
-		c.c.ClearContext()
+		return &raven.User{
+			Username: t.Username,
+			Email:    t.Email,
+			ID:       t.Subject,
+		}, nil
 	}
-}
-
-// extractUserInfo reads the context and returns sentry understandable
-// user object's reference and error
-func extractUserInfo(ctx context.Context) (*raven.User, error) {
-	m, err := token.ReadManagerFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	token := goajwt.ContextJWT(ctx)
-	if token == nil {
-		return nil, fmt.Errorf("no token found in context")
-	}
-	t, err := m.ParseToken(ctx, token.Raw)
-	if err != nil {
-		return nil, err
-	}
-
-	return &raven.User{
-		Username: t.Username,
-		Email:    t.Email,
-		ID:       t.Subject,
-	}, nil
 }

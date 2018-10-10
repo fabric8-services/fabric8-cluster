@@ -2,11 +2,11 @@ package sentry
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/resource"
 	testsupport "github.com/fabric8-services/fabric8-cluster/test"
+	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
 	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
 
 	"github.com/dgrijalva/jwt-go"
@@ -17,16 +17,11 @@ import (
 )
 
 func TestSentry(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
 	suite.Run(t, &TestWhiteboxSentry{})
 }
 
 type TestWhiteboxSentry struct {
-	suite.Suite
-}
-
-func (s *TestWhiteboxSentry) TearDownSuite() {
-	sentryClient = nil
+	testsuite.UnitTestSuite
 }
 
 func failOnNoToken(t *testing.T) context.Context {
@@ -43,6 +38,7 @@ func failOnParsingToken(t *testing.T) context.Context {
 
 func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 	identity := testsupport.NewIdentity()
+	f := extractUserInfo()
 
 	tests := []struct {
 		name    string
@@ -78,7 +74,7 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			got, err := extractUserInfo(tt.ctx)
+			got, err := f(tt.ctx)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -91,31 +87,9 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 
 func (s *TestWhiteboxSentry) TestInitialize() {
 	resource.Require(s.T(), resource.UnitTest)
-	_, err := InitializeSentryClient(
-		"someIncorrectDSN",
-		WithRelease("someRelease"),
-		WithEnvironment("someEnv"),
-	)
-	require.Error(s.T(), err)
-
-	haltSentry, err := InitializeSentryClient(
-		"https://something:something@domain.com/abc",
-		WithRelease("someRelease"),
-		WithEnvironment("someEnv"),
-	)
+	haltSentry, err := Initialize(s.Config, "")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), haltSentry)
-
-	ctx := testsupport.EmbedUserTokenInContext(nil, nil)
-
-	c := Sentry()
-	require.NotNil(s.T(), c)
-	require.Equal(s.T(), sentryClient, c)
-
-	require.NotPanics(s.T(), func() {
-		c.CaptureError(ctx, errors.New("some error"))
-	})
-
 	require.NotPanics(s.T(), func() {
 		haltSentry()
 	})
