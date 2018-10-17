@@ -7,7 +7,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/resource"
 	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
-	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
+	"github.com/fabric8-services/fabric8-common/token/tokencontext"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/raven-go"

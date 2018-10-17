@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/token"
-	"github.com/fabric8-services/fabric8-cluster/token/tokencontext"
+	"github.com/fabric8-services/fabric8-common/token/tokencontext"
+	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/goadesign/goa"

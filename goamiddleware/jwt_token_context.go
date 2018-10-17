@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/fabric8-services/fabric8-cluster/token"
 	"github.com/fabric8-services/fabric8-common/log"
+	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware/security/jwt"

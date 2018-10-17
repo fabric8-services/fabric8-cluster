@@ -16,8 +16,8 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/jsonapi"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/sentry"
-	"github.com/fabric8-services/fabric8-cluster/token"
 	"github.com/fabric8-services/fabric8-common/log"
+	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
