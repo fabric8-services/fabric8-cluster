@@ -271,6 +271,10 @@ migrate-database: $(BINARY_SERVER_BIN)
 ## Generate GOA sources. Only necessary after clean of if changed `design` folder.
 generate: app/controllers.go migration/sqlbindata.go configuration/confbindata.go
 
+.PHONY: generate-client
+generate-client: $(GOAGEN_BIN)
+	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-cluster/design --pkg cluster
+
 .PHONY: regenerate
 ## Runs the "clean-generated" and the "generate" target
 regenerate: clean-generated generate
