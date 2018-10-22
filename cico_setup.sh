@@ -132,10 +132,65 @@ function deploy() {
   fi
 
   echo 'CICO: Image pushed, ready to update deployed app'
+
+  generate_client_setup
 }
 
 function cico_setup() {
   load_jenkins_vars;
   install_deps;
   prepare;
+}
+
+
+function git_configure_and_clone() {
+    git config --global user.name "FABRIC8 CD autobot"
+    git config --global user.email fabric8cd@gmail.com
+
+    set +x
+    echo git clone https://XXXX@github.com/${GHORG}/${GHREPO}.git --depth=1 /tmp/${GHREPO}
+    git clone https://$(echo ${FABRIC8_HUB_TOKEN}|base64 --decode)@github.com/${GHORG}/${GHREPO}.git --depth=1 /tmp/${GHREPO}
+    set -x
+}
+
+function generate_client_and_create_pr() {
+    make generate-client
+
+    local newVersion=$(git rev-parse HEAD)
+    local message="chore: update client version to ${newVersion}"
+    local short_head=$(git rev-parse --short HEAD)
+    local branch="client_update_${short_head}"
+
+    cd /tmp/${GHREPO}
+    git checkout -b ${branch}
+    cd -
+    cp -r cluster tool /tmp/${GHREPO}
+    git rev-parse --short HEAD > /tmp/${GHREPO}/source_commit.txt
+    cd /tmp/${GHREPO}
+
+    git commit cluster tool source_commit.txt -m "${message}"
+    git push -u origin ${branch}
+    rm -rf /tmp/${GHREPO}
+
+    set +x
+    curl -s -X POST -L -H "Authorization: token $(echo ${FABRIC8_HUB_TOKEN}|base64 --decode)" \
+         -d "{\"title\": \"${message}\", \"base\":\"master\", \"head\":\"${branch}\"}" \
+         https://api.github.com/repos/${GHORG}/${GHREPO}/pulls
+    set -x
+}
+
+function generate_client_setup() {
+    set -e
+    SERVICE_NAME=${PWD##*/}
+    GHORG=${GHORG:-fabric8-services}
+    GHREPO=${GHREPO:-${SERVICE_NAME}-client}
+
+    PREV_COMMIT=$(curl -s https://raw.githubusercontent.com/${GHORG}/${GHREPO}/master/source_commit.txt)
+    if [[ $(git diff --reverse $PREV_COMMIT..HEAD design) ]]; then
+        echo "generating new client."
+        git_configure_and_clone
+        generate_client_and_create_pr
+    else
+        echo "no change in design package."
+    fi
 }
