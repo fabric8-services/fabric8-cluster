@@ -219,6 +219,7 @@ CLEAN_TARGETS += clean-generated
 clean-generated:
 	-rm -rf ./app
 	-rm -rf ./client/
+	-rm -rf ./cluster/
 	-rm -rf ./swagger/
 	-rm -rf ./tool
 	-rm -f ./migration/sqlbindata.go
@@ -270,6 +271,10 @@ migrate-database: $(BINARY_SERVER_BIN)
 .PHONY: generate
 ## Generate GOA sources. Only necessary after clean of if changed `design` folder.
 generate: app/controllers.go migration/sqlbindata.go configuration/confbindata.go
+
+.PHONY: generate-client
+generate-client: $(GOAGEN_BIN)
+	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-cluster/design --pkg cluster
 
 .PHONY: regenerate
 ## Runs the "clean-generated" and the "generate" target
