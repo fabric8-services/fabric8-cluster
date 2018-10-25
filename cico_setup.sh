@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # functions to generate latest client if any change in design pkg
-source <(curl -ssL https://git.io/fxP0E)
+source <(curl -ssL https://git.io/fxD0K)
 
 # Output command before executing
 set -x
