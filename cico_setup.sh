@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # functions to generate latest client if any change in design pkg
-source <(curl -ssL https://git.io/fxD0K)
+source <(curl -s https://raw.githubusercontent.com/fabric8-services/fabric8-common/master/.scripts/create_push_client.sh)
 
 # Output command before executing
 set -x
