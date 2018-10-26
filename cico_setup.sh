@@ -136,7 +136,7 @@ function deploy() {
 
   echo 'CICO: Image pushed, ready to update deployed app'
 
-  generate_client_setup fabric8-services fabric8-cluster-client
+  generate_client_setup fabric8-services fabric8-cluster-client cluster tool/cli
 }
 
 function cico_setup() {
