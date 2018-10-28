@@ -6,8 +6,8 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/app/test"
 	. "github.com/fabric8-services/fabric8-cluster/controller"
 	"github.com/fabric8-services/fabric8-cluster/rest"
-	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
+	"github.com/fabric8-services/fabric8-common/test/auth"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
@@ -23,8 +23,9 @@ func TestRunClustersREST(t *testing.T) {
 	suite.Run(t, &ClustersTestSuite{UnitTestSuite: testsuite.NewUnitTestSuite()})
 }
 
-func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount *testsupport.Identity) (*goa.Service, *ClustersController) {
-	svc := testsupport.ServiceAsServiceAccountUser("Token-Service", serviceAccount)
+func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount *auth.Identity) (*goa.Service, *ClustersController) {
+	svc, err := auth.ServiceAsServiceAccountUser("Token-Service", serviceAccount)
+	require.NoError(s.T(), err)
 	return svc, NewClustersController(svc, s.Config)
 }
 
@@ -38,7 +39,7 @@ func (s *ClustersTestSuite) TestShowForServiceAccountsOK() {
 }
 
 func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
-	sa := &testsupport.Identity{
+	sa := &auth.Identity{
 		Username: saName,
 		ID:       uuid.NewV4(),
 	}
@@ -61,7 +62,7 @@ func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 }
 
 func (s *ClustersTestSuite) TestShowForUnknownSAFails() {
-	sa := &testsupport.Identity{
+	sa := &auth.Identity{
 		Username: "unknown-sa",
 		ID:       uuid.NewV4(),
 	}
@@ -75,7 +76,7 @@ func (s *ClustersTestSuite) TestShowForAuthServiceAccountsOK() {
 }
 
 func (s *ClustersTestSuite) TestShowAuthForUnknownSAFails() {
-	sa := &testsupport.Identity{
+	sa := &auth.Identity{
 		Username: "fabric8-tenant",
 		ID:       uuid.NewV4(),
 	}
@@ -84,7 +85,7 @@ func (s *ClustersTestSuite) TestShowAuthForUnknownSAFails() {
 }
 
 func (s *ClustersTestSuite) checkShowAuthForServiceAccount(saName string) {
-	sa := &testsupport.Identity{
+	sa := &auth.Identity{
 		Username: saName,
 		ID:       uuid.NewV4(),
 	}

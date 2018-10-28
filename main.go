@@ -12,12 +12,12 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/controller"
-	"github.com/fabric8-services/fabric8-cluster/goamiddleware"
 	"github.com/fabric8-services/fabric8-cluster/jsonapi"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/sentry"
-	"github.com/fabric8-services/fabric8-cluster/token"
+	"github.com/fabric8-services/fabric8-common/goamiddleware"
 	"github.com/fabric8-services/fabric8-common/log"
+	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
@@ -149,7 +149,7 @@ func main() {
 	//appDB := gormapplication.NewGormDB(db, config)
 
 	// Setup Security
-	tokenManager, err := token.NewManager(config)
+	tokenManager, err := token.DefaultManager(config)
 	if err != nil {
 		log.Panic(nil, map[string]interface{}{
 			"err": err,

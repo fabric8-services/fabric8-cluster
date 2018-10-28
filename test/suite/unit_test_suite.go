@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// NewRemoteTestSuite instantiates a new UnitTestSuite
+// NewUnitTestSuite instantiates a new UnitTestSuite
 func NewUnitTestSuite() UnitTestSuite {
 	return UnitTestSuite{}
 }

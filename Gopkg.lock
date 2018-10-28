@@ -52,10 +52,15 @@
     "configuration",
     "convert",
     "errors",
+    "goamiddleware",
+    "httpsupport",
     "log",
-    "sentry"
+    "sentry",
+    "test/auth",
+    "token",
+    "token/jwk"
   ]
-  revision = "51e44b47e514721ddaa3fca99e5fb5bc1a6e7eb2"
+  revision = "85e11c21982767f47d3da5e6f59d5b638f8b0313"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -413,6 +418,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f2a3056203d46b1b9c8fa2bad6a9ecf2bb334957305954cf9eeb302692167e53"
+  inputs-digest = "03f68dd1454d5d239c9b3c9443cc57510e24b291bd544daeaa14bf53c4d797c9"
   solver-name = "gps-cdcl"
   solver-version = 1

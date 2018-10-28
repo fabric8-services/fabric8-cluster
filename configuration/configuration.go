@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/rest"
+	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -673,7 +674,7 @@ func (c *ConfigurationData) GetEnvironment() string {
 // GetDevModePrivateKey returns the private key and its ID used in tests
 func (c *ConfigurationData) GetDevModePrivateKey() []byte {
 	if c.DeveloperModeEnabled() {
-		return []byte(devModePrivateKey)
+		return []byte(commoncfg.DevModeRsaPrivateKey)
 	}
 	return nil
 }
