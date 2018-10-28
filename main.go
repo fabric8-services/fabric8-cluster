@@ -12,10 +12,10 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/controller"
-	"github.com/fabric8-services/fabric8-cluster/goamiddleware"
 	"github.com/fabric8-services/fabric8-cluster/jsonapi"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/sentry"
+	"github.com/fabric8-services/fabric8-common/goamiddleware"
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-common/token"
 

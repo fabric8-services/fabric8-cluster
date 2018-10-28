@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/resource"
-	testsupport "github.com/fabric8-services/fabric8-cluster/test"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
-	"github.com/fabric8-services/fabric8-common/token/tokencontext"
+	"github.com/fabric8-services/fabric8-common/test/auth"
+	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/raven-go"
@@ -25,7 +25,7 @@ type TestWhiteboxSentry struct {
 }
 
 func failOnNoToken(t *testing.T) context.Context {
-	return tokencontext.ContextWithTokenManager(context.Background(), testsupport.TokenManager)
+	return token.ContextWithTokenManager(context.Background(), auth.TokenManager)
 }
 
 func failOnParsingToken(t *testing.T) context.Context {
@@ -37,8 +37,9 @@ func failOnParsingToken(t *testing.T) context.Context {
 }
 
 func (s *TestWhiteboxSentry) TestExtractUserInfo() {
-	identity := testsupport.NewIdentity()
 	f := extractUserInfo()
+	ctx, identity, err := auth.EmbedUserTokenInContext(nil, nil)
+	require.NoError(s.T(), err)
 
 	tests := []struct {
 		name    string
@@ -63,7 +64,7 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 		},
 		{
 			name:    "pass on parsing token",
-			ctx:     testsupport.EmbedUserTokenInContext(nil, identity),
+			ctx:     ctx,
 			wantErr: false,
 			want: &raven.User{
 				Username: identity.Username,

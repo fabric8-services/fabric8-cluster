@@ -12,8 +12,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/resource"
 	"github.com/fabric8-services/fabric8-common/log"
 
-	"github.com/fabric8-services/fabric8-cluster/test/graph"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq" // need to import postgres driver
 	"github.com/stretchr/testify/suite"
@@ -36,7 +34,6 @@ type DBTestSuite struct {
 	cleanTest     func()
 	cleanSuite    func()
 	Ctx           context.Context
-	Graph         *graph.TestGraph
 }
 
 // SetupSuite implements suite.SetupAllSuite
@@ -69,8 +66,6 @@ func (s *DBTestSuite) SetupSuite() {
 // SetupTest implements suite.SetupTest
 func (s *DBTestSuite) SetupTest() {
 	s.cleanTest = cleaner.DeleteCreatedEntities(s.DB)
-	g := s.NewTestGraph()
-	s.Graph = &g
 }
 
 // TearDownTest implements suite.TearDownTest
@@ -81,7 +76,6 @@ func (s *DBTestSuite) TearDownTest() {
 	if s.Configuration.IsCleanTestDataEnabled() {
 		s.cleanTest()
 	}
-	s.Graph = nil
 }
 
 // PopulateDBTestSuite populates the DB with common values
@@ -118,8 +112,4 @@ func (s *DBTestSuite) DisableGormCallbacks() func() {
 		s.DB.Callback().Create().Register(gormCallbackName, oldCreateCallback)
 		s.DB.Callback().Update().Register(gormCallbackName, oldUpdateCallback)
 	}
-}
-
-func (s *DBTestSuite) NewTestGraph() graph.TestGraph {
-	return graph.NewTestGraph(s.T(), s.Application, s.Ctx, s.DB)
 }
