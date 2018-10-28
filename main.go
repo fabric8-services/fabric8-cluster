@@ -149,7 +149,7 @@ func main() {
 	//appDB := gormapplication.NewGormDB(db, config)
 
 	// Setup Security
-	tokenManager, err := token.NewManager(config)
+	tokenManager, err := token.DefaultManager(config)
 	if err != nil {
 		log.Panic(nil, map[string]interface{}{
 			"err": err,
