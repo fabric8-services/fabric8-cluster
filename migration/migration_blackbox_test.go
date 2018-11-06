@@ -1,180 +1,108 @@
 package migration_test
 
 import (
-	"bufio"
-	"bytes"
 	"database/sql"
 	"fmt"
-	"html/template"
-	logger "log"
+	"os"
 	"testing"
 
-	config "github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/migration"
-	"github.com/fabric8-services/fabric8-cluster/resource"
-	"github.com/fabric8-services/fabric8-common/log"
+	"github.com/fabric8-services/fabric8-common/gormsupport"
+	migrationsupport "github.com/fabric8-services/fabric8-common/migration"
+	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
-	errs "github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-// fn defines the type of function that can be part of a migration steps
-type fn func(tx *sql.Tx) error
+const (
+	dbName      = "test"
+	defaultHost = "localhost"
+	defaultPort = "5436"
+)
+
+type MigrationTestSuite struct {
+	suite.Suite
+}
 
 const (
 	databaseName = "test"
 )
 
 var (
-	conf       *config.ConfigurationData
-	migrations migration.Migrations
-	dialect    gorm.Dialect
-	gormDB     *gorm.DB
-	sqlDB      *sql.DB
+	sqlDB *sql.DB
+	host  string
+	port  string
 )
 
-func setupTest() {
-	var err error
-	conf, err = config.GetConfigurationData()
-	if err != nil {
-		panic(fmt.Errorf("Failed to setup the configuration: %s", err.Error()))
-	}
-	configurationString := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=%s connect_timeout=%d",
-		conf.GetPostgresHost(),
-		conf.GetPostgresPort(),
-		conf.GetPostgresUser(),
-		conf.GetPostgresPassword(),
-		conf.GetPostgresSSLMode(),
-		conf.GetPostgresConnectionTimeout(),
-	)
+func TestMigration(t *testing.T) {
+	suite.Run(t, new(MigrationTestSuite))
+}
 
-	db, err := sql.Open("postgres", configurationString)
+func (s *MigrationTestSuite) SetupTest() {
+	resource.Require(s.T(), resource.Database)
+	host = os.Getenv("F8CLUSTER_POSTGRES_HOST")
+	if host == "" {
+		host = defaultHost
+	}
+	port = os.Getenv("F8CLUSTER_POSTGRES_PORT")
+	if port == "" {
+		port = defaultPort
+	}
+	dbConfig := fmt.Sprintf("host=%s port=%s user=postgres password=mysecretpassword sslmode=disable connect_timeout=5", host, port)
+	db, err := sql.Open("postgres", dbConfig)
+	require.NoError(s.T(), err, "cannot connect to database: %s", dbName)
 	defer db.Close()
-	if err != nil {
-		panic(fmt.Errorf("Cannot connect to database: %s\n", err))
+	_, err = db.Exec("DROP DATABASE " + dbName)
+	if err != nil && !gormsupport.IsInvalidCatalogName(err) {
+		require.NoError(s.T(), err, "failed to drop database '%s'", dbName)
 	}
-
-	db.Exec("DROP DATABASE " + databaseName)
-
-	_, err = db.Exec("CREATE DATABASE " + databaseName)
-	if err != nil {
-		panic(err)
-	}
-
-	migrations = migration.GetMigrations()
+	_, err = db.Exec("CREATE DATABASE " + dbName)
+	require.NoError(s.T(), err, "failed to create database '%s'", dbName)
 }
 
-func TestMigrations(t *testing.T) {
-	resource.Require(t, resource.Database)
-
-	setupTest()
-
-	configurationString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d",
-		conf.GetPostgresHost(),
-		conf.GetPostgresPort(),
-		conf.GetPostgresUser(),
-		conf.GetPostgresPassword(),
-		databaseName,
-		conf.GetPostgresSSLMode(),
-		conf.GetPostgresConnectionTimeout(),
-	)
+func (s *MigrationTestSuite) TestMigrate() {
+	dbConfig := fmt.Sprintf("host=%s port=%s user=postgres password=mysecretpassword dbname=%s sslmode=disable connect_timeout=5",
+		host, port, dbName)
 	var err error
-	sqlDB, err = sql.Open("postgres", configurationString)
+	sqlDB, err = sql.Open("postgres", dbConfig)
+	require.NoError(s.T(), err, "cannot connect to DB '%s'", dbName)
 	defer sqlDB.Close()
-	if err != nil {
-		panic(fmt.Errorf("Cannot connect to DB: %s\n", err))
-	}
-	gormDB, err = gorm.Open("postgres", configurationString)
+	gormDB, err := gorm.Open("postgres", dbConfig)
+	require.NoError(s.T(), err, "cannot connect to DB '%s'", dbName)
 	defer gormDB.Close()
-	if err != nil {
-		panic(fmt.Errorf("Cannot connect to DB: %s\n", err))
-	}
-	dialect = gormDB.Dialect()
-	dialect.SetDB(sqlDB)
-
-	//t.Run("TestMigration01", testMigration01)
-
-	// Perform the migration
-	if err := migration.Migrate(sqlDB, databaseName); err != nil {
-		t.Fatalf("Failed to execute the migration: %s\n", err)
-	}
+	s.T().Run("testMigration001Cluster", testMigration001Cluster)
 }
 
-// runSQLscript loads the given filename from the packaged SQL test files and
-// executes it on the given database. Golang text/template module is used
-// to handle all the optional arguments passed to the sql test files
-func runSQLscript(db *sql.DB, sqlFilename string) error {
-	var tx *sql.Tx
-	tx, err := db.Begin()
-	if err != nil {
-		return errs.New(fmt.Sprintf("Failed to start transaction: %s\n", err))
-	}
-	if err := executeSQLTestFile(sqlFilename)(tx); err != nil {
-		log.Warn(nil, nil, "Failed to execute data insertion using '%s': %s\n", sqlFilename, err)
-		if err = tx.Rollback(); err != nil {
-			return errs.New(fmt.Sprintf("error while rolling back transaction: %s", err))
-		}
-	}
-	if err = tx.Commit(); err != nil {
-		return errs.New(fmt.Sprintf("Error during transaction commit: %s\n", err))
-	}
-
-	return nil
+func testMigration001Cluster(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:2])
+	require.NoError(t, err)
+	//t.Run("insert ok", func(t *testing.T) {
+	//	_, err := sqlDB.Exec(`INSERT INTO cluster (cluster_id, url, type, identity_id)
+	//		VALUES (uuid_generate_v4(),'osio-stage', 'stage', uuid_generate_v4(),'', 'cluster1.com')`)
+	//	require.NoError(t, err)
+	//})
 }
 
-// executeSQLTestFile loads the given filename from the packaged SQL files and
-// executes it on the given database. Golang text/template module is used
-// to handle all the optional arguments passed to the sql test files
-func executeSQLTestFile(filename string, args ...string) fn {
-	return func(db *sql.Tx) error {
-		log.Info(nil, nil, "Executing SQL test script '%s'", filename)
-		data, err := Asset(filename)
-		if err != nil {
-			return errs.WithStack(err)
-		}
-
-		if len(args) > 0 {
-			tmpl, err := template.New("sql").Parse(string(data))
-			if err != nil {
-				return errs.WithStack(err)
-			}
-			var sqlScript bytes.Buffer
-			writer := bufio.NewWriter(&sqlScript)
-			err = tmpl.Execute(writer, args)
-			if err != nil {
-				return errs.WithStack(err)
-			}
-			// We need to flush the content of the writer
-			writer.Flush()
-			_, err = db.Exec(sqlScript.String())
-		} else {
-			_, err = db.Exec(string(data))
-		}
-
-		return errs.WithStack(err)
-	}
-}
-
-// migrateToVersion runs the migration of all the scripts to a certain version
-func migrateToVersion(db *sql.DB, m migration.Migrations, version int64) {
-	var err error
-	for nextVersion := int64(0); nextVersion < version && err == nil; nextVersion++ {
-		var tx *sql.Tx
-		tx, err = sqlDB.Begin()
-		if err != nil {
-			panic(fmt.Errorf("Failed to start transaction: %s\n", err))
-		}
-
-		if err = migration.MigrateToNextVersion(tx, &nextVersion, m, databaseName); err != nil {
-			if err = tx.Rollback(); err != nil {
-				logger.Fatalf("error while rolling back transaction: %v", err)
-			}
-			logger.Fatalf("Failed to migrate to version after rolling back")
-		}
-
-		if err = tx.Commit(); err != nil {
-			logger.Fatalf("Error during transaction commit: %s", err)
-		}
-	}
-}
+//INSERT INTO
+//users(created_at, updated_at, id, email, full_name, image_url, bio, url, context_information)
+//VALUES
+//(
+//now(), now(), 'f03f023b-0427-4cdb-924b-fb2369018ab7', 'test2@example.com', 'test1', 'https://www.gravatar.com/avatar/testtwo2', 'my test bio one', 'http://example.com/001', '{"key": "value"}'
+//),
+//(
+//now(), now(), 'f03f023b-0427-4cdb-924b-fb2369018ab6', 'test3@example.com', 'test2', 'http://https://www.gravatar.com/avatar/testtwo3', 'my test bio two', 'http://example.com/002', '{"key": "value"}'
+//)
+//;
+//-- identities
+//INSERT INTO
+//identities(created_at, updated_at, id, username, provider_type, user_id, profile_url)
+//VALUES
+//(
+//now(), now(), '2a808366-9525-4646-9c80-ed704b2eebbe', 'test1', 'github', 'f03f023b-0427-4cdb-924b-fb2369018ab7', 'http://example-github.com/001'
+//),
+//(
+//now(), now(), '2a808366-9525-4646-9c80-ed704b2eebbb', 'test2', 'rhhd', 'f03f023b-0427-4cdb-924b-fb2369018ab6', 'http://example-rhd.com/002'
+//)
+//;
