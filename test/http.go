@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/fabric8-services/fabric8-cluster/rest"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ type DummyHttpClient struct {
 }
 
 type DummyHttpDoer struct {
-	*rest.HttpClientDoer
+	*httpsupport.HTTPClientDoer
 	Client *DummyHttpClient
 }
 
@@ -31,8 +31,8 @@ func (c *DummyHttpClient) Do(req *http.Request) (*http.Response, error) {
 
 func NewDummyHttpDoer() *DummyHttpDoer {
 	client := &DummyHttpClient{}
-	doer := &rest.HttpClientDoer{HttpClient: client}
-	return &DummyHttpDoer{HttpClientDoer: doer, Client: client}
+	doer := &httpsupport.HTTPClientDoer{HTTPClient: client}
+	return &DummyHttpDoer{HTTPClientDoer: doer, Client: client}
 }
 
 func EqualURLs(t *testing.T, expected string, actual string) {

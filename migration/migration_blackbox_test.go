@@ -78,31 +78,23 @@ func (s *MigrationTestSuite) TestMigrate() {
 func testMigration001Cluster(t *testing.T) {
 	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:2])
 	require.NoError(t, err)
-	//t.Run("insert ok", func(t *testing.T) {
-	//	_, err := sqlDB.Exec(`INSERT INTO cluster (cluster_id, url, type, identity_id)
-	//		VALUES (uuid_generate_v4(),'osio-stage', 'stage', uuid_generate_v4(),'', 'cluster1.com')`)
-	//	require.NoError(t, err)
-	//})
+	t.Run("insert cluster", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO cluster (cluster_id, created_at, updated_at, name, url, console_url,
+                     metrics_url, logging_url, app_dns, sa_token, sa_username, token_provider_id, 
+                     auth_client_id, auth_client_secret, auth_default_scope, type)
+			VALUES ('0b3d3751-69a7-4981-bf6f-63cd08b723af', now(), now(), 'stage', 'https://api.cluster.com', 'https://console.cluster.com',
+			        'https://metrics.cluster.com', 'https://login.cluster.com', 'https://app.cluster.com', 'sometoken', 'dssas-sre', 'pr-id',
+			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
+		require.NoError(t, err)
+	})
+	t.Run("insert identity cluster", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO identity_cluster (identity_id, cluster_id, created_at, updated_at)
+			VALUES (uuid_generate_v4(), '0b3d3751-69a7-4981-bf6f-63cd08b723af', now(), now())`)
+		require.NoError(t, err)
+	})
+	t.Run("insert identity cluster fail for unknown cluster ID", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO identity_cluster (identity_id, cluster_id, created_at, updated_at)
+			VALUES (uuid_generate_v4(), uuid_generate_v4(), now(), now())`)
+		require.Error(t, err)
+	})
 }
-
-//INSERT INTO
-//users(created_at, updated_at, id, email, full_name, image_url, bio, url, context_information)
-//VALUES
-//(
-//now(), now(), 'f03f023b-0427-4cdb-924b-fb2369018ab7', 'test2@example.com', 'test1', 'https://www.gravatar.com/avatar/testtwo2', 'my test bio one', 'http://example.com/001', '{"key": "value"}'
-//),
-//(
-//now(), now(), 'f03f023b-0427-4cdb-924b-fb2369018ab6', 'test3@example.com', 'test2', 'http://https://www.gravatar.com/avatar/testtwo3', 'my test bio two', 'http://example.com/002', '{"key": "value"}'
-//)
-//;
-//-- identities
-//INSERT INTO
-//identities(created_at, updated_at, id, username, provider_type, user_id, profile_url)
-//VALUES
-//(
-//now(), now(), '2a808366-9525-4646-9c80-ed704b2eebbe', 'test1', 'github', 'f03f023b-0427-4cdb-924b-fb2369018ab7', 'http://example-github.com/001'
-//),
-//(
-//now(), now(), '2a808366-9525-4646-9c80-ed704b2eebbb', 'test2', 'rhhd', 'f03f023b-0427-4cdb-924b-fb2369018ab6', 'http://example-rhd.com/002'
-//)
-//;
