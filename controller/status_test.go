@@ -9,7 +9,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	. "github.com/fabric8-services/fabric8-cluster/controller"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
-	"github.com/fabric8-services/fabric8-cluster/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/pkg/errors"
@@ -28,7 +27,6 @@ type TestStatusREST struct {
 }
 
 func TestRunStatusREST(t *testing.T) {
-	resource.Require(t, resource.Database)
 	suite.Run(t, &TestStatusREST{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fabric8-services/fabric8-cluster/rest"
 	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -250,7 +250,7 @@ func convertAPIURL(apiURL string, newPrefix string, newPath string) (string, err
 	if err != nil {
 		return "", err
 	}
-	newHost, err := rest.ReplaceDomainPrefix(newURL.Host, newPrefix)
+	newHost, err := httpsupport.ReplaceDomainPrefix(newURL.Host, newPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -475,7 +475,7 @@ func (c *ConfigurationData) GetOSOClusterByURL(url string) *OSOCluster {
 	defer c.mux.RUnlock()
 
 	for apiURL, cluster := range c.clusters {
-		if strings.HasPrefix(rest.AddTrailingSlashToURL(url), apiURL) {
+		if strings.HasPrefix(httpsupport.AddTrailingSlashToURL(url), apiURL) {
 			return &cluster
 		}
 	}

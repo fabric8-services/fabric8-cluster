@@ -53,10 +53,14 @@
     "convert",
     "errors",
     "goamiddleware",
+    "gormsupport",
     "httpsupport",
     "log",
+    "migration",
+    "resource",
     "sentry",
     "test/auth",
+    "test/suite",
     "token",
     "token/jwk"
   ]
@@ -345,8 +349,8 @@
     "require",
     "suite"
   ]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -418,6 +422,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "521be14bfc1f57432422c3aab3050de1849e9c4d757b532f17bce69f6e40d3f1"
+  inputs-digest = "a873e660063e3002e0d52ceb444377f402a7d8de93cc2916e699bbd3fdbec2be"
   solver-name = "gps-cdcl"
   solver-version = 1

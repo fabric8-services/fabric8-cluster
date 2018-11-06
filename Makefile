@@ -166,21 +166,13 @@ $(GOCYCLO_BIN):
 	cd $(VENDOR_DIR)/github.com/fzipp/gocyclo && go build -v
 
 # Pack all migration SQL files into a compilable Go file
-migration/sqlbindata.go: $(GO_BINDATA_BIN) $(wildcard migration/sql-files/*.sql) migration/sqlbindata_test.go
+migration/sqlbindata.go: $(GO_BINDATA_BIN) $(wildcard migration/sql-files/*.sql)
 	$(GO_BINDATA_BIN) \
 		-o migration/sqlbindata.go \
 		-pkg migration \
 		-prefix migration/sql-files \
 		-nocompress \
 		migration/sql-files
-
-migration/sqlbindata_test.go: $(GO_BINDATA_BIN) $(wildcard migration/sql-test-files/*.sql)
-	$(GO_BINDATA_BIN) \
-		-o migration/sqlbindata_test.go \
-		-pkg migration_test \
-		-prefix migration/sql-test-files \
-		-nocompress \
-		migration/sql-test-files
 
 # Pack configuration files into a compilable Go file
 configuration/confbindata.go: $(GO_BINDATA_BIN) $(wildcard configuration/conf-files/*.conf)
@@ -261,6 +253,7 @@ app/controllers.go: $(DESIGNS) $(GOAGEN_BIN) $(VENDOR_DIR)
 	$(GOAGEN_BIN) app -d ${PACKAGE_NAME}/${DESIGN_DIR}
 	$(GOAGEN_BIN) controller -d ${PACKAGE_NAME}/${DESIGN_DIR} -o controller/ --pkg controller --app-pkg ${PACKAGE_NAME}/app
 	$(GOAGEN_BIN) client -d ${PACKAGE_NAME}/${DESIGN_DIR}
+	$(GOAGEN_BIN) gen -d ${PACKAGE_NAME}/${DESIGN_DIR} --pkg-path=github.com/fabric8-services/fabric8-common/goasupport/jsonapi_errors_helpers --out app
 	$(GOAGEN_BIN) swagger -d ${PACKAGE_NAME}/${DESIGN_DIR}
 
 .PHONY: migrate-database

@@ -5,8 +5,8 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/app/test"
 	. "github.com/fabric8-services/fabric8-cluster/controller"
-	"github.com/fabric8-services/fabric8-cluster/rest"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/test/auth"
 
 	"github.com/goadesign/goa"
@@ -52,10 +52,10 @@ func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 		configCluster := s.Config.GetOSOClusterByURL(cluster.APIURL)
 		require.NotNil(s.T(), configCluster)
 		require.Equal(s.T(), configCluster.Name, cluster.Name)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
 		require.Equal(s.T(), configCluster.AppDNS, cluster.AppDNS)
 		require.Equal(s.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
 	}
@@ -98,10 +98,10 @@ func (s *ClustersTestSuite) checkShowAuthForServiceAccount(saName string) {
 		configCluster := s.Config.GetOSOClusterByURL(cluster.APIURL)
 		require.NotNil(s.T(), configCluster)
 		require.Equal(s.T(), configCluster.Name, cluster.Name)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
-		require.Equal(s.T(), rest.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
+		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
 		require.Equal(s.T(), configCluster.AppDNS, cluster.AppDNS)
 		require.Equal(s.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
 

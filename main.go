@@ -12,7 +12,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/controller"
-	"github.com/fabric8-services/fabric8-cluster/jsonapi"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/sentry"
 	"github.com/fabric8-services/fabric8-common/goamiddleware"
@@ -140,7 +139,7 @@ func main() {
 	// Use our own log request to inject identity id and modify other properties
 	service.Use(log.LogRequest(config.DeveloperModeEnabled()))
 	service.Use(gzip.Middleware(9))
-	service.Use(jsonapi.ErrorHandler(service, true))
+	service.Use(app.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
 
 	service.WithLogger(goalogrus.New(log.Logger()))

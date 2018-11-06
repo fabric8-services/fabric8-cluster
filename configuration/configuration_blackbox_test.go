@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/resource"
+	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"

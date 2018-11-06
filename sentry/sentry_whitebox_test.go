@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/fabric8-services/fabric8-cluster/resource"
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
 	"github.com/fabric8-services/fabric8-common/test/auth"
 	"github.com/fabric8-services/fabric8-common/token"
@@ -87,7 +86,6 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 }
 
 func (s *TestWhiteboxSentry) TestInitialize() {
-	resource.Require(s.T(), resource.UnitTest)
 	haltSentry, err := Initialize(s.Config, "")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), haltSentry)
