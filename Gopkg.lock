@@ -53,6 +53,7 @@
     "convert",
     "errors",
     "goamiddleware",
+    "goasupport/jsonapi_errors_helpers",
     "gormsupport",
     "httpsupport",
     "log",
@@ -422,6 +423,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a873e660063e3002e0d52ceb444377f402a7d8de93cc2916e699bbd3fdbec2be"
+  inputs-digest = "0a91c16da3e6c0361c4cfe43331d3ec916117657265542a8c6ad33fa9f11afb9"
   solver-name = "gps-cdcl"
   solver-version = 1
