@@ -29,52 +29,52 @@ objects:
         containers:
         - image: ${IMAGE}:${IMAGE_TAG}
           env:
-          - name: F8CLUSTER_POSTGRES_HOST
+          - name: F8_POSTGRES_HOST
             valueFrom:
               secretKeyRef:
                 name: f8cluster
                 key: db.host
-          - name: F8CLUSTER_POSTGRES_PORT
+          - name: F8_POSTGRES_PORT
             valueFrom:
               secretKeyRef:
                 name: f8cluster
                 key: db.port
-          - name: F8CLUSTER_POSTGRES_USER
+          - name: F8_POSTGRES_USER
             valueFrom:
               secretKeyRef:
                 name: f8cluster
                 key: db.user
-          - name: F8CLUSTER_POSTGRES_PASSWORD
+          - name: F8_POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: f8cluster
                 key: db.password
-          - name: F8CLUSTER_SENTRY_DSN
+          - name: F8_SENTRY_DSN
             valueFrom:
               secretKeyRef:
                 name: f8cluster
                 key: sentry.dsn
-          - name: F8CLUSTER_POSTGRES_SSLMODE
+          - name: F8_POSTGRES_SSLMODE
             valueFrom:
               configMapKeyRef:
                 name: f8cluster
                 key: postgres.sslmode
-          - name: F8CLUSTER_POSTGRES_CONNECTION_MAXIDLE
+          - name: F8_POSTGRES_CONNECTION_MAXIDLE
             valueFrom:
               configMapKeyRef:
                 name: f8cluster
                 key: postgres.connection.maxidle
-          - name: F8CLUSTER_POSTGRES_CONNECTION_MAXOPEN
+          - name: F8_POSTGRES_CONNECTION_MAXOPEN
             valueFrom:
               configMapKeyRef:
                 name: f8cluster
                 key: postgres.connection.maxopen
-          - name: F8CLUSTER_ENVIRONMENT
+          - name: F8_ENVIRONMENT
             valueFrom:
               configMapKeyRef:
                 name: f8cluster
                 key: environment
-          - name: F8CLUSTER_AUTH_URL
+          - name: F8_AUTH_URL
             valueFrom:
               configMapKeyRef:
                 name: f8cluster

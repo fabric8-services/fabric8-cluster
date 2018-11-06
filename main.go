@@ -47,8 +47,8 @@ func main() {
 
 	// Override default -config switch with environment variable only if -config switch was
 	// not explicitly given via the command line.
-	configFile = configFileFromFlags("config", "F8CLUSTER_CONFIG_FILE_PATH")
-	osoClusterConfigFile = configFileFromFlags("osoClusterConfigFile", "F8CLUSTER_OSO_CLUSTER_CONFIG_FILE")
+	configFile = configFileFromFlags("config", "F8_CONFIG_FILE_PATH")
+	osoClusterConfigFile = configFileFromFlags("osoClusterConfigFile", "F8_OSO_CLUSTER_CONFIG_FILE")
 
 	config, err := configuration.NewConfigurationData(configFile, osoClusterConfigFile)
 	if err != nil {

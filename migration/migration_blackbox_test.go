@@ -42,11 +42,11 @@ func TestMigration(t *testing.T) {
 
 func (s *MigrationTestSuite) SetupTest() {
 	resource.Require(s.T(), resource.Database)
-	host = os.Getenv("F8CLUSTER_POSTGRES_HOST")
+	host = os.Getenv("F8_POSTGRES_HOST")
 	if host == "" {
 		host = defaultHost
 	}
-	port = os.Getenv("F8CLUSTER_POSTGRES_PORT")
+	port = os.Getenv("F8_POSTGRES_PORT")
 	if port == "" {
 		port = defaultPort
 	}

@@ -2,14 +2,14 @@ FROM centos:7
 LABEL maintainer "Devtools <devtools@redhat.com>"
 LABEL author "Konrad Kleine <kkleine@redhat.com>"
 ENV LANG=en_US.utf8
-ENV F8CLUSTER_INSTALL_PREFIX=/usr/local/cluster
+ENV F8_INSTALL_PREFIX=/usr/local/cluster
 
 # Create a non-root user and a group with the same name: "cluster"
-ENV F8CLUSTER_USER_NAME=cluster
-RUN useradd --no-create-home -s /bin/bash ${F8CLUSTER_USER_NAME}
+ENV F8_USER_NAME=cluster
+RUN useradd --no-create-home -s /bin/bash ${F8_USER_NAME}
 
-COPY bin/cluster ${F8CLUSTER_INSTALL_PREFIX}/bin/cluster
-COPY config.yaml ${F8CLUSTER_INSTALL_PREFIX}/etc/config.yaml
+COPY bin/cluster ${F8_INSTALL_PREFIX}/bin/cluster
+COPY config.yaml ${F8_INSTALL_PREFIX}/etc/config.yaml
 
 # Install little pcp pmcd server for metrics collection
 # would prefer only pmcd, and not the /bin/pm*tools etc.
@@ -23,9 +23,9 @@ EXPOSE 44321
 
 
 # From here onwards, any RUN, CMD, or ENTRYPOINT will be run under the following user
-USER ${F8CLUSTER_USER_NAME}
+USER ${F8_USER_NAME}
 
-WORKDIR ${F8CLUSTER_INSTALL_PREFIX}
+WORKDIR ${F8_INSTALL_PREFIX}
 ENTRYPOINT [ "/cluster+pmcd.sh" ]
 
 EXPOSE 8087
