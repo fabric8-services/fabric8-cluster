@@ -11,22 +11,22 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestTransactionSuite struct {
+type TransactionTestSuite struct {
 	gormtestsupport.DBTestSuite
 }
 
-func TestRunTransactionSuite(t *testing.T) {
-	suite.Run(t, &TestTransactionSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
+func TestTransaction(t *testing.T) {
+	suite.Run(t, &TransactionTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func (s *TestTransactionSuite) TestTransactionOK() {
+func (s *TransactionTestSuite) TestTransactionOK() {
 	err := transaction.Transactional(s.Application, func(tr transaction.TransactionalResources) error {
 		return nil
 	})
 	require.NoError(s.T(), err)
 }
 
-func (s *TestTransactionSuite) TestTransactionFail() {
+func (s *TransactionTestSuite) TestTransactionFail() {
 	err := transaction.Transactional(s.Application, func(tr transaction.TransactionalResources) error {
 		return errors.New("Oopsie Woopsie")
 	})

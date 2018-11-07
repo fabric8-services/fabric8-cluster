@@ -12,6 +12,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
