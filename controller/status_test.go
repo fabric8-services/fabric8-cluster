@@ -9,7 +9,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	. "github.com/fabric8-services/fabric8-cluster/controller"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
-	"github.com/fabric8-services/fabric8-cluster/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/pkg/errors"
@@ -28,7 +27,6 @@ type TestStatusREST struct {
 }
 
 func TestRunStatusREST(t *testing.T) {
-	resource.Require(t, resource.Database)
 	suite.Run(t, &TestStatusREST{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
@@ -67,13 +65,13 @@ func (rest *TestStatusREST) TestShowStatusWithoutDBFails() {
 }
 
 func (rest *TestStatusREST) TestShowStatusWithDefaultConfigInProdModeFails() {
-	existingDevMode := os.Getenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
+	existingDevMode := os.Getenv("F8_DEVELOPER_MODE_ENABLED")
 	defer func() {
-		os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", existingDevMode)
+		os.Setenv("F8_DEVELOPER_MODE_ENABLED", existingDevMode)
 		rest.resetConfiguration()
 	}()
 
-	os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", "false")
+	os.Setenv("F8_DEVELOPER_MODE_ENABLED", "false")
 	rest.resetConfiguration()
 	svc, ctrl := rest.UnSecuredController()
 	_, res := test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)

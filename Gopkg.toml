@@ -25,6 +25,7 @@
 #   unused-packages = true
 
 required = [
+  "github.com/fabric8-services/fabric8-common/goasupport/jsonapi_errors_helpers", # needed by goa generator
   "github.com/golang/lint/golint",
   "github.com/fzipp/gocyclo",
   "github.com/goadesign/goa/cors",
@@ -52,10 +53,6 @@ required = [
   name = "github.com/goadesign/goa"
   version = "1.3.0"
   
-[[constraint]]
-  name = "github.com/jinzhu/gorm"
-  version = "1.9.1"
-
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"

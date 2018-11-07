@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/resource"
+	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
@@ -47,8 +47,8 @@ func resetConfiguration() {
 func TestGetEnvironmentOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	constAuthEnvironment := "F8CLUSTER_ENVIRONMENT"
-	constAuthSentryDSN := "F8CLUSTER_SENTRY_DSN"
+	constAuthEnvironment := "F8_ENVIRONMENT"
+	constAuthSentryDSN := "F8_SENTRY_DSN"
 	constLocalEnv := "local"
 
 	existingEnvironmentName := os.Getenv(constAuthEnvironment)
@@ -95,14 +95,14 @@ func TestGetEnvironmentOK(t *testing.T) {
 }
 
 func TestAuthServiceURL(t *testing.T) {
-	existingEnvironment := os.Getenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
+	existingEnvironment := os.Getenv("F8_DEVELOPER_MODE_ENABLED")
 	defer func() {
-		os.Setenv("F8CLUSTER_DEVELOPER_MODE_ENABLED", existingEnvironment)
+		os.Setenv("F8_DEVELOPER_MODE_ENABLED", existingEnvironment)
 		resetConfiguration()
 	}()
-	os.Unsetenv("F8CLUSTER_DEVELOPER_MODE_ENABLED")
+	os.Unsetenv("F8_DEVELOPER_MODE_ENABLED")
 
-	checkURLValidation(t, "F8CLUSTER_AUTH_URL", "Auth service")
+	checkURLValidation(t, "F8_AUTH_URL", "Auth service")
 }
 
 func checkURLValidation(t *testing.T, envName, serviceName string) {
@@ -135,7 +135,7 @@ func checkURLValidation(t *testing.T, envName, serviceName string) {
 
 func TestGetSentryDSNOK(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
-	constSentryDSN := "F8CLUSTER_SENTRY_DSN"
+	constSentryDSN := "F8_SENTRY_DSN"
 	existingDSN := os.Getenv(constSentryDSN)
 	defer func() {
 		os.Setenv(constSentryDSN, existingDSN)

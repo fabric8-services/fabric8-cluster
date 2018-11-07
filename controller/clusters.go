@@ -3,9 +3,8 @@ package controller
 import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/jsonapi"
-	"github.com/fabric8-services/fabric8-cluster/rest"
 	"github.com/fabric8-services/fabric8-common/errors"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-common/token"
 
@@ -34,16 +33,16 @@ func NewClustersController(service *goa.Service, config clusterConfiguration) *C
 func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 	if !token.IsSpecificServiceAccount(ctx, token.OsoProxy, token.Tenant, token.JenkinsIdler, token.JenkinsProxy, token.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return jsonapi.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
 	var data []*app.ClusterData
 	for _, clusterConfig := range c.config.GetOSOClusters() {
 		cluster := &app.ClusterData{
 			Name:              clusterConfig.Name,
-			APIURL:            rest.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL:        rest.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL:        rest.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL:        rest.AddTrailingSlashToURL(clusterConfig.LoggingURL),
+			APIURL:            httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
 			AppDNS:            clusterConfig.AppDNS,
 			CapacityExhausted: clusterConfig.CapacityExhausted,
 		}
@@ -60,16 +59,16 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersContext) error {
 	if !token.IsSpecificServiceAccount(ctx, token.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return jsonapi.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
 	var data []*app.FullClusterData
 	for _, clusterConfig := range c.config.GetOSOClusters() {
 		cluster := &app.FullClusterData{
 			Name:              clusterConfig.Name,
-			APIURL:            rest.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL:        rest.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL:        rest.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL:        rest.AddTrailingSlashToURL(clusterConfig.LoggingURL),
+			APIURL:            httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
 			AppDNS:            clusterConfig.AppDNS,
 			CapacityExhausted: clusterConfig.CapacityExhausted,
 

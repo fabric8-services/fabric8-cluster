@@ -13,7 +13,7 @@ services:
     image: fabric8-services/fabric8-cluster:latest
     command: -config /usr/local/cluster/etc/config.yaml
     environment:
-      F8CLUSTER_POSTGRES_HOST: db
+      F8_POSTGRES_HOST: db
     ports:
       - "8087:8087"
     networks:

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fabric8-services/fabric8-cluster/rest"
 	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -112,7 +112,7 @@ func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*
 	}
 
 	// Set up the main configuration
-	c.v.SetEnvPrefix("F8CLUSTER")
+	c.v.SetEnvPrefix("F8")
 	c.v.AutomaticEnv()
 	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	c.v.SetTypeByDefaultValue(true)
@@ -250,7 +250,7 @@ func convertAPIURL(apiURL string, newPrefix string, newPath string) (string, err
 	if err != nil {
 		return "", err
 	}
-	newHost, err := rest.ReplaceDomainPrefix(newURL.Host, newPrefix)
+	newHost, err := httpsupport.ReplaceDomainPrefix(newURL.Host, newPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -327,12 +327,12 @@ func pathExists(pathToCheck string) (string, error) {
 
 func getMainConfigFile() string {
 	// This was either passed as a env var or set inside main.go from --config
-	envConfigPath, _ := os.LookupEnv("F8CLUSTER_CONFIG_FILE_PATH")
+	envConfigPath, _ := os.LookupEnv("F8_CONFIG_FILE_PATH")
 	return envConfigPath
 }
 
 func getOSOClusterConfigFile() string {
-	envOSOClusterConfigFile, _ := os.LookupEnv("F8CLUSTER_OSO_CLUSTER_CONFIG_FILE")
+	envOSOClusterConfigFile, _ := os.LookupEnv("F8_OSO_CLUSTER_CONFIG_FILE")
 	return envOSOClusterConfigFile
 }
 
@@ -475,7 +475,7 @@ func (c *ConfigurationData) GetOSOClusterByURL(url string) *OSOCluster {
 	defer c.mux.RUnlock()
 
 	for apiURL, cluster := range c.clusters {
-		if strings.HasPrefix(rest.AddTrailingSlashToURL(url), apiURL) {
+		if strings.HasPrefix(httpsupport.AddTrailingSlashToURL(url), apiURL) {
 			return &cluster
 		}
 	}
@@ -666,7 +666,7 @@ func (c *ConfigurationData) IsLogJSON() bool {
 
 // GetEnvironment returns the current environment application is deployed in
 // like 'production', 'prod-preview', 'local', etc as the value of environment variable
-// `F8CLUSTER_ENVIRONMENT` is set.
+// `F8_ENVIRONMENT` is set.
 func (c *ConfigurationData) GetEnvironment() string {
 	return c.v.GetString(varEnvironment)
 }

@@ -2,10 +2,8 @@ package suite
 
 import (
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/resource"
 	"github.com/fabric8-services/fabric8-common/log"
-
-	"github.com/stretchr/testify/suite"
+	"github.com/fabric8-services/fabric8-common/test/suite"
 )
 
 // NewUnitTestSuite instantiates a new UnitTestSuite
@@ -15,13 +13,13 @@ func NewUnitTestSuite() UnitTestSuite {
 
 // RemoteTestSuite is a base for unit tests
 type UnitTestSuite struct {
-	suite.Suite
+	suite.UnitTestSuite
 	Config *configuration.ConfigurationData
 }
 
 // SetupSuite implements suite.SetupAllSuite
 func (s *UnitTestSuite) SetupSuite() {
-	resource.Require(s.T(), resource.UnitTest)
+	s.UnitTestSuite.SetupSuite()
 	s.setupConfig()
 }
 
