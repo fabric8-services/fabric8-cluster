@@ -16,7 +16,7 @@ import (
 )
 
 type Cluster struct {
-	gormsupport.HardDeleteLifecycle
+	gormsupport.LifecycleHardDelete
 
 	// This is the primary key value
 	ClusterID uuid.UUID `sql:"type:uuid default uuid_generate_v4()" gorm:"primary_key;column:cluster_id"`
