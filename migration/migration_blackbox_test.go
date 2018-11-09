@@ -74,6 +74,7 @@ func (s *MigrationTestSuite) TestMigrate() {
 	require.NoError(s.T(), err, "cannot connect to DB '%s'", dbName)
 	defer gormDB.Close()
 	s.T().Run("testMigration001Cluster", testMigration001Cluster)
+	s.T().Run("testMigration002ClusterOnDeleteCascade", testMigration002ClusterOnDeleteCascade)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -97,5 +98,46 @@ func testMigration001Cluster(t *testing.T) {
 		_, err := sqlDB.Exec(`INSERT INTO identity_cluster (identity_id, cluster_id, created_at, updated_at)
 			VALUES (uuid_generate_v4(), uuid_generate_v4(), now(), now())`)
 		require.Error(t, err)
+	})
+}
+
+func testMigration002ClusterOnDeleteCascade(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:3])
+	require.NoError(t, err)
+	t.Run("insert cluster", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO cluster (cluster_id, created_at, updated_at, name, url, console_url,
+                     metrics_url, logging_url, app_dns, sa_token, sa_username, token_provider_id, 
+                     auth_client_id, auth_client_secret, auth_default_scope, type)
+			VALUES ('c55a6344-95d5-455e-ad8f-92c6783dbd4d', now(), now(), 'stage', 'https://api.cluster.com', 'https://console.cluster.com',
+			        'https://metrics.cluster.com', 'https://login.cluster.com', 'https://app.cluster.com', 'sometoken', 'dssas-sre', 'pr-id',
+			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
+		require.NoError(t, err)
+	})
+	t.Run("insert identity cluster", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO identity_cluster (identity_id, cluster_id, created_at, updated_at)
+			VALUES (uuid_generate_v4(), 'c55a6344-95d5-455e-ad8f-92c6783dbd4d', now(), now())`)
+		require.NoError(t, err)
+	})
+	t.Run("insert identity cluster fail for unknown cluster ID", func(t *testing.T) {
+		_, err := sqlDB.Exec(`INSERT INTO identity_cluster (identity_id, cluster_id, created_at, updated_at)
+			VALUES (uuid_generate_v4(), uuid_generate_v4(), now(), now())`)
+		require.Error(t, err)
+	})
+	t.Run("identity cluster on delete cascade", func(t *testing.T) {
+		// Identity cluster available
+		r, err := sqlDB.Exec(`SELECT * FROM identity_cluster WHERE cluster_id = 'c55a6344-95d5-455e-ad8f-92c6783dbd4d'`)
+		require.NoError(t, err)
+		rows, err := r.RowsAffected()
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rows)
+		// Delete cluster to make sure cascade delete works
+		_, err = sqlDB.Exec(`DELETE FROM cluster WHERE cluster_id = 'c55a6344-95d5-455e-ad8f-92c6783dbd4d'`)
+		require.NoError(t, err)
+		// Identity cluster is gone
+		r, err = sqlDB.Exec(`SELECT * FROM identity_cluster WHERE cluster_id = 'c55a6344-95d5-455e-ad8f-92c6783dbd4d'`)
+		require.NoError(t, err)
+		rows, err = r.RowsAffected()
+		require.NoError(t, err)
+		require.Equal(t, int64(0), rows)
 	})
 }
