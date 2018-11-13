@@ -5,12 +5,12 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-common/log"
-	testsuite "github.com/fabric8-services/fabric8-common/test/suite"
+	"github.com/fabric8-services/fabric8-common/test/suite"
 )
 
 // DBTestSuite is a base for tests using a gorm db
 type DBTestSuite struct {
-	testsuite.DBTestSuite
+	suite.DBTestSuite
 	Configuration *configuration.ConfigurationData
 	Application   application.Application
 }
@@ -23,7 +23,7 @@ func NewDBTestSuite() DBTestSuite {
 			"err": err,
 		}, "failed to setup the configuration")
 	}
-	return DBTestSuite{DBTestSuite: testsuite.NewDBTestSuite(config), Configuration: config}
+	return DBTestSuite{DBTestSuite: suite.NewDBTestSuite(config), Configuration: config}
 }
 
 // SetupSuite implements suite.SetupAllSuite
