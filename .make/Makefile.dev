@@ -1,0 +1,96 @@
+DOCKER_REPO?=fabric8-services
+IMAGE_NAME?=fabric8-cluster
+MINISHIFT_IP?=$(shell minishift ip)
+SHORT_COMMIT=$(shell git rev-parse --short HEAD)
+ifneq ($(GITUNTRACKEDCHANGES),)
+SHORT_COMMIT := $(SHORT_COMMIT)-dirty
+endif
+
+TIMESTAMP:=$(shell date +%s)
+TAG?=$(SHORT_COMMIT)-$(TIMESTAMP)
+
+TEMPLATE_DIR:=minishift/openshift
+POSTGRESQL_VERSION:=9.6
+
+.PHONY: deploy-cluster
+deploy-cluster: deploy-cluster-config deploy-cluster-db deploy-cluster-only
+
+.PHONY: deploy-cluster-only
+deploy-auth-only: build build-image
+	@echo "Deploys cluster service ${TAG}"
+	@oc process -f $(TEMPLATE_DIR)/f8cluster.app.yaml \
+		-p DOCKER_REPO=$(DOCKER_REPO) \
+		-p IMAGE_TAG=$(TAG) \
+		-p IMAGE_NAME=$(IMAGE_NAME) \
+		-o yaml | oc apply -f -
+
+.PHONY: deploy-auth-db
+deploy-auth-db:
+	@echo "Deploying auth-db service using postgresql:${POSTGRESQL_VERSION}"
+	@oc process -f $(TEMPLATE_DIR)/auth.db.yaml \
+		-p POSTGRESQL_VERSION=$(POSTGRESQL_VERSION) \
+		-o yaml | oc apply -f -
+
+.PHONY: deploy-auth
+deploy-auth: deploy-auth-config deploy-auth-db
+	@echo "Deploying auth service"
+	@oc process -f $(TEMPLATE_DIR)/auth.app.yaml -o yaml | oc apply -f -
+
+.PHONY: deploy-cluster-db
+deploy-cluster-db:
+	@echo "Deploying cluster-db service using postgresql:${POSTGRESQL_VERSION}"
+	@oc process -f $(TEMPLATE_DIR)/f8cluster.db.yaml \
+		-p POSTGRESQL_VERSION=$(POSTGRESQL_VERSION) \
+		-o yaml | oc apply -f -
+
+.PHONY: build-image
+build-image: expose-minishift-docker-env
+	docker build -t $(DOCKER_REPO)/$(IMAGE_NAME):dev -f Dockerfile.dev .
+
+.PHONY: expose-minishift-docker-env
+expose-minishift-docker-env:
+	-eval `minishift docker-env`
+
+.PHONY: deploy-auth-config
+deploy-auth-config:
+	oc process -f $(TEMPLATE_DIR)/auth.config.yaml -o yaml | oc apply -f -
+
+.PHONY: deploy-cluster-config
+deploy-cluster-config:
+	oc process -f $(TEMPLATE_DIR)/f8cluster.config.yaml -o yaml | oc apply -f -
+
+.PHONY: clean-all
+clean-all:
+	oc delete all -l env=dev
+	oc delete project $(OC_PROJECT_NAME)
+
+.PHONY: clean-all-resources
+clean-all-resources:
+	oc delete all -l env=dev
+
+.PHONY: clean-auth
+clean-auth:
+	oc delete all -l belongsTo=auth
+
+.PHONY: clean-cluster
+clean-cluster:
+	oc delete all -l belongsTo=f8cluster
+
+.PHONY: redeploy-cluster
+redeploy-auth: build build-image deploy-cluster-only
+
+.PHONY: minishift-start
+minishift-start:
+	minishift start --cpus 4 --memory 8GB
+	./minishift/check_hosts.sh
+	-eval `minishift docker-env` && oc login -u developer -p developer
+
+.PHONY: deploy-all
+deploy-all: prebuild-check deps generate build init-project clean-all-resources deploy-auth deploy-cluster
+
+OC_PROJECT_NAME?=fabric8-services
+.PHONY: init-project
+init-project: ## Initializes new project clusterh secrets
+	@echo "Setting up project '$(OC_PROJECT_NAME)' in the cluster (ignoring potential errors if entries already exist)"
+	@oc new-project $(OC_PROJECT_NAME) || true \
+    @oc project $(OC_PROJECT_NAME)
