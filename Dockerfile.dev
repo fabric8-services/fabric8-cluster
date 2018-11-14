@@ -1,4 +1,4 @@
-FROM quay.io/openshiftio/fabric8-services-fabric8-cluster:c9398c
+FROM quay.io/openshiftio/fabric8-services-fabric8-cluster:bddfb4e
 
 COPY bin/cluster /usr/local/cluster/bin/cluster
 RUN echo chmod +x /usr/local/cluster/bin/cluster

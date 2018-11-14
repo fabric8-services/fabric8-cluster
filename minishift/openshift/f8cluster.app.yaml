@@ -28,59 +28,43 @@ objects:
           service: ${SERVICE_NAME}
       spec:
         containers:
-        - image: ${DOCKER_REPO}/${IMAGE_NAME}:${IMAGE_TAG}
+        - image: ${DOCKER_REPO}/${IMAGE_NAME}:dev
           env:
           - name: F8_POSTGRES_HOST
             valueFrom:
               secretKeyRef:
-                name: f8cluster
+                name: ${SERVICE_NAME}
                 key: db.host
           - name: F8_POSTGRES_PORT
             valueFrom:
               secretKeyRef:
-                name: f8cluster
+                name: ${SERVICE_NAME}
                 key: db.port
           - name: F8_POSTGRES_USER
             valueFrom:
               secretKeyRef:
-                name: f8cluster
+                name: ${SERVICE_NAME}
                 key: db.user
           - name: F8_POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: f8cluster
+                name: ${SERVICE_NAME}
                 key: db.password
-          - name: F8_SENTRY_DSN
-            valueFrom:
-              secretKeyRef:
-                name: f8cluster
-                key: sentry.dsn
-          - name: F8_POSTGRES_SSLMODE
-            valueFrom:
-              configMapKeyRef:
-                name: f8cluster
-                key: postgres.sslmode
-          - name: F8_POSTGRES_CONNECTION_MAXIDLE
-            valueFrom:
-              configMapKeyRef:
-                name: f8cluster
-                key: postgres.connection.maxidle
-          - name: F8_POSTGRES_CONNECTION_MAXOPEN
-            valueFrom:
-              configMapKeyRef:
-                name: f8cluster
-                key: postgres.connection.maxopen
           - name: F8_ENVIRONMENT
             valueFrom:
               configMapKeyRef:
-                name: f8cluster
+                name: ${SERVICE_NAME}
                 key: environment
+          - name: F8_DEVELOPER_MODE_ENABLED
+            valueFrom:
+              secretKeyRef:
+                name: ${SERVICE_NAME}
+                key: developer.mode.enabled
           - name: F8_AUTH_URL
             valueFrom:
               configMapKeyRef:
                 name: f8cluster
                 key: auth.url
-          imagePullPolicy: Always
           name: f8cluster
           ports:
           - containerPort: 8087

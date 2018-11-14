@@ -16,7 +16,7 @@ POSTGRESQL_VERSION:=9.6
 deploy-cluster: deploy-cluster-config deploy-cluster-db deploy-cluster-only
 
 .PHONY: deploy-cluster-only
-deploy-auth-only: build build-image
+deploy-cluster-only: build build-image
 	@echo "Deploys cluster service ${TAG}"
 	@oc process -f $(TEMPLATE_DIR)/f8cluster.app.yaml \
 		-p DOCKER_REPO=$(DOCKER_REPO) \

@@ -74,6 +74,7 @@ objects:
                 name: ${SERVICE_NAME}
                 key: notification.serviceurl
           name: ${SERVICE_NAME}
+          imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8089
             protocol: TCP

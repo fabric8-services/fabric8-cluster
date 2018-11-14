@@ -4,7 +4,7 @@ These instructions will help you run your services on OpenShift using MiniShift.
 
 ### Prerequisites
 
-[MiniShift v1.26.1](https://docs.openshift.org/latest/minishift/getting-started/installing.html)
+[MiniShift v1.27.0](https://docs.openshift.org/latest/minishift/getting-started/installing.html)
 
 [oc 3.11.0](https://docs.okd.io/latest/cli_reference/get_started_cli.html#installing-the-cli)
 
@@ -110,7 +110,7 @@ make clean-auth
 ##### Cleaning Cluster
 This removes both the `f8cluster` and `db-f8cluster` services from minishift.
 ```bash
-make clean-f8cluster
+make clean-cluster
 ```
 ##### Cleaning Auth, Cluster
 This removes `auth`, `f8cluster` services from minishift and deletes the `fabric8-services` project.

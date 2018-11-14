@@ -20,6 +20,8 @@ objects:
   data:
     db.host: ZGItZjhjbHVzdGVyCg==
     db.port: NTQzMg==
+    db.user: cG9zdGdyZXM=
+    db.password: bXlzZWNyZXRwYXNzd29yZA==
     db.admin.password: bXlzZWNyZXRwYXNzd29yZA==
     developer.mode.enabled: dHJ1ZQ==
 - apiVersion: v1
