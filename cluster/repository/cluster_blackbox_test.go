@@ -1,12 +1,15 @@
 package repository_test
 
 import (
+	"context"
+	"github.com/satori/go.uuid"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
+	"github.com/fabric8-services/fabric8-cluster/test"
+	"github.com/fabric8-services/fabric8-common/errors"
 
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,83 +28,71 @@ func (s *clusterTestSuite) SetupTest() {
 	s.repo = repository.NewClusterRepository(s.DB)
 }
 
-func (s *clusterTestSuite) TestCreateRoleScopeOK() {
-	rt, err := s.resourceTypeRepo.Lookup(s.Ctx, "openshift.io/resource/area")
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), rt)
-
-	rts, err := testsupport.CreateTestScope(s.Ctx, s.DB, *rt, uuid.NewV4().String())
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), rts)
-
-	randomRole, err := testsupport.CreateTestRole(s.Ctx, s.DB, *rt, "collab-"+uuid.NewV4().String())
+func (s *clusterTestSuite) TestCreateAndLoadClusterOK() {
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+	test.CreateCluster(s.T(), s.DB) // noise
+	loaded, err := s.repo.Load(context.Background(), cluster1.ClusterID)
 	require.NoError(s.T(), err)
 
-	rs := rolescope.RoleScope{
-		ResourceTypeScopeID: rts.ResourceTypeScopeID,
-		RoleID:              randomRole.RoleID,
-	}
-
-	err = s.repo.Create(s.Ctx, &rs)
-	require.NoError(s.T(), err)
+	test.AssertEqualClusters(s.T(), cluster1, loaded)
 }
 
-func (s *clusterTestSuite) TestListRoleScopeByRoleOK() {
-	rt, err := s.resourceTypeRepo.Lookup(s.Ctx, "openshift.io/resource/area")
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), rt)
-
-	rts, err := testsupport.CreateTestScope(s.Ctx, s.DB, *rt, uuid.NewV4().String())
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), rts)
-
-	randomRole, err := testsupport.CreateTestRole(s.Ctx, s.DB, *rt, "collab-"+uuid.NewV4().String())
+func (s *clusterTestSuite) TestDeleteOK() {
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+	cluster2 := test.CreateCluster(s.T(), s.DB) // noise
+	err := s.repo.Delete(context.Background(), cluster1.ClusterID)
 	require.NoError(s.T(), err)
 
-	rs := rolescope.RoleScope{
-		ResourceTypeScopeID: rts.ResourceTypeScopeID,
-		RoleID:              randomRole.RoleID,
-	}
+	_, err = s.repo.Load(context.Background(), cluster1.ClusterID)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", cluster1.ClusterID)
 
-	err = s.repo.Create(s.Ctx, &rs)
+	loaded, err := s.repo.Load(context.Background(), cluster2.ClusterID)
 	require.NoError(s.T(), err)
-
-	retrievedRoles, err := s.repo.LoadByRole(s.Ctx, randomRole.RoleID)
-	require.NoError(s.T(), err)
-	require.Len(s.T(), retrievedRoles, 1)
-	require.Equal(s.T(), randomRole.RoleID, retrievedRoles[0].RoleID)
-	require.Equal(s.T(), rs.ResourceTypeScopeID, retrievedRoles[0].ResourceTypeScopeID)
-
+	test.AssertEqualClusters(s.T(), cluster2, loaded)
 }
 
-func (s *clusterTestSuite) TestListRoleScopeByScopeOK() {
-	rt, err := s.resourceTypeRepo.Lookup(s.Ctx, "openshift.io/resource/area")
+func (s *clusterTestSuite) TestDeleteUnknownFails() {
+	id := uuid.NewV4()
+	err := s.repo.Delete(context.Background(), id)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
+}
+
+func (s *clusterTestSuite) TestLoadUnknownFails() {
+	id := uuid.NewV4()
+	_, err := s.repo.Load(context.Background(), id)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
+}
+
+func (s *clusterTestSuite) TestSaveOK() {
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+	cluster2 := test.CreateCluster(s.T(), s.DB) // noise
+
+	cluster1.AppDNS = uuid.NewV4().String()
+	cluster1.AuthClientID = uuid.NewV4().String()
+	cluster1.AuthClientSecret = uuid.NewV4().String()
+	cluster1.AuthDefaultScope = uuid.NewV4().String()
+	cluster1.ConsoleURL = uuid.NewV4().String()
+	cluster1.LoggingURL = uuid.NewV4().String()
+	cluster1.MetricsURL = uuid.NewV4().String()
+	cluster1.Name = uuid.NewV4().String()
+	cluster1.SaToken = uuid.NewV4().String()
+	cluster1.SaUsername = uuid.NewV4().String()
+	cluster1.TokenProviderID = uuid.NewV4().String()
+	cluster1.Type = uuid.NewV4().String()
+	cluster1.URL = uuid.NewV4().String()
+
+	err := s.repo.Save(context.Background(), cluster1)
 	require.NoError(s.T(), err)
-	require.NotNil(s.T(), rt)
 
-	// TODO: move to test/authorization.go
-	rts := resourcetype.ResourceTypeScope{
-		ResourceTypeScopeID: uuid.NewV4(),
-		ResourceTypeID:      rt.ResourceTypeID,
-		Name:                uuid.NewV4().String(),
-	}
+	loaded1, err := s.repo.Load(context.Background(), cluster1.ClusterID)
+	test.AssertEqualClusters(s.T(), cluster1, loaded1)
 
-	err = s.resourceTypeScopeRepo.Create(s.Ctx, &rts)
+	loaded2, err := s.repo.Load(context.Background(), cluster2.ClusterID)
+	test.AssertEqualClusters(s.T(), cluster2, loaded2)
+}
 
-	randomRole, err := testsupport.CreateTestRole(s.Ctx, s.DB, *rt, "collab-"+uuid.NewV4().String())
-	require.NoError(s.T(), err)
-
-	rs := rolescope.RoleScope{
-		ResourceTypeScopeID: rts.ResourceTypeScopeID,
-		RoleID:              randomRole.RoleID,
-	}
-
-	err = s.repo.Create(s.Ctx, &rs)
-	require.NoError(s.T(), err)
-
-	retrievedRoles, err := s.repo.LoadByScope(s.Ctx, rs.ResourceTypeScopeID)
-	require.NoError(s.T(), err)
-	require.Len(s.T(), retrievedRoles, 1)
-	require.Equal(s.T(), randomRole.RoleID, retrievedRoles[0].RoleID)
-	require.Equal(s.T(), rs.ResourceTypeScopeID, retrievedRoles[0].ResourceTypeScopeID)
+func (s *clusterTestSuite) TestSaveUnknownFails() {
+	id := uuid.NewV4()
+	err := s.repo.Save(context.Background(), &repository.Cluster{ClusterID: id})
+	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
 }
