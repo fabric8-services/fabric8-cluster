@@ -96,3 +96,13 @@ func (s *clusterTestSuite) TestSaveUnknownFails() {
 	err := s.repo.Save(context.Background(), &repository.Cluster{ClusterID: id})
 	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
 }
+
+func (s *clusterTestSuite) TestExists() {
+	id := uuid.NewV4()
+	err := s.repo.CheckExists(context.Background(), id.String())
+	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
+
+	cluster := test.CreateCluster(s.T(), s.DB)
+	err = s.repo.CheckExists(context.Background(), cluster.ClusterID.String())
+	require.NoError(s.T(), err)
+}
