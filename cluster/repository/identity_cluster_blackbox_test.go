@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
@@ -41,8 +42,8 @@ func (s *identityClusterTestSuite) TestCreateAndListIdentityClusterOK() {
 	clusters, err := s.repo.ListClustersForIdentity(context.Background(), idCluster1.IdentityID)
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), clusters, 2)
-	assertContainsCluster(s.T(), clusters, &idCluster1.Cluster)
-	assertContainsCluster(s.T(), clusters, &idCluster2.Cluster)
+	assertContainsCluster(s.T(), clusters, idCluster1.Cluster)
+	assertContainsCluster(s.T(), clusters, idCluster2.Cluster)
 }
 
 func (s *identityClusterTestSuite) TestListClustersForUnknownIdentityOK() {
@@ -51,14 +52,14 @@ func (s *identityClusterTestSuite) TestListClustersForUnknownIdentityOK() {
 	assert.Len(s.T(), clusters, 0)
 }
 
-func assertContainsCluster(t *testing.T, clusters []repository.Cluster, cluster *repository.Cluster) {
+func assertContainsCluster(t *testing.T, clusters []repository.Cluster, cluster repository.Cluster) {
 	require.NotEqual(t, uuid.UUID{}, cluster.ClusterID)
 	for _, cls := range clusters {
 		if cls.ClusterID == cluster.ClusterID {
 			return
 		}
 	}
-	assert.Fail(t, "didn't find cluster")
+	assert.Fail(t, fmt.Sprintf("didn't find cluster with ID: %s among %v", cluster.ClusterID, clusters))
 }
 
 func (s *identityClusterTestSuite) TestDeleteOK() {
