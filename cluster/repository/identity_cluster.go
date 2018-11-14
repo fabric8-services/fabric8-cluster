@@ -20,7 +20,7 @@ type IdentityCluster struct {
 	// The associated Identity ID
 	IdentityID uuid.UUID `sql:"type:uuid" gorm:"primary_key;column:identity_id"`
 	// The associated cluster
-	Cluster Cluster `gorm:"ForeignKey:ClusterID"`
+	Cluster Cluster `gorm:"ForeignKey:ClusterID;association_foreignkey:ClusterID"`
 	// The foreign key value for ClusterID
 	ClusterID uuid.UUID ` sql:"type:uuid" gorm:"primary_key;column:cluster_id"`
 }
@@ -37,7 +37,8 @@ func NewIdentityClusterRepository(db *gorm.DB) IdentityClusterRepository {
 
 // IdentityClusterRepository represents the storage interface.
 type IdentityClusterRepository interface {
-	LoadByIdentity(ctx context.Context, identityID uuid.UUID) (*IdentityCluster, error)
+	Load(ctx context.Context, identityID, clusterID uuid.UUID) (*IdentityCluster, error)
+	ListClustersForIdentity(ctx context.Context, identityID uuid.UUID) ([]Cluster, error)
 	Create(ctx context.Context, u *IdentityCluster) error
 	Delete(ctx context.Context, identityID, clusterID uuid.UUID) error
 }
@@ -56,15 +57,31 @@ func (m IdentityCluster) TableName() string {
 
 // CRUD Functions
 
-// Load returns a single Cluster as a Database Model
-func (m *GormIdentityClusterRepository) LoadByIdentity(ctx context.Context, identityID uuid.UUID) (*IdentityCluster, error) {
+// Load returns a single Identity Cluster as a Database Model
+func (m *GormIdentityClusterRepository) Load(ctx context.Context, identityID, clusterID uuid.UUID) (*IdentityCluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "identity_cluster", "load"}, time.Now())
 	var native IdentityCluster
-	err := m.db.Table(m.TableName()).Preload("ClusterID").Where("identity_id = ?", identityID).Find(&native).Error
+	err := m.db.Table(m.TableName()).Preload("Cluster").Where("identity_id = ? and cluster_id = ?", identityID, clusterID).Find(&native).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, errors.NewNotFoundError("identity_cluster", identityID.String())
+		return nil, errors.NewNotFoundErrorFromString(fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, clusterID))
 	}
 	return &native, errs.WithStack(err)
+}
+
+// ListClustersForIdentity returns the list of all cluster for the identity
+func (m *GormIdentityClusterRepository) ListClustersForIdentity(ctx context.Context, identityID uuid.UUID) ([]Cluster, error) {
+	defer goa.MeasureSince([]string{"goa", "db", "identity_cluster", "listClustersForIdentity"}, time.Now())
+	var rows []IdentityCluster
+
+	err := m.db.Table(m.TableName()).Preload("Cluster").Where("identity_id = ?", identityID).Find(&rows).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, errs.WithStack(err)
+	}
+	clusters := make([]Cluster, 0, len(rows))
+	for _, idCluster := range rows {
+		clusters = append(clusters, idCluster.Cluster)
+	}
+	return clusters, nil
 }
 
 // Create creates a new record.
@@ -103,7 +120,7 @@ func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID, 
 		return errs.WithStack(result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return errors.NewNotFoundErrorFromString(fmt.Sprintf("nothing to delete: identity cluster not found (clusterID:\"%s\", identityID:\"%s\")", clusterID, identityID.String()))
+		return errors.NewNotFoundErrorFromString(fmt.Sprintf("nothing to delete: identity cluster not found (identityID:\"%s\", clusterID:\"%s\")", identityID, clusterID))
 	}
 
 	log.Debug(ctx, map[string]interface{}{

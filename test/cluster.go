@@ -59,3 +59,36 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
 }
+
+func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluster, identityID *uuid.UUID) *repository.IdentityCluster {
+	if cluster == nil {
+		cluster = CreateCluster(t, db)
+	}
+	if identityID == nil {
+		id := uuid.NewV4()
+		identityID = &id
+	}
+	idCluster := &repository.IdentityCluster{
+		ClusterID:  cluster.ClusterID,
+		IdentityID: *identityID,
+	}
+
+	repo := repository.NewIdentityClusterRepository(db)
+	err := repo.Create(context.Background(), idCluster)
+	require.NoError(t, err)
+
+	loaded, err := repo.Load(context.Background(), idCluster.IdentityID, idCluster.ClusterID)
+	require.NoError(t, err)
+	require.NotNil(t, loaded)
+	AssertEqualClusters(t, cluster, &loaded.Cluster)
+	AssertEqualIdentityClusters(t, idCluster, loaded)
+
+	return loaded
+}
+
+func AssertEqualIdentityClusters(t *testing.T, expected, actual *repository.IdentityCluster) {
+	require.NotNil(t, expected)
+	require.NotNil(t, actual)
+	assert.Equal(t, expected.IdentityID, actual.IdentityID)
+	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+}
