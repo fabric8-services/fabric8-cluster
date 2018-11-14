@@ -49,7 +49,7 @@ func exists(ctx context.Context, db *gorm.DB, tableName, idColumnName, id string
 
 // CheckExists does the same as Exists for a soft deletable item but only returns the error value; thereby
 // being a handy convenience function.
-func CheckExists(ctx context.Context, db *gorm.DB, tableName string, id string) error {
+func CheckExists(ctx context.Context, db *gorm.DB, tableName, id string) error {
 	_, err := exists(ctx, db, tableName, "id", id, true)
 	return err
 }
@@ -61,9 +61,9 @@ func CheckExistsWithCustomIDColumn(ctx context.Context, db *gorm.DB, tableName, 
 	return err
 }
 
-// CheckExists does the same as Exists for a hard deletable item but only returns the error value; thereby
+// CheckHardDeletableExists does the same as Exists for a hard deletable item but only returns the error value; thereby
 // being a handy convenience function.
-func CheckHardDeletableExists(ctx context.Context, db *gorm.DB, tableName string, idColumnName, id string) error {
+func CheckHardDeletableExists(ctx context.Context, db *gorm.DB, tableName, idColumnName, id string) error {
 	_, err := exists(ctx, db, tableName, idColumnName, id, false)
 	return err
 }

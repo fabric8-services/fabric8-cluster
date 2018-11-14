@@ -93,13 +93,13 @@ func (m *GormIdentityClusterRepository) Create(ctx context.Context, c *IdentityC
 			"cluster_id":  c.ClusterID.String(),
 			"identity_id": c.IdentityID.String(),
 			"err":         err,
-		}, "unable to create the cluster")
+		}, "unable to create the identity cluster")
 		return errs.WithStack(err)
 	}
 	log.Debug(ctx, map[string]interface{}{
 		"cluster_id":  c.ClusterID.String(),
 		"identity_id": c.IdentityID.String(),
-	}, "Identity Cluster created!")
+	}, "Identity cluster created!")
 	return nil
 }
 
@@ -116,7 +116,7 @@ func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID, 
 			"cluster_id":  c.ClusterID.String(),
 			"identity_id": c.IdentityID.String(),
 			"err":         result.Error,
-		}, "unable to delete the cluster")
+		}, "unable to delete the identity cluster")
 		return errs.WithStack(result.Error)
 	}
 	if result.RowsAffected == 0 {
@@ -126,7 +126,7 @@ func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID, 
 	log.Debug(ctx, map[string]interface{}{
 		"cluster_id":  c.ClusterID.String(),
 		"identity_id": c.IdentityID.String(),
-	}, "Cluster deleted!")
+	}, "Identity cluster deleted!")
 
 	return nil
 }
