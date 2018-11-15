@@ -8,6 +8,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 	"github.com/fabric8-services/fabric8-cluster/application/service/factory"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
+	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 
 	"github.com/jinzhu/gorm"
@@ -69,10 +70,15 @@ type GormDB struct {
 	serviceFactory *factory.ServiceFactory
 }
 
-//// Identities creates new Identity repository
-//func (g *GormBase) Identities() account.IdentityRepository {
-//	return account.NewIdentityRepository(g.db)
-//}
+// Clusters creates new Clusters repository
+func (g *GormBase) Clusters() repository.ClusterRepository {
+	return repository.NewClusterRepository(g.db)
+}
+
+// IdentityClusters creates new IdentityClusters repository
+func (g *GormBase) IdentityClusters() repository.IdentityClusterRepository {
+	return repository.NewIdentityClusterRepository(g.db)
+}
 
 func (g *GormDB) FooService() service.FooService {
 	return g.serviceFactory.FooService()
