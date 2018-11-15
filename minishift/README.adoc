@@ -52,7 +52,7 @@ This build uses the developer account for creating a project called `fabric8-ser
 
 The above command then automates the process of running the containers on OpenShift in MiniShift by using openshift templates.
 
-Once the cluster service is running, it will be available at link:http://f8cluster-fabric8-services.${minishift ip}.nip.io/api[http://f8cluster-fabric8-services.${minishift ip}.nip.io/api].
+Once the cluster service is running, it will be available at http://f8cluster-fabric8-services.$(minishift_ip).nip.io/api.
 
 If you wish to access the Postgres database, it is available on the same host but on port 31002.  Use the following command to connect with the Postgres client:
 
@@ -60,7 +60,7 @@ If you wish to access the Postgres database, it is available on the same host bu
 PGPASSWORD=mysecretpassword psql -h minishift.local -U postgres -d postgres -p 31002
 ```
 
-However you can see auth service is running, and will be available at link:http://auth-fabric8-services.${minishift ip}.nip.io/api[http://auth-fabric8-services.${minishift ip}.nip.io/api].
+However you can see auth service is running, and will be available at http://auth-fabric8-services.$(minishift_ip).nip.io/api.
 
 If you wish to access the Postgres database, it is available on the same host but on port 31001.  Use the following command to connect with the Postgres client:
 
@@ -115,7 +115,7 @@ Look for running pods using `oc get pods`. You should be able to see two pods(au
 [[check-auth-service-status]]
 ==== Check auth service status
 You can get auth route by using `oc get routes`. It should be in format `auth-fabric8-services.${minishift ip}.nip.io`
-You can check status by hitting this in browser `http://auth-fabric8-services.${minishift ip}.nip.io/api/status`(e.g. `http://auth-fabric8-services.192.168.42.177.nip.io/api/status`).
+You can check status by hitting this in browser `http://auth-fabric8-services.$(minishift_ip).nip.io/api/status`(e.g. `http://auth-fabric8-services.192.168.42.177.nip.io/api/status`).
 
 [[connecting-to-auth-postgres-db]]
 ==== Connecting to Auth Postgres DB
@@ -141,7 +141,7 @@ Look for running pods using `oc get pods`. You should be able to see two pods(f8
 [[cluster-service-status]]
 ==== Check Cluster service status
 You can get cluster route by using `oc get routes`. It should be in format `f8cluster-fabric8-services.${minishift ip}.nip.io`
-You can check status by hitting this in browser `http://f8cluster-fabric8-services.${minishift ip}.nip.io/api/status`(e.g. `http://f8cluster-fabric8-services.192.168.42.177.nip.io/api/status`).
+You can check status by hitting this in browser `http://f8cluster-fabric8-services.${minishift_ip}.nip.io/api/status`(e.g. `http://f8cluster-fabric8-services.192.168.42.177.nip.io/api/status`).
 
 [[cluster-service-db]]
 ==== Connecting to Cluster Postgres DB
