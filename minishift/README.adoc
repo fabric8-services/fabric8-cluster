@@ -110,7 +110,7 @@ To deploy auth service, we have following make target which will deploy required
 make deploy-auth
 ```
 
-Look for running pods using `oc get pods`. You should be able to see two pods(auth-*, db-auth-*). First time it will take some time as it has download required container images.
+Look for running pods using `oc get pods`. You should be able to see two pods(`auth-*`, `db-auth-*`). First time it will take some time as it has download required container images.
 
 [[check-auth-service-status]]
 ==== Check auth service status
@@ -136,7 +136,7 @@ To deploy cluster service, we have following make target which will deploy requi
 make deploy-cluster
 ```
 
-Look for running pods using `oc get pods`. You should be able to see two pods(f8cluster-*, db-f8cluster-*). First time it will take some time as it has download required container images.
+Look for running pods using `oc get pods`. You should be able to see two pods(`f8cluster-*`, `db-f8cluster-*`). First time it will take some time as it has download required container images.
 
 [[cluster-service-status]]
 ==== Check Cluster service status
