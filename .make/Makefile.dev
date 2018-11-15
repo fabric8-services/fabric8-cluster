@@ -13,10 +13,10 @@ TEMPLATE_DIR:=minishift/openshift
 POSTGRESQL_VERSION:=9.6
 
 .PHONY: deploy-cluster
-deploy-cluster: deploy-cluster-config deploy-cluster-db deploy-cluster-only
+deploy-cluster: deploy-cluster-config deploy-cluster-db redeploy-cluster
 
-.PHONY: deploy-cluster-only
-deploy-cluster-only: build build-image
+.PHONY: redeploy-cluster
+redeploy-cluster: build build-image
 	@echo "Deploys cluster service ${TAG}"
 	@oc process -f $(TEMPLATE_DIR)/f8cluster.app.yaml \
 		-p DOCKER_REPO=$(DOCKER_REPO) \
@@ -60,24 +60,20 @@ deploy-cluster-config:
 	oc process -f $(TEMPLATE_DIR)/f8cluster.config.yaml -o yaml | oc apply -f -
 
 .PHONY: clean-all
-clean-all:
-	oc delete all -l env=dev
-	oc delete project $(OC_PROJECT_NAME)
+clean-all: clean-all-resources
+	oc delete project $(OC_PROJECT_NAME) --grace-period=1
 
 .PHONY: clean-all-resources
-clean-all-resources:
+clean-all-resources: expose-minishift-oc-and-oc-login
 	oc delete all -l env=dev
 
 .PHONY: clean-auth
-clean-auth:
+clean-auth: expose-minishift-oc-and-oc-login
 	oc delete all -l belongsTo=auth
 
 .PHONY: clean-cluster
 clean-cluster:
 	oc delete all -l belongsTo=f8cluster
-
-.PHONY: redeploy-cluster
-redeploy-auth: build build-image deploy-cluster-only
 
 .PHONY: minishift-start
 minishift-start:
@@ -94,3 +90,13 @@ init-project: ## Initializes new project clusterh secrets
 	@echo "Setting up project '$(OC_PROJECT_NAME)' in the cluster (ignoring potential errors if entries already exist)"
 	@oc new-project $(OC_PROJECT_NAME) || true \
     @oc project $(OC_PROJECT_NAME)
+
+.PHONY: dev-openshift
+dev-openshift: prebuild-check deps generate build minishift-start init-project clean-all-resources deploy-auth deploy-cluster
+
+.PHONY: clean-openshift
+clean-openshift: clean-all
+
+.PHONY: expose-minishift-oc-and-oc-login
+expose-minishift-oc-and-oc-login:
+	-eval `minishift oc-env` &&  oc login -u developer -p developer
