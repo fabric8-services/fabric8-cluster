@@ -44,12 +44,8 @@ deploy-cluster-db:
 		-o yaml | oc apply -f -
 
 .PHONY: build-image
-build-image: expose-minishift-docker-env
+build-image:
 	docker build -t $(DOCKER_REPO)/$(IMAGE_NAME):dev -f Dockerfile.dev .
-
-.PHONY: expose-minishift-docker-env
-expose-minishift-docker-env:
-	-eval `minishift docker-env`
 
 .PHONY: deploy-auth-config
 deploy-auth-config:
@@ -79,7 +75,7 @@ clean-cluster:
 minishift-start:
 	minishift start --cpus 4 --memory 8GB
 	./minishift/check_hosts.sh
-	-eval `minishift docker-env` && oc login -u developer -p developer
+	@oc login -u developer -p developer
 
 .PHONY: deploy-all
 deploy-all: prebuild-check deps generate build init-project clean-all-resources deploy-auth deploy-cluster
@@ -92,7 +88,7 @@ init-project: ## Initializes new project clusterh secrets
     @oc project $(OC_PROJECT_NAME)
 
 .PHONY: dev-openshift
-dev-openshift: prebuild-check deps generate build minishift-start init-project clean-all-resources deploy-auth deploy-cluster
+dev-openshift: build init-project clean-all-resources deploy-auth deploy-cluster
 
 .PHONY: clean-openshift
 clean-openshift: clean-all
