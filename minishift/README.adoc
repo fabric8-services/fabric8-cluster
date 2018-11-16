@@ -20,9 +20,9 @@ link:https://www.linux-kvm.org/page/Downloads[KVM Hypervisor]
 [[install-minishift]]
 ==== Install Minishift
 
-Make sure you have all prerequisites installed. Please check the list link:https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html[here]
+Make sure you have all prerequisites installed. Please check the list link:https://docs.okd.io/latest/minishift/getting-started/preparing-to-install.html[here].
 
-Download and put `minishift` in your $PATH by following steps link:https://docs.okd.io/latest/minishift/getting-started/installing.html#installing-manually[here]
+Download and put `minishift` in your $PATH by following steps link:https://docs.okd.io/latest/minishift/getting-started/installing.html#installing-manually[here].
 
 Verify installation by running following command, you should get version number.
 ```bash
@@ -31,7 +31,7 @@ minishift version
 
 [[install-oc]]
 ==== Install oc
-Please install and set up oc on your machine by visiting link:https://docs.okd.io/latest/cli_reference/get_started_cli.html#installing-the-cli[oc]
+Please install and set up oc on your machine by visiting link:https://docs.okd.io/latest/cli_reference/get_started_cli.html#installing-the-cli[oc].
 
 Verify installation by running following command, you should get version number.
 ```bash
@@ -40,13 +40,24 @@ oc version
 
 [[usage]]
 == Usage
+TL;DR
+```
+make minishift-start
+eval $(minishift docker-env)
+make dev-openshift
+```
 
-When you want to run `fabric8-cluster` and it's dependent services i.e. `fabric8-auth` on OpenShift use following command:
+Make sure that you have minishift running. you can check it using `minishift status`. If not then start it using `make minishift-start` target.
+
+Please enter sudo password when prompted, it is needed in order to create an entry in the `/etc/hosts`.
+`minishift ip` gives the IP address on which MiniShift is running. This automation creates a host entry as `minishift.local` for that IP. This domain is whitelisted on `fabric8-auth`.
+
+After successfully starting minishift, configure your shell to use docker daemon from minishift using `eval $(minishift docker-env)`.
+
+Now it's time to run `fabric8-cluster` and it's dependent services i.e. `fabric8-auth` on OpenShift use following command:
 ```
 make dev-openshift
 ```
-Please enter sudo password when prompted, it is needed in order to create an entry in the `/etc/hosts`.
-`minishift ip` gives the IP address on which MiniShift is running. This automation creates a host entry as `minishift.local` for that IP. This domain is whitelisted on fabric8-auth.
 
 This build uses the developer account for creating a project called `fabric8-services`.
 
