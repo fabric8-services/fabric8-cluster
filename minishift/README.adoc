@@ -40,7 +40,7 @@ oc version
 
 [[usage]]
 == Usage
-TL;DR
+=== TL;DR
 ```
 make minishift-start
 eval $(minishift docker-env)
