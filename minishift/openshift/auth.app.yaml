@@ -78,26 +78,27 @@ objects:
           ports:
           - containerPort: 8089
             protocol: TCP
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /api/status
-              port: 8089
-              scheme: HTTP
-            initialDelaySeconds: 1
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /api/status
-              port: 8089
-              scheme: HTTP
-            initialDelaySeconds: 1
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
+# Should we use livenessProbe or readinessProbe in development mode? If yes then let's wait for https://github.com/fabric8-services/fabric8-auth/issues/713 to fix
+#          livenessProbe:
+#            failureThreshold: 3
+#            httpGet:
+#              path: /api/status
+#              port: 8089
+#              scheme: HTTP
+#            initialDelaySeconds: 1
+#            periodSeconds: 10
+#            successThreshold: 1
+#            timeoutSeconds: 1
+#          readinessProbe:
+#            failureThreshold: 3
+#            httpGet:
+#              path: /api/status
+#              port: 8089
+#              scheme: HTTP
+#            initialDelaySeconds: 1
+#            periodSeconds: 10
+#            successThreshold: 1
+#            timeoutSeconds: 1
           resources:
             requests:
               cpu: 0.1m
