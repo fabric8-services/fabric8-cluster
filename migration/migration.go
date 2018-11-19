@@ -17,6 +17,7 @@ func Steps() Scripts {
 		{"000-bootstrap.sql"},
 		{"001-cluster.sql"},
 		{"002-cluster-on-delete-cascade.sql"},
+		{"003-unique-index-on-cluster-api-url.sql"},
 	}
 }
 
