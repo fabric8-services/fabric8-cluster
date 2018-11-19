@@ -18,6 +18,8 @@ import (
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-common/token"
 
+	"context"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
 	"github.com/goadesign/goa/middleware"
@@ -145,7 +147,7 @@ func main() {
 	service.WithLogger(goalogrus.New(log.Logger()))
 
 	// Create DB
-	//appDB := gormapplication.NewGormDB(db, config)
+	appDB := gormapplication.NewGormDB(db, config)
 
 	// Setup Security
 	tokenManager, err := token.DefaultManager(config)
@@ -167,6 +169,7 @@ func main() {
 	app.MountStatusController(service, statusCtrl)
 
 	// Mount "clusters" controller
+	appDB.Clusters().CreateOrSaveOSOClusterFromConfig(context.Background(), config)
 	clustersCtrl := controller.NewClustersController(service, config)
 	app.MountClustersController(service, clustersCtrl)
 

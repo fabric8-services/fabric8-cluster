@@ -14,7 +14,21 @@ import (
 
 func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 
-	cluster := &repository.Cluster{
+	cluster := NewCluster()
+	repo := repository.NewClusterRepository(db)
+
+	err := repo.Create(context.Background(), cluster)
+	require.NoError(t, err)
+
+	cls, err := repo.Load(context.Background(), cluster.ClusterID)
+	require.NoError(t, err)
+
+	AssertEqualClusters(t, cluster, cls)
+	return cluster
+}
+
+func NewCluster() *repository.Cluster {
+	return &repository.Cluster{
 		AppDNS:           uuid.NewV4().String(),
 		AuthClientID:     uuid.NewV4().String(),
 		AuthClientSecret: uuid.NewV4().String(),
@@ -29,19 +43,14 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 		Type:             uuid.NewV4().String(),
 		URL:              uuid.NewV4().String(),
 	}
-	repo := repository.NewClusterRepository(db)
-
-	err := repo.Create(context.Background(), cluster)
-	require.NoError(t, err)
-
-	cls, err := repo.Load(context.Background(), cluster.ClusterID)
-	require.NoError(t, err)
-
-	AssertEqualClusters(t, cluster, cls)
-	return cluster
 }
 
 func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
+	AssertEqualClusterDetails(t, expected, actual)
+	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+}
+
+func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.URL, actual.URL)
@@ -56,7 +65,6 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 	assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
 	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
-	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
 }
 

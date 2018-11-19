@@ -13,6 +13,15 @@ import (
 	"github.com/jinzhu/gorm"
 	errs "github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
+)
+
+const (
+	OSD = "OSD"
+	OCP = "OCP"
+	OSO = "OSO"
 )
 
 type Cluster struct {
@@ -23,7 +32,7 @@ type Cluster struct {
 	// The name of the cluster
 	Name string
 	// API URL of the cluster
-	URL string
+	URL string `sql:"unique_index"`
 	// Console URL of the cluster
 	ConsoleURL string
 	// Metrics URL of the cluster
@@ -65,6 +74,10 @@ type ClusterRepository interface {
 	Create(ctx context.Context, u *Cluster) error
 	Save(ctx context.Context, u *Cluster) error
 	Delete(ctx context.Context, ID uuid.UUID) error
+	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
+	LoadClusterByURL(ctx context.Context, url string) (*Cluster, error)
+	CreateOrSave(ctx context.Context, u *Cluster) error
+	CreateOrSaveOSOClusterFromConfig(ctx context.Context, config *configuration.ConfigurationData) error
 }
 
 // TableName overrides the table name settings in Gorm to force a specific table name
@@ -94,6 +107,16 @@ func (m *GormClusterRepository) Load(ctx context.Context, id uuid.UUID) (*Cluste
 	err := m.db.Table(m.TableName()).Where("cluster_id = ?", id).Find(&native).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, errors.NewNotFoundError("cluster", id.String())
+	}
+	return &native, errs.WithStack(err)
+}
+
+func (m *GormClusterRepository) LoadClusterByURL(ctx context.Context, url string) (*Cluster, error) {
+	defer goa.MeasureSince([]string{"goa", "db", "cluster", "loadClusterByURL"}, time.Now())
+	var native Cluster
+	err := m.db.Table(m.TableName()).Where("url = ?", url).Find(&native).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, err
 	}
 	return &native, errs.WithStack(err)
 }
@@ -145,6 +168,34 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 	return nil
 }
 
+func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) error {
+	obj, err := m.LoadClusterByURL(ctx, c.URL)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return m.Create(ctx, c)
+		}
+		log.Error(ctx, map[string]interface{}{
+			"cluster_url": c.URL,
+			"err":         err,
+		}, "unable to load cluster")
+		return errs.WithStack(err)
+	}
+	err = m.db.Model(obj).Updates(c).Error
+	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"cluster_id":  c.ClusterID.String(),
+			"cluster_url": c.URL,
+			"err":         err,
+		}, "unable to update cluster")
+		return errs.WithStack(err)
+	}
+
+	log.Debug(ctx, map[string]interface{}{
+		"cluster_id": c.ClusterID.String(),
+	}, "Cluster saved!")
+	return nil
+}
+
 // Delete removes a single record. This is a hard delete!
 func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "delete"}, time.Now())
@@ -169,4 +220,47 @@ func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	}, "Cluster deleted!")
 
 	return nil
+}
+
+func (m *GormClusterRepository) CreateOrSaveOSOClusterFromConfig(ctx context.Context, config *configuration.ConfigurationData) error {
+	for _, clusterConfig := range config.GetOSOClusters() {
+		cluster := &Cluster{
+			Name:       clusterConfig.Name,
+			URL:        httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
+			ConsoleURL: httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
+			MetricsURL: httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
+			LoggingURL: httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
+			AppDNS:     clusterConfig.AppDNS,
+			//CapacityExhausted: clusterConfig.CapacityExhausted,
+
+			SaToken:          clusterConfig.ServiceAccountToken,
+			SaUsername:       clusterConfig.ServiceAccountUsername,
+			TokenProviderID:  clusterConfig.TokenProviderID,
+			AuthClientID:     clusterConfig.AuthClientID,
+			AuthClientSecret: clusterConfig.AuthClientSecret,
+			AuthDefaultScope: clusterConfig.AuthClientDefaultScope,
+			Type:             OSO,
+		}
+		if err := m.CreateOrSave(ctx, cluster); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Query expose an open ended Query model
+func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error) {
+	defer goa.MeasureSince([]string{"goa", "db", "cluster", "query"}, time.Now())
+	var objs []Cluster
+
+	err := m.db.Scopes(funcs...).Table(m.TableName()).Find(&objs).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, errs.WithStack(err)
+	}
+
+	log.Debug(nil, map[string]interface{}{
+		"cluster_list": objs,
+	}, "cluster query done successfully!")
+
+	return objs, nil
 }
