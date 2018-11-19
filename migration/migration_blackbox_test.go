@@ -13,9 +13,9 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -33,10 +33,10 @@ const (
 )
 
 var (
-	sqlDB *sql.DB
-	host  string
-	port  string
-	dialect    gorm.Dialect
+	sqlDB   *sql.DB
+	host    string
+	port    string
+	dialect gorm.Dialect
 )
 
 func TestMigration(t *testing.T) {
