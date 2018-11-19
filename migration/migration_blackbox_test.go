@@ -20,7 +20,7 @@ import (
 const (
 	dbName      = "test"
 	defaultHost = "localhost"
-	defaultPort = "5436"
+	defaultPort = "5434"
 )
 
 type MigrationTestSuite struct {
