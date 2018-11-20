@@ -14,6 +14,7 @@ import (
 	errs "github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 
+	"fmt"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 )
@@ -116,7 +117,7 @@ func (m *GormClusterRepository) LoadClusterByURL(ctx context.Context, url string
 	var native Cluster
 	err := m.db.Table(m.TableName()).Where("url = ?", url).Find(&native).Error
 	if err == gorm.ErrRecordNotFound {
-		return nil, err
+		return nil, errors.NewNotFoundErrorFromString(fmt.Sprintf("cluster with url %s not found", url))
 	}
 	return &native, errs.WithStack(err)
 }
@@ -171,7 +172,7 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) error {
 	obj, err := m.LoadClusterByURL(ctx, c.URL)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if ok, _ := errors.IsNotFoundError(err); ok {
 			return m.Create(ctx, c)
 		}
 		log.Error(ctx, map[string]interface{}{
@@ -241,9 +242,7 @@ func (m *GormClusterRepository) CreateOrSaveOSOClusterFromConfig(ctx context.Con
 			AuthDefaultScope: clusterConfig.AuthClientDefaultScope,
 			Type:             OSO,
 		}
-		if err := m.CreateOrSave(ctx, cluster); err != nil {
-			return err
-		}
+		return m.CreateOrSave(ctx, cluster)
 	}
 	return nil
 }

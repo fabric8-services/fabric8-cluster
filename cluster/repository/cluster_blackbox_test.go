@@ -53,9 +53,11 @@ func (s *clusterTestSuite) TestCreateAndLoadClusterByURLOK() {
 func (s *clusterTestSuite) TestCreateAndLoadClusterByURLFail() {
 	test.CreateCluster(s.T(), s.DB)
 	test.CreateCluster(s.T(), s.DB) // noise
-	loaded, err := s.repo.LoadClusterByURL(context.Background(), uuid.NewV4().String())
+
+	clusterURL := uuid.NewV4().String()
+	loaded, err := s.repo.LoadClusterByURL(context.Background(), clusterURL)
 	assert.Nil(s.T(), loaded)
-	test.AssertError(s.T(), err, gorm.ErrRecordNotFound, "record not found")
+	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf("cluster with url %s not found", clusterURL))
 }
 
 func (s *clusterTestSuite) TestCreateOKInCreateOrSave() {
@@ -102,9 +104,10 @@ func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
 
 func (s *clusterTestSuite) TestCreateOrSaveOSOClusterOK() {
 	clusterConfig, err := configuration.NewConfigurationData("", "./../../configuration/conf-files/oso-clusters.conf")
-	fmt.Println(clusterConfig.GetOSOClusters())
-	require.Nil(s.T(), err)
-	s.repo.CreateOrSaveOSOClusterFromConfig(context.Background(), clusterConfig)
+	require.NoError(s.T(), err)
+
+	err = s.repo.CreateOrSaveOSOClusterFromConfig(context.Background(), clusterConfig)
+	require.NoError(s.T(), err)
 
 	clusters, err := s.repo.Query(func(db *gorm.DB) *gorm.DB {
 		return db.Where("type = ?", repository.OSO)
@@ -256,7 +259,6 @@ func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *reposi
 
 func getCluster(clusters []repository.Cluster, url string) *repository.Cluster {
 	for _, c := range clusters {
-		fmt.Println(c.URL, url)
 		if c.URL == url {
 			return &c
 		}
