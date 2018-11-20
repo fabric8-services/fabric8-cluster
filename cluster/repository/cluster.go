@@ -15,14 +15,6 @@ import (
 	"github.com/satori/go.uuid"
 
 	"fmt"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-common/httpsupport"
-)
-
-const (
-	OSD = "OSD"
-	OCP = "OCP"
-	OSO = "OSO"
 )
 
 type Cluster struct {
@@ -78,7 +70,6 @@ type ClusterRepository interface {
 	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
 	LoadClusterByURL(ctx context.Context, url string) (*Cluster, error)
 	CreateOrSave(ctx context.Context, u *Cluster) error
-	CreateOrSaveOSOClusterFromConfig(ctx context.Context, config *configuration.ConfigurationData) error
 }
 
 // TableName overrides the table name settings in Gorm to force a specific table name
@@ -220,30 +211,6 @@ func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error 
 		"cluster_id": id.String(),
 	}, "Cluster deleted!")
 
-	return nil
-}
-
-func (m *GormClusterRepository) CreateOrSaveOSOClusterFromConfig(ctx context.Context, config *configuration.ConfigurationData) error {
-	for _, clusterConfig := range config.GetOSOClusters() {
-		cluster := &Cluster{
-			Name:       clusterConfig.Name,
-			URL:        httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL: httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL: httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL: httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
-			AppDNS:     clusterConfig.AppDNS,
-			//CapacityExhausted: clusterConfig.CapacityExhausted,
-
-			SaToken:          clusterConfig.ServiceAccountToken,
-			SaUsername:       clusterConfig.ServiceAccountUsername,
-			TokenProviderID:  clusterConfig.TokenProviderID,
-			AuthClientID:     clusterConfig.AuthClientID,
-			AuthClientSecret: clusterConfig.AuthClientSecret,
-			AuthDefaultScope: clusterConfig.AuthClientDefaultScope,
-			Type:             OSO,
-		}
-		return m.CreateOrSave(ctx, cluster)
-	}
 	return nil
 }
 

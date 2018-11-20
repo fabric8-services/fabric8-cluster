@@ -8,6 +8,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/context"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
+	clusterservice "github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/log"
 
@@ -135,7 +136,6 @@ func (f *ServiceFactory) getContext() context.ServiceContext {
 	return f.contextProducer()
 }
 
-func (f *ServiceFactory) FooService() service.FooService {
-	//return organizationservice.NewOrganizationService(f.getContext())
-	return nil
+func (f *ServiceFactory) ClusterService() service.ClusterService {
+	return clusterservice.NewClusterService(f.getContext(), f.config)
 }

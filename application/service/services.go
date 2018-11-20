@@ -16,11 +16,11 @@ Steps for adding a new Service:
    and use the factory method from the step #4
 */
 
-type FooService interface {
-	Foo(ctx context.Context) error
+type ClusterService interface {
+	CreateOrSaveOSOClusterFromConfig(ctx context.Context) error
 }
 
 //Services creates instances of service layer objects
 type Services interface {
-	FooService() FooService
+	ClusterService() ClusterService
 }

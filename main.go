@@ -169,7 +169,7 @@ func main() {
 	app.MountStatusController(service, statusCtrl)
 
 	// Mount "clusters" controller
-	appDB.Clusters().CreateOrSaveOSOClusterFromConfig(context.Background(), config)
+	appDB.ClusterService().CreateOrSaveOSOClusterFromConfig(context.Background())
 	clustersCtrl := controller.NewClustersController(service, config)
 	app.MountClustersController(service, clustersCtrl)
 
