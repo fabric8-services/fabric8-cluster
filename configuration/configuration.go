@@ -335,7 +335,6 @@ func getOSOClusterConfigFile() string {
 	return envOSOClusterConfigFile
 }
 
-
 func (c *ConfigurationData) ReloadClusterConfig() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()

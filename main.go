@@ -18,6 +18,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-common/token"
 
+	"context"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
@@ -27,7 +28,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
-	"context"
 )
 
 func main() {
@@ -94,7 +94,6 @@ func main() {
 		}, "failed to setup the sentry client")
 	}
 	defer haltSentry()
-
 
 	if config.DeveloperModeEnabled() && log.IsDebug() {
 		db = db.Debug()

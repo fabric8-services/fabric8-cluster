@@ -2,11 +2,11 @@ package configuration_test
 
 import (
 	"fmt"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/resource"
 	"net/http"
 	"os"
 	"testing"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
