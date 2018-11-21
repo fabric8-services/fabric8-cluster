@@ -40,22 +40,22 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 
 // CreateOrSaveOSOClusterFromConfig creates clusters or save updated cluster info from config
 func (c clusterService) CreateOrSaveOSOClusterFromConfig(ctx context.Context) error {
-	for _, clusterConfig := range c.loader.GetOSOClusters() {
+	for _, osoCluster := range c.loader.GetOSOClusters() {
 		cluster := &repository.Cluster{
-			Name:       clusterConfig.Name,
-			URL:        httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL: httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL: httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL: httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
-			AppDNS:     clusterConfig.AppDNS,
+			Name:       osoCluster.Name,
+			URL:        httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
+			ConsoleURL: httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
+			MetricsURL: httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
+			LoggingURL: httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
+			AppDNS:     osoCluster.AppDNS,
 			//CapacityExhausted: clusterConfig.CapacityExhausted,
 
-			SaToken:          clusterConfig.ServiceAccountToken,
-			SaUsername:       clusterConfig.ServiceAccountUsername,
-			TokenProviderID:  clusterConfig.TokenProviderID,
-			AuthClientID:     clusterConfig.AuthClientID,
-			AuthClientSecret: clusterConfig.AuthClientSecret,
-			AuthDefaultScope: clusterConfig.AuthClientDefaultScope,
+			SaToken:          osoCluster.ServiceAccountToken,
+			SaUsername:       osoCluster.ServiceAccountUsername,
+			TokenProviderID:  osoCluster.TokenProviderID,
+			AuthClientID:     osoCluster.AuthClientID,
+			AuthClientSecret: osoCluster.AuthClientSecret,
+			AuthDefaultScope: osoCluster.AuthClientDefaultScope,
 			Type:             OSO,
 		}
 

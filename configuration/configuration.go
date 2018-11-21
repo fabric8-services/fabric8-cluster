@@ -185,20 +185,20 @@ func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClust
 	c.clusters = map[string]OSOCluster{}
 	for _, cluster := range clusterConf.Clusters {
 		if cluster.ConsoleURL == "" {
-			cluster.ConsoleURL, err = convertAPIURL(cluster.APIURL, "console", "console")
+			cluster.ConsoleURL, err = ConvertAPIURL(cluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
 		if cluster.MetricsURL == "" {
-			cluster.MetricsURL, err = convertAPIURL(cluster.APIURL, "metrics", "")
+			cluster.MetricsURL, err = ConvertAPIURL(cluster.APIURL, "metrics", "")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
 		if cluster.LoggingURL == "" {
 			// This is not a typo; the logging host is the same as the console host in current k8s
-			cluster.LoggingURL, err = convertAPIURL(cluster.APIURL, "console", "console")
+			cluster.LoggingURL, err = ConvertAPIURL(cluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
@@ -244,7 +244,7 @@ func (c *ConfigurationData) checkClusterConfig() error {
 	return nil
 }
 
-func convertAPIURL(apiURL string, newPrefix string, newPath string) (string, error) {
+func ConvertAPIURL(apiURL, newPrefix, newPath string) (string, error) {
 	newURL, err := url.Parse(apiURL)
 	if err != nil {
 		return "", err
@@ -258,7 +258,7 @@ func convertAPIURL(apiURL string, newPrefix string, newPath string) (string, err
 	return newURL.String(), nil
 }
 
-func readFromJSONFile(configFilePath string, defaultConfigFilePath string, configFileName string) (*viper.Viper, *string, string, error) {
+func readFromJSONFile(configFilePath, defaultConfigFilePath, configFileName string) (*viper.Viper, *string, string, error) {
 	jsonViper := viper.New()
 	jsonViper.SetTypeByDefaultValue(true)
 
@@ -314,6 +314,7 @@ func (c *ConfigurationData) appendDefaultConfigErrorMessage(message string) {
 	}
 }
 
+// PathExists returns existed path or error if path doesn't exist
 func PathExists(pathToCheck string) (string, error) {
 	_, err := os.Stat(pathToCheck)
 	if err == nil {

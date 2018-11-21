@@ -6,8 +6,13 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster/service"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,4 +104,59 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual *repository.Iden
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.IdentityID, actual.IdentityID)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+}
+
+type OSOClusterConfig struct {
+	Clusters []configuration.OSOCluster
+}
+
+func GetClustersFromConfigFile(filePath string) ([]repository.Cluster, error) {
+	clusters := make([]repository.Cluster, 0)
+	clusterViper := viper.New()
+	clusterViper.SetTypeByDefaultValue(true)
+
+	clusterViper.SetConfigFile(filePath)
+	clusterViper.SetConfigType("json")
+	err := clusterViper.ReadInConfig()
+	if err != nil {
+		return clusters, errors.Errorf("failed to load the JSON config file (%s): %s \n", filePath, err)
+	}
+
+	var clusterConf OSOClusterConfig
+	err = clusterViper.Unmarshal(&clusterConf)
+	if err != nil {
+		return clusters, errors.Errorf("failed to unmarshal JSON config file (%s): %s \n", filePath, err)
+	}
+	for _, osoCluster := range clusterConf.Clusters {
+		cluster := repository.Cluster{
+			Name:       osoCluster.Name,
+			URL:        httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
+			ConsoleURL: convertAPIURLForEmptyURL(osoCluster.ConsoleURL, osoCluster.APIURL, "console", "console"),
+			MetricsURL: convertAPIURLForEmptyURL(osoCluster.MetricsURL, osoCluster.APIURL, "metrics", ""),
+			LoggingURL: convertAPIURLForEmptyURL(osoCluster.LoggingURL, osoCluster.APIURL, "console", "console"),
+			AppDNS:     osoCluster.AppDNS,
+			//CapacityExhausted: clusterConfig.CapacityExhausted,
+
+			SaToken:          osoCluster.ServiceAccountToken,
+			SaUsername:       osoCluster.ServiceAccountUsername,
+			TokenProviderID:  osoCluster.TokenProviderID,
+			AuthClientID:     osoCluster.AuthClientID,
+			AuthClientSecret: osoCluster.AuthClientSecret,
+			AuthDefaultScope: osoCluster.AuthClientDefaultScope,
+			Type:             service.OSO,
+		}
+		clusters = append(clusters, cluster)
+	}
+	return clusters, nil
+}
+
+func convertAPIURLForEmptyURL(url, apiURL, newPrefix, newPath string) string {
+	if url == "" {
+		url, err := configuration.ConvertAPIURL(apiURL, newPrefix, newPath)
+		if err != nil {
+			return ""
+		}
+		return httpsupport.AddTrailingSlashToURL(url)
+	}
+	return url
 }
