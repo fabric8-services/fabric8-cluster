@@ -29,8 +29,7 @@ func NewServiceContext(repos repository.Repositories, tm transaction.Transaction
 	ctx.transactionManager = tm
 	ctx.inTransaction = false
 
-	var sc context.ServiceContext
-	sc = ctx
+	sc := ctx
 	ctx.services = NewServiceFactory(func() context.ServiceContext { return sc }, config, options...)
 	return ctx
 }
@@ -38,9 +37,8 @@ func NewServiceContext(repos repository.Repositories, tm transaction.Transaction
 func (s *serviceContextImpl) Repositories() repository.Repositories {
 	if s.inTransaction {
 		return s.transactionalRepositories
-	} else {
-		return s.repositories
 	}
+	return s.repositories
 }
 
 func (s *serviceContextImpl) Services() service.Services {

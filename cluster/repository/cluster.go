@@ -103,6 +103,7 @@ func (m *GormClusterRepository) Load(ctx context.Context, id uuid.UUID) (*Cluste
 	return &native, errs.WithStack(err)
 }
 
+// LoadClusterByURL returns a single Cluster filtered using 'url'
 func (m *GormClusterRepository) LoadClusterByURL(ctx context.Context, url string) (*Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "loadClusterByURL"}, time.Now())
 	var native Cluster
@@ -160,6 +161,7 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 	return nil
 }
 
+// CreateOrSave creates cluster or saves cluster if any cluster found using url
 func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) error {
 	obj, err := m.LoadClusterByURL(ctx, c.URL)
 	if err != nil {

@@ -149,9 +149,11 @@ func (s *clusterTestSuite) TestSaveOK() {
 	require.NoError(s.T(), err)
 
 	loaded1, err := s.repo.Load(context.Background(), cluster1.ClusterID)
+	require.NoError(s.T(), err)
 	test.AssertEqualClusters(s.T(), cluster1, loaded1)
 
 	loaded2, err := s.repo.Load(context.Background(), cluster2.ClusterID)
+	require.NoError(s.T(), err)
 	test.AssertEqualClusters(s.T(), cluster2, loaded2)
 }
 

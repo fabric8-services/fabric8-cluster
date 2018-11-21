@@ -16,8 +16,10 @@ Steps for adding a new Service:
    and use the factory method from the step #4
 */
 
+//
 type ClusterService interface {
 	CreateOrSaveOSOClusterFromConfig(ctx context.Context) error
+	InitializeClusterWatcher() (func() error, error)
 }
 
 //Services creates instances of service layer objects
