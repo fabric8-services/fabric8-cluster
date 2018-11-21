@@ -8,7 +8,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
-	"github.com/fabric8-services/fabric8-oso-proxy/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/fsnotify/fsnotify"
 	"time"
 )
