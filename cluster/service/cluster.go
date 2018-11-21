@@ -8,8 +8,8 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
-	log "github.com/sirupsen/logrus"
 	"github.com/fsnotify/fsnotify"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
