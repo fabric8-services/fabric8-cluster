@@ -93,6 +93,7 @@ func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
 	cluster.SaUsername = uuid.NewV4().String()
 	cluster.TokenProviderID = uuid.NewV4().String()
 	cluster.Type = uuid.NewV4().String()
+	cluster.CapacityExhausted = true
 
 	s.repo.CreateOrSave(context.Background(), cluster)
 	loaded, err = s.repo.LoadClusterByURL(context.Background(), cluster.URL)
@@ -144,6 +145,7 @@ func (s *clusterTestSuite) TestSaveOK() {
 	cluster1.TokenProviderID = uuid.NewV4().String()
 	cluster1.Type = uuid.NewV4().String()
 	cluster1.URL = uuid.NewV4().String()
+	cluster1.CapacityExhausted = true
 
 	err := s.repo.Save(context.Background(), cluster1)
 	require.NoError(s.T(), err)

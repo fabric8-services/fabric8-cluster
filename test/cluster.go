@@ -6,7 +6,6 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
-	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
@@ -33,19 +32,20 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 
 func NewCluster() *repository.Cluster {
 	return &repository.Cluster{
-		AppDNS:           uuid.NewV4().String(),
-		AuthClientID:     uuid.NewV4().String(),
-		AuthClientSecret: uuid.NewV4().String(),
-		AuthDefaultScope: uuid.NewV4().String(),
-		ConsoleURL:       uuid.NewV4().String(),
-		LoggingURL:       uuid.NewV4().String(),
-		MetricsURL:       uuid.NewV4().String(),
-		Name:             uuid.NewV4().String(),
-		SaToken:          uuid.NewV4().String(),
-		SaUsername:       uuid.NewV4().String(),
-		TokenProviderID:  uuid.NewV4().String(),
-		Type:             uuid.NewV4().String(),
-		URL:              uuid.NewV4().String(),
+		AppDNS:            uuid.NewV4().String(),
+		AuthClientID:      uuid.NewV4().String(),
+		AuthClientSecret:  uuid.NewV4().String(),
+		AuthDefaultScope:  uuid.NewV4().String(),
+		ConsoleURL:        uuid.NewV4().String(),
+		LoggingURL:        uuid.NewV4().String(),
+		MetricsURL:        uuid.NewV4().String(),
+		Name:              uuid.NewV4().String(),
+		SaToken:           uuid.NewV4().String(),
+		SaUsername:        uuid.NewV4().String(),
+		TokenProviderID:   uuid.NewV4().String(),
+		Type:              uuid.NewV4().String(),
+		URL:               uuid.NewV4().String(),
+		CapacityExhausted: false,
 	}
 }
 
@@ -70,6 +70,7 @@ func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluste
 	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
+	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
 }
 
 func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluster, identityID *uuid.UUID) *repository.IdentityCluster {
@@ -105,19 +106,15 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual *repository.Iden
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 }
 
-type OSOClusterConfig struct {
-	Clusters []configuration.OSOCluster
-}
-
 func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.Cluster {
 	return &repository.Cluster{
-		Name:       osoCluster.Name,
-		URL:        httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
-		ConsoleURL: convertAPIURLForEmptyURL(osoCluster.ConsoleURL, osoCluster.APIURL, "console", "console"),
-		MetricsURL: convertAPIURLForEmptyURL(osoCluster.MetricsURL, osoCluster.APIURL, "metrics", ""),
-		LoggingURL: convertAPIURLForEmptyURL(osoCluster.LoggingURL, osoCluster.APIURL, "console", "console"),
-		AppDNS:     osoCluster.AppDNS,
-		//CapacityExhausted: clusterConfig.CapacityExhausted,
+		Name:              osoCluster.Name,
+		URL:               httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
+		ConsoleURL:        httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
+		MetricsURL:        httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
+		LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
+		AppDNS:            osoCluster.AppDNS,
+		CapacityExhausted: osoCluster.CapacityExhausted,
 
 		SaToken:          osoCluster.ServiceAccountToken,
 		SaUsername:       osoCluster.ServiceAccountUsername,
@@ -127,15 +124,4 @@ func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.C
 		AuthDefaultScope: osoCluster.AuthClientDefaultScope,
 		Type:             service.OSO,
 	}
-}
-
-func convertAPIURLForEmptyURL(url, apiURL, newPrefix, newPath string) string {
-	if url == "" {
-		url, err := cluster.ConvertAPIURL(apiURL, newPrefix, newPath)
-		if err != nil {
-			return ""
-		}
-		return httpsupport.AddTrailingSlashToURL(url)
-	}
-	return httpsupport.AddTrailingSlashToURL(url)
 }
