@@ -6,6 +6,7 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
@@ -152,7 +153,7 @@ func GetClustersFromConfigFile(filePath string) ([]repository.Cluster, error) {
 
 func convertAPIURLForEmptyURL(url, apiURL, newPrefix, newPath string) string {
 	if url == "" {
-		url, err := configuration.ConvertAPIURL(apiURL, newPrefix, newPath)
+		url, err := cluster.ConvertAPIURL(apiURL, newPrefix, newPath)
 		if err != nil {
 			return ""
 		}

@@ -8,8 +8,8 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
+	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fsnotify/fsnotify"
-	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -89,9 +89,9 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 					time.Sleep(1 * time.Second) // Wait for one second before re-adding and reloading. It might be needed if the file is removed and then re-added in some environments
 					err = watcher.Add(event.Name)
 					if err != nil {
-						log.WithFields(map[string]interface{}{
+						log.Error(context.Background(), map[string]interface{}{
 							"file": event.Name,
-						}).Errorln("cluster config was removed but unable to re-add it to watcher")
+						}, "cluster config was removed but unable to re-add it to watcher")
 					}
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Remove == fsnotify.Remove {
@@ -100,33 +100,33 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 					err = c.loader.ReloadClusterConfig()
 					if err != nil {
 						// Do not crash. Log the error and keep using the existing configuration
-						log.WithFields(map[string]interface{}{
+						log.Error(context.Background(), map[string]interface{}{
 							"err":  err,
 							"file": event.Name,
 							"op":   event.Op.String(),
-						}).Errorln("unable to reload cluster config file")
+						}, "unable to reload cluster config file")
 					} else {
-						log.WithFields(map[string]interface{}{
+						log.Info(context.Background(), map[string]interface{}{
 							"file": event.Name,
 							"op":   event.Op.String(),
-						}).Infoln("cluster config file modified and reloaded")
+						}, "cluster config file modified and reloaded")
 					}
 					if err := c.CreateOrSaveOSOClusterFromConfig(context.Background()); err != nil {
 						// Do not crash. Log the error and keep using the existing configuration from DB
-						log.WithFields(map[string]interface{}{
+						log.Error(context.Background(), map[string]interface{}{
 							"err":  err,
 							"file": event.Name,
 							"op":   event.Op.String(),
-						}).Errorln("unable to save reloaded cluster config file")
+						}, "unable to save reloaded cluster config file")
 					}
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
 				}
-				log.WithFields(map[string]interface{}{
+				log.Error(context.Background(), map[string]interface{}{
 					"err": err,
-				}).Errorln("cluster config file watcher error")
+				}, "cluster config file watcher error")
 			}
 		}
 	}()
@@ -139,14 +139,14 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 	configFilePath, err := configuration.PathExists(osoConfigPath)
 	if err == nil && configFilePath != "" {
 		err = watcher.Add(configFilePath)
-		log.WithFields(map[string]interface{}{
+		log.Info(context.Background(), map[string]interface{}{
 			"file": configFilePath,
-		}).Infoln("cluster config file watcher initialized")
+		}, "cluster config file watcher initialized")
 	} else {
 		// OK in Dev Mode
-		log.WithFields(map[string]interface{}{
+		log.Warn(context.Background(), map[string]interface{}{
 			"file": configFilePath,
-		}).Warnln("cluster config file watcher not initialized for non-existent file")
+		}, "cluster config file watcher not initialized for non-existent file")
 	}
 
 	return watcher.Close, err

@@ -13,6 +13,7 @@ import (
 	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -183,27 +184,27 @@ func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClust
 		return usedClusterConfigFile, err
 	}
 	c.clusters = map[string]OSOCluster{}
-	for _, cluster := range clusterConf.Clusters {
-		if cluster.ConsoleURL == "" {
-			cluster.ConsoleURL, err = ConvertAPIURL(cluster.APIURL, "console", "console")
+	for _, osoCluster := range clusterConf.Clusters {
+		if osoCluster.ConsoleURL == "" {
+			osoCluster.ConsoleURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if cluster.MetricsURL == "" {
-			cluster.MetricsURL, err = ConvertAPIURL(cluster.APIURL, "metrics", "")
+		if osoCluster.MetricsURL == "" {
+			osoCluster.MetricsURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "metrics", "")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if cluster.LoggingURL == "" {
+		if osoCluster.LoggingURL == "" {
 			// This is not a typo; the logging host is the same as the console host in current k8s
-			cluster.LoggingURL, err = ConvertAPIURL(cluster.APIURL, "console", "console")
+			osoCluster.LoggingURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		c.clusters[cluster.APIURL] = cluster
+		c.clusters[osoCluster.APIURL] = osoCluster
 	}
 
 	err = c.checkClusterConfig()
@@ -242,20 +243,6 @@ func (c *ConfigurationData) checkClusterConfig() error {
 		return err
 	}
 	return nil
-}
-
-func ConvertAPIURL(apiURL, newPrefix, newPath string) (string, error) {
-	newURL, err := url.Parse(apiURL)
-	if err != nil {
-		return "", err
-	}
-	newHost, err := httpsupport.ReplaceDomainPrefix(newURL.Host, newPrefix)
-	if err != nil {
-		return "", err
-	}
-	newURL.Host = newHost
-	newURL.Path = newPath
-	return newURL.String(), nil
 }
 
 func readFromJSONFile(configFilePath, defaultConfigFilePath, configFileName string) (*viper.Viper, *string, string, error) {
