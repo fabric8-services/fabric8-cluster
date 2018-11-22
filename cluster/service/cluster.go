@@ -110,14 +110,14 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 							"file": event.Name,
 							"op":   event.Op.String(),
 						}, "cluster config file modified and reloaded")
-					}
-					if err := c.CreateOrSaveOSOClusterFromConfig(context.Background()); err != nil {
-						// Do not crash. Log the error and keep using the existing configuration from DB
-						log.Error(context.Background(), map[string]interface{}{
-							"err":  err,
-							"file": event.Name,
-							"op":   event.Op.String(),
-						}, "unable to save reloaded cluster config file")
+						if err := c.CreateOrSaveOSOClusterFromConfig(context.Background()); err != nil {
+							// Do not crash. Log the error and keep using the existing configuration from DB
+							log.Error(context.Background(), map[string]interface{}{
+								"err":  err,
+								"file": event.Name,
+								"op":   event.Op.String(),
+							}, "unable to save reloaded cluster config file")
+						}
 					}
 				}
 			case err, ok := <-watcher.Errors:
