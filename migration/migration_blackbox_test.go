@@ -83,6 +83,7 @@ func (s *MigrationTestSuite) TestMigrate() {
 	s.T().Run("testMigration002ClusterOnDeleteCascade", testMigration002ClusterOnDeleteCascade)
 	s.T().Run("testMigration003UniqueIndexOnClusterApiUrl", testMigration003UniqueIndexOnClusterApiUrl)
 	s.T().Run("testMigration004AddCapacityExhaustedToCluster", testMigration004AddCapacityExhaustedToCluster)
+	s.T().Run("testMigration005AlterClusterAPIURLIndexToUnique", testMigration005AlterClusterAPIURLIndexToUnique)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -173,7 +174,6 @@ func testMigration004AddCapacityExhaustedToCluster(t *testing.T) {
 
 	// check if ALL the existing rows & new rows have the default value
 	rows, err := sqlDB.Query("SELECT capacity_exhausted FROM cluster")
-	fmt.Println(rows.Columns())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,4 +184,29 @@ func testMigration004AddCapacityExhaustedToCluster(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, capacity_exhausted)
 	}
+}
+
+func testMigration005AlterClusterAPIURLIndexToUnique(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:6])
+	require.NoError(t, err)
+
+	assert.True(t, dialect.HasIndex("cluster", "idx_cluster_url"))
+
+	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, created_at, updated_at, name, url, console_url,
+                     metrics_url, logging_url, app_dns, sa_token, sa_username, token_provider_id,
+                     auth_client_id, auth_client_secret, auth_default_scope, type)
+			VALUES ('2c4e4852-69a7-4981-bf6f-63cd08b723af', now(), now(), 'exhausted', 'https://unique.api.cluster.com', 'https://console.cluster.com',
+			        'https://metrics.cluster.com', 'https://login.cluster.com', 'https://app.cluster.com', 'sometoken', 'dssas-sre', 'pr-id',
+			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
+	require.NoError(t, err)
+
+	// add cluster with same url https://unique.api.cluster.com to verify uniqueness
+	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, created_at, updated_at, name, url, console_url,
+                     metrics_url, logging_url, app_dns, sa_token, sa_username, token_provider_id,
+                     auth_client_id, auth_client_secret, auth_default_scope, type)
+			VALUES ('2aye4862-69a7-4981-bf6f-63cd08b723af', now(), now(), 'exhausted', 'https://unique.api.cluster.com', 'https://console.cluster.com',
+			        'https://metrics.cluster.com', 'https://login.cluster.com', 'https://app.cluster.com', 'sometoken', 'dssas-sre', 'pr-id',
+			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
+
+	require.Error(t, err)
 }
