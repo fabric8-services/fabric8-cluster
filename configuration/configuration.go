@@ -13,7 +13,7 @@ import (
 	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -184,27 +184,27 @@ func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClust
 		return usedClusterConfigFile, err
 	}
 	c.clusters = map[string]OSOCluster{}
-	for _, cluster := range clusterConf.Clusters {
-		if cluster.ConsoleURL == "" {
-			cluster.ConsoleURL, err = convertAPIURL(cluster.APIURL, "console", "console")
+	for _, osoCluster := range clusterConf.Clusters {
+		if osoCluster.ConsoleURL == "" {
+			osoCluster.ConsoleURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if cluster.MetricsURL == "" {
-			cluster.MetricsURL, err = convertAPIURL(cluster.APIURL, "metrics", "")
+		if osoCluster.MetricsURL == "" {
+			osoCluster.MetricsURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "metrics", "")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if cluster.LoggingURL == "" {
+		if osoCluster.LoggingURL == "" {
 			// This is not a typo; the logging host is the same as the console host in current k8s
-			cluster.LoggingURL, err = convertAPIURL(cluster.APIURL, "console", "console")
+			osoCluster.LoggingURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		c.clusters[cluster.APIURL] = cluster
+		c.clusters[osoCluster.APIURL] = osoCluster
 	}
 
 	err = c.checkClusterConfig()
@@ -245,21 +245,7 @@ func (c *ConfigurationData) checkClusterConfig() error {
 	return nil
 }
 
-func convertAPIURL(apiURL string, newPrefix string, newPath string) (string, error) {
-	newURL, err := url.Parse(apiURL)
-	if err != nil {
-		return "", err
-	}
-	newHost, err := httpsupport.ReplaceDomainPrefix(newURL.Host, newPrefix)
-	if err != nil {
-		return "", err
-	}
-	newURL.Host = newHost
-	newURL.Path = newPath
-	return newURL.String(), nil
-}
-
-func readFromJSONFile(configFilePath string, defaultConfigFilePath string, configFileName string) (*viper.Viper, *string, string, error) {
+func readFromJSONFile(configFilePath, defaultConfigFilePath, configFileName string) (*viper.Viper, *string, string, error) {
 	jsonViper := viper.New()
 	jsonViper.SetTypeByDefaultValue(true)
 
@@ -274,7 +260,7 @@ func readFromJSONFile(configFilePath string, defaultConfigFilePath string, confi
 	} else {
 		// If the JSON configuration file has not been specified
 		// then we default to <defaultConfigFile>
-		configFilePath, err = pathExists(defaultConfigFilePath)
+		configFilePath, err = PathExists(defaultConfigFilePath)
 		if err != nil {
 			return nil, nil, defaultConfigFilePath, err
 		}
@@ -315,7 +301,8 @@ func (c *ConfigurationData) appendDefaultConfigErrorMessage(message string) {
 	}
 }
 
-func pathExists(pathToCheck string) (string, error) {
+// PathExists returns existed path or error if path doesn't exist
+func PathExists(pathToCheck string) (string, error) {
 	_, err := os.Stat(pathToCheck)
 	if err == nil {
 		return pathToCheck, nil
@@ -336,76 +323,7 @@ func getOSOClusterConfigFile() string {
 	return envOSOClusterConfigFile
 }
 
-// InitializeClusterWatcher initializes a file watcher for the cluster config file
-// When the file is updated the configuration synchronously reload the cluster configuration
-func (c *ConfigurationData) InitializeClusterWatcher() (func() error, error) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Op&fsnotify.Remove == fsnotify.Remove {
-					time.Sleep(1 * time.Second) // Wait for one second before re-adding and reloading. It might be needed if the file is removed and then re-added in some environments
-					err = watcher.Add(event.Name)
-					if err != nil {
-						log.WithFields(map[string]interface{}{
-							"file": event.Name,
-						}).Errorln("cluster config was removed but unable to re-add it to watcher")
-					}
-				}
-				if event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Remove == fsnotify.Remove {
-					// Reload config if operation is Write or Remove.
-					// Both can be part of file update depending on environment and actual operation.
-					err := c.reloadClusterConfig()
-					if err != nil {
-						// Do not crash. Log the error and keep using the existing configuration
-						log.WithFields(map[string]interface{}{
-							"err":  err,
-							"file": event.Name,
-							"op":   event.Op.String(),
-						}).Errorln("unable to reload cluster config file")
-					} else {
-						log.WithFields(map[string]interface{}{
-							"file": event.Name,
-							"op":   event.Op.String(),
-						}).Infoln("cluster config file modified and reloaded")
-					}
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.WithFields(map[string]interface{}{
-					"err": err,
-				}).Errorln("cluster config file watcher error")
-			}
-		}
-	}()
-
-	configFilePath, err := pathExists(c.clusterConfigFilePath)
-	if err == nil && configFilePath != "" {
-		err = watcher.Add(configFilePath)
-		log.WithFields(map[string]interface{}{
-			"file": c.clusterConfigFilePath,
-		}).Infoln("cluster config file watcher initialized")
-	} else {
-		// OK in Dev Mode
-		log.WithFields(map[string]interface{}{
-			"file": c.clusterConfigFilePath,
-		}).Warnln("cluster config file watcher not initialized for non-existent file")
-	}
-
-	return watcher.Close, err
-}
-
-func (c *ConfigurationData) reloadClusterConfig() error {
+func (c *ConfigurationData) ReloadClusterConfig() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
@@ -483,6 +401,11 @@ func (c *ConfigurationData) GetOSOClusterByURL(url string) *OSOCluster {
 	return nil
 }
 
+// GetOSOConfigurationFilePath returns the oso configuration file path.
+func (c *ConfigurationData) GetOSOConfigurationFilePath() string {
+	return c.clusterConfigFilePath
+}
+
 // GetDefaultConfigurationFile returns the default configuration file.
 func (c *ConfigurationData) GetDefaultConfigurationFile() string {
 	return defaultConfigFile
@@ -533,7 +456,7 @@ func (c *ConfigurationData) setConfigDefaults() {
 
 	c.v.SetDefault(varLogLevel, defaultLogLevel)
 
-	// By default, test data should be cleaned from DB, unless explicitely said otherwise.
+	// By default, test data should be cleaned from DB, unless explicitly said otherwise.
 	c.v.SetDefault(varCleanTestDataEnabled, true)
 	// By default, DB logs are not output in the console
 	c.v.SetDefault(varDBLogsEnabled, false)

@@ -6,6 +6,10 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster"
+	"github.com/fabric8-services/fabric8-cluster/cluster/service"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +18,21 @@ import (
 
 func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 
-	cluster := &repository.Cluster{
+	cluster := NewCluster()
+	repo := repository.NewClusterRepository(db)
+
+	err := repo.Create(context.Background(), cluster)
+	require.NoError(t, err)
+
+	cls, err := repo.Load(context.Background(), cluster.ClusterID)
+	require.NoError(t, err)
+
+	AssertEqualClusters(t, cluster, cls)
+	return cluster
+}
+
+func NewCluster() *repository.Cluster {
+	return &repository.Cluster{
 		AppDNS:           uuid.NewV4().String(),
 		AuthClientID:     uuid.NewV4().String(),
 		AuthClientSecret: uuid.NewV4().String(),
@@ -29,19 +47,14 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 		Type:             uuid.NewV4().String(),
 		URL:              uuid.NewV4().String(),
 	}
-	repo := repository.NewClusterRepository(db)
-
-	err := repo.Create(context.Background(), cluster)
-	require.NoError(t, err)
-
-	cls, err := repo.Load(context.Background(), cluster.ClusterID)
-	require.NoError(t, err)
-
-	AssertEqualClusters(t, cluster, cls)
-	return cluster
 }
 
 func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
+	AssertEqualClusterDetails(t, expected, actual)
+	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+}
+
+func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.URL, actual.URL)
@@ -56,7 +69,6 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 	assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
 	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
-	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
 }
 
@@ -91,4 +103,39 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual *repository.Iden
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.IdentityID, actual.IdentityID)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+}
+
+type OSOClusterConfig struct {
+	Clusters []configuration.OSOCluster
+}
+
+func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.Cluster {
+	return &repository.Cluster{
+		Name:       osoCluster.Name,
+		URL:        httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
+		ConsoleURL: convertAPIURLForEmptyURL(osoCluster.ConsoleURL, osoCluster.APIURL, "console", "console"),
+		MetricsURL: convertAPIURLForEmptyURL(osoCluster.MetricsURL, osoCluster.APIURL, "metrics", ""),
+		LoggingURL: convertAPIURLForEmptyURL(osoCluster.LoggingURL, osoCluster.APIURL, "console", "console"),
+		AppDNS:     osoCluster.AppDNS,
+		//CapacityExhausted: clusterConfig.CapacityExhausted,
+
+		SaToken:          osoCluster.ServiceAccountToken,
+		SaUsername:       osoCluster.ServiceAccountUsername,
+		TokenProviderID:  osoCluster.TokenProviderID,
+		AuthClientID:     osoCluster.AuthClientID,
+		AuthClientSecret: osoCluster.AuthClientSecret,
+		AuthDefaultScope: osoCluster.AuthClientDefaultScope,
+		Type:             service.OSO,
+	}
+}
+
+func convertAPIURLForEmptyURL(url, apiURL, newPrefix, newPath string) string {
+	if url == "" {
+		url, err := cluster.ConvertAPIURL(apiURL, newPrefix, newPath)
+		if err != nil {
+			return ""
+		}
+		return httpsupport.AddTrailingSlashToURL(url)
+	}
+	return httpsupport.AddTrailingSlashToURL(url)
 }

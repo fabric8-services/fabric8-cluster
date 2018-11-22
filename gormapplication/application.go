@@ -80,8 +80,8 @@ func (g *GormBase) IdentityClusters() repository.IdentityClusterRepository {
 	return repository.NewIdentityClusterRepository(g.db)
 }
 
-func (g *GormDB) FooService() service.FooService {
-	return g.serviceFactory.FooService()
+func (g *GormDB) ClusterService() service.ClusterService {
+	return g.serviceFactory.ClusterService()
 }
 
 func (g *GormBase) DB() *gorm.DB {

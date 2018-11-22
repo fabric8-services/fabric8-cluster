@@ -211,7 +211,6 @@ CLEAN_TARGETS += clean-generated
 clean-generated:
 	-rm -rf ./app
 	-rm -rf ./client/
-	-rm -rf ./cluster/
 	-rm -rf ./swagger/
 	-rm -rf ./tool
 	-rm -f ./migration/sqlbindata.go

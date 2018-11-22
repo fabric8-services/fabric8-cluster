@@ -18,6 +18,8 @@ import (
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fabric8-services/fabric8-common/token"
 
+	"context"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
 	"github.com/goadesign/goa/middleware"
@@ -93,15 +95,6 @@ func main() {
 	}
 	defer haltSentry()
 
-	// Initialize cluster config watcher
-	haltWatcher, err := config.InitializeClusterWatcher()
-	if err != nil {
-		log.Panic(nil, map[string]interface{}{
-			"err": err,
-		}, "failed to setup the cluster config watcher")
-	}
-	defer haltWatcher()
-
 	if config.DeveloperModeEnabled() && log.IsDebug() {
 		db = db.Debug()
 	}
@@ -145,7 +138,22 @@ func main() {
 	service.WithLogger(goalogrus.New(log.Logger()))
 
 	// Create DB
-	//appDB := gormapplication.NewGormDB(db, config)
+	appDB := gormapplication.NewGormDB(db, config)
+
+	// Create OSO cluster config for the first time
+	if err := appDB.ClusterService().CreateOrSaveOSOClusterFromConfig(context.Background()); err != nil {
+		log.Panic(context.TODO(), map[string]interface{}{
+			"err": err,
+		}, "failed to create or save cluster")
+	}
+	// Initialize cluster config watcher
+	haltWatcher, err := appDB.ClusterService().InitializeClusterWatcher()
+	if err != nil {
+		log.Panic(context.TODO(), map[string]interface{}{
+			"err": err,
+		}, "failed to setup the cluster config watcher")
+	}
+	defer haltWatcher()
 
 	// Setup Security
 	tokenManager, err := token.DefaultManager(config)

@@ -13,6 +13,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -20,7 +21,7 @@ import (
 const (
 	dbName      = "test"
 	defaultHost = "localhost"
-	defaultPort = "5436"
+	defaultPort = "5434"
 )
 
 type MigrationTestSuite struct {
@@ -32,9 +33,10 @@ const (
 )
 
 var (
-	sqlDB *sql.DB
-	host  string
-	port  string
+	sqlDB   *sql.DB
+	host    string
+	port    string
+	dialect gorm.Dialect
 )
 
 func TestMigration(t *testing.T) {
@@ -73,8 +75,13 @@ func (s *MigrationTestSuite) TestMigrate() {
 	gormDB, err := gorm.Open("postgres", dbConfig)
 	require.NoError(s.T(), err, "cannot connect to DB '%s'", dbName)
 	defer gormDB.Close()
+
+	dialect = gormDB.Dialect()
+	dialect.SetDB(sqlDB)
+
 	s.T().Run("testMigration001Cluster", testMigration001Cluster)
 	s.T().Run("testMigration002ClusterOnDeleteCascade", testMigration002ClusterOnDeleteCascade)
+	s.T().Run("testMigration003UniqueIndexOnClusterApiUrl", testMigration003UniqueIndexOnClusterApiUrl)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -140,4 +147,11 @@ func testMigration002ClusterOnDeleteCascade(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(0), rows)
 	})
+}
+
+func testMigration003UniqueIndexOnClusterApiUrl(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:4])
+	require.NoError(t, err)
+
+	assert.True(t, dialect.HasIndex("cluster", "idx_cluster_url"))
 }

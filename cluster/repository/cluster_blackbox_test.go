@@ -10,6 +10,9 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
 
+	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,7 +28,7 @@ func TestCluster(t *testing.T) {
 
 func (s *clusterTestSuite) SetupTest() {
 	s.DBTestSuite.SetupTest()
-	s.repo = repository.NewClusterRepository(s.DB)
+	s.repo = s.Application.Clusters()
 }
 
 func (s *clusterTestSuite) TestCreateAndLoadClusterOK() {
@@ -35,6 +38,67 @@ func (s *clusterTestSuite) TestCreateAndLoadClusterOK() {
 	require.NoError(s.T(), err)
 
 	test.AssertEqualClusters(s.T(), cluster1, loaded)
+}
+
+func (s *clusterTestSuite) TestCreateAndLoadClusterByURLOK() {
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+	test.CreateCluster(s.T(), s.DB) // noise
+	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster1.URL)
+	require.NoError(s.T(), err)
+
+	test.AssertEqualClusters(s.T(), cluster1, loaded)
+}
+
+func (s *clusterTestSuite) TestCreateAndLoadClusterByURLFail() {
+	test.CreateCluster(s.T(), s.DB)
+	test.CreateCluster(s.T(), s.DB) // noise
+
+	clusterURL := uuid.NewV4().String()
+	loaded, err := s.repo.LoadClusterByURL(context.Background(), clusterURL)
+	assert.Nil(s.T(), loaded)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf("cluster with url %s not found", clusterURL))
+}
+
+func (s *clusterTestSuite) TestCreateOKInCreateOrSave() {
+	cluster := test.NewCluster()
+	s.repo.CreateOrSave(context.Background(), cluster)
+	test.CreateCluster(s.T(), s.DB) // noise
+
+	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	require.NoError(s.T(), err)
+
+	test.AssertEqualClusters(s.T(), cluster, loaded)
+}
+
+func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
+	cluster := test.NewCluster()
+	test.CreateCluster(s.T(), s.DB) // noise
+	s.repo.CreateOrSave(context.Background(), cluster)
+
+	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	require.NoError(s.T(), err)
+
+	test.AssertEqualClusters(s.T(), cluster, loaded)
+
+	// update cluster details
+	cluster.AppDNS = uuid.NewV4().String()
+	cluster.AuthClientID = uuid.NewV4().String()
+	cluster.AuthClientSecret = uuid.NewV4().String()
+	cluster.AuthDefaultScope = uuid.NewV4().String()
+	cluster.ConsoleURL = uuid.NewV4().String()
+	cluster.LoggingURL = uuid.NewV4().String()
+	cluster.MetricsURL = uuid.NewV4().String()
+	cluster.Name = uuid.NewV4().String()
+	cluster.SaToken = uuid.NewV4().String()
+	cluster.SaUsername = uuid.NewV4().String()
+	cluster.TokenProviderID = uuid.NewV4().String()
+	cluster.Type = uuid.NewV4().String()
+
+	s.repo.CreateOrSave(context.Background(), cluster)
+	loaded, err = s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	require.NoError(s.T(), err)
+
+	test.AssertEqualClusters(s.T(), cluster, loaded)
 }
 
 func (s *clusterTestSuite) TestDeleteOK() {
@@ -85,9 +149,11 @@ func (s *clusterTestSuite) TestSaveOK() {
 	require.NoError(s.T(), err)
 
 	loaded1, err := s.repo.Load(context.Background(), cluster1.ClusterID)
+	require.NoError(s.T(), err)
 	test.AssertEqualClusters(s.T(), cluster1, loaded1)
 
 	loaded2, err := s.repo.Load(context.Background(), cluster2.ClusterID)
+	require.NoError(s.T(), err)
 	test.AssertEqualClusters(s.T(), cluster2, loaded2)
 }
 
@@ -105,4 +171,16 @@ func (s *clusterTestSuite) TestExists() {
 	cluster := test.CreateCluster(s.T(), s.DB)
 	err = s.repo.CheckExists(context.Background(), cluster.ClusterID.String())
 	require.NoError(s.T(), err)
+}
+
+func (s *clusterTestSuite) TestQueryOK() {
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+
+	clusters, err := s.repo.Query(func(db *gorm.DB) *gorm.DB {
+		return db.Where("cluster_id = ?", cluster1.ClusterID)
+	})
+
+	require.NoError(s.T(), err)
+	require.Len(s.T(), clusters, 1)
+	test.AssertEqualClusters(s.T(), cluster1, &clusters[0])
 }

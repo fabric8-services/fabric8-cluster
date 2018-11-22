@@ -2,15 +2,11 @@ package configuration_test
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/resource"
 	"net/http"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
@@ -228,100 +224,6 @@ func TestClusterConfigurationFromInvalidFile(t *testing.T) {
 	_, err = configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-wrong-json.conf")
 	require.Error(t, err)
 	assert.Equal(t, err.Error(), "empty cluster config file")
-}
-
-func TestClusterConfigurationWatcher(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
-	// Create a temp file with content from ./conf-files/oso-clusters-custom.conf
-	tmpFileName := createTempClusterConfigFile(t)
-	defer os.Remove(tmpFileName)
-
-	// Load configuration from the temp file
-	config, err := configuration.NewConfigurationData("", tmpFileName)
-	require.NoError(t, err)
-	cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
-	require.NotNil(t, cluster)
-
-	original := cluster.CapacityExhausted
-
-	// Start watching
-	haltWatcher, err := config.InitializeClusterWatcher()
-	require.NoError(t, err)
-	defer haltWatcher()
-
-	// Update the config file
-	updateClusterConfigFile(t, tmpFileName, "./conf-files/tests/oso-clusters-capacity-updated.conf")
-	// Check if it has been updated
-	waitForConfigUpdate(t, config, !original)
-
-	// Update the config file back to the original
-	updateClusterConfigFile(t, tmpFileName, "./conf-files/oso-clusters.conf")
-	// Check if it has been updated
-	waitForConfigUpdate(t, config, original)
-
-	// Update the config file to some invalid data
-	updateClusterConfigFile(t, tmpFileName, "./conf-files/tests/oso-clusters-invalid.conf")
-	// The configuration should not change
-	waitForConfigUpdate(t, config, original)
-	updateClusterConfigFile(t, tmpFileName, "./conf-files/tests/oso-clusters-empty.conf")
-	// The configuration should not change
-	waitForConfigUpdate(t, config, original)
-
-	// Fix the file
-	updateClusterConfigFile(t, tmpFileName, "./conf-files/tests/oso-clusters-capacity-updated.conf")
-	// Now configuration should be updated
-	waitForConfigUpdate(t, config, !original)
-}
-
-func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, expected bool) {
-	for i := 0; i < 30; i++ {
-		time.Sleep(100 * time.Millisecond)
-		cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
-		require.NotNil(t, cluster)
-		if expected == cluster.CapacityExhausted {
-			return
-		}
-	}
-	require.Fail(t, "cluster config has not been reloaded within 3s")
-}
-
-func TestClusterConfigurationWatcherNoErrorForDefaultConfig(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
-	config, err := configuration.GetConfigurationData()
-	require.NoError(t, err)
-
-	haltWatcher, err := config.InitializeClusterWatcher()
-	require.NoError(t, err)
-	defer haltWatcher()
-}
-
-func createTempClusterConfigFile(t *testing.T) string {
-	to, err := ioutil.TempFile("", "oso-clusters.conf")
-	require.NoError(t, err)
-	defer to.Close()
-
-	from, err := os.Open("./conf-files/oso-clusters.conf")
-	require.NoError(t, err)
-	defer from.Close()
-
-	_, err = io.Copy(to, from)
-	require.NoError(t, err)
-	return to.Name()
-}
-
-func updateClusterConfigFile(t *testing.T, to, from string) {
-	fromFile, err := os.Open(from)
-	require.NoError(t, err)
-	defer fromFile.Close()
-
-	toFile, err := os.OpenFile(to, os.O_RDWR|os.O_CREATE, 0666)
-	require.NoError(t, err)
-	defer toFile.Close()
-
-	_, err = io.Copy(toFile, fromFile)
-	require.NoError(t, err)
 }
 
 func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.OSOCluster) {

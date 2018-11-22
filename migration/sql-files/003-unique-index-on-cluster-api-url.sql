@@ -1,0 +1,1 @@
+CREATE INDEX idx_cluster_url ON cluster (url);
