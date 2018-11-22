@@ -82,6 +82,7 @@ func (s *MigrationTestSuite) TestMigrate() {
 	s.T().Run("testMigration001Cluster", testMigration001Cluster)
 	s.T().Run("testMigration002ClusterOnDeleteCascade", testMigration002ClusterOnDeleteCascade)
 	s.T().Run("testMigration003UniqueIndexOnClusterApiUrl", testMigration003UniqueIndexOnClusterApiUrl)
+	s.T().Run("testMigration004AddCapacityExhaustedToCluster", testMigration004AddCapacityExhaustedToCluster)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -154,4 +155,11 @@ func testMigration003UniqueIndexOnClusterApiUrl(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, dialect.HasIndex("cluster", "idx_cluster_url"))
+}
+
+func testMigration004AddCapacityExhaustedToCluster(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:5])
+	require.NoError(t, err)
+
+	assert.True(t, dialect.HasColumn("cluster", "capacity_exhausted"))
 }

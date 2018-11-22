@@ -42,13 +42,13 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 func (c clusterService) CreateOrSaveOSOClusterFromConfig(ctx context.Context) error {
 	for _, osoCluster := range c.loader.GetOSOClusters() {
 		cluster := &repository.Cluster{
-			Name:       osoCluster.Name,
-			URL:        httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
-			ConsoleURL: httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
-			MetricsURL: httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
-			LoggingURL: httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
-			AppDNS:     osoCluster.AppDNS,
-			//CapacityExhausted: clusterConfig.CapacityExhausted,
+			Name:              osoCluster.Name,
+			URL:               httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
+			AppDNS:            osoCluster.AppDNS,
+			CapacityExhausted: osoCluster.CapacityExhausted,
 
 			SaToken:          osoCluster.ServiceAccountToken,
 			SaUsername:       osoCluster.ServiceAccountUsername,
