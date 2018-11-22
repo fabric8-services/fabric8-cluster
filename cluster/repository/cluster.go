@@ -48,6 +48,8 @@ type Cluster struct {
 	AuthDefaultScope string
 	// Cluster type. Such as OSD, OSO, OCP, etc
 	Type string
+	// cluster capacity exhausted by default false
+	CapacityExhausted bool
 }
 
 // GormClusterRepository is the implementation of the storage interface for Cluster.

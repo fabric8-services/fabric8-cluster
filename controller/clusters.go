@@ -62,22 +62,22 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
 	var data []*app.FullClusterData
-	for _, clusterConfig := range c.config.GetOSOClusters() {
+	for _, ososCluster := range c.config.GetOSOClusters() {
 		cluster := &app.FullClusterData{
-			Name:              clusterConfig.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
-			AppDNS:            clusterConfig.AppDNS,
-			CapacityExhausted: clusterConfig.CapacityExhausted,
+			Name:              ososCluster.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(ososCluster.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(ososCluster.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(ososCluster.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(ososCluster.LoggingURL),
+			AppDNS:            ososCluster.AppDNS,
+			CapacityExhausted: ososCluster.CapacityExhausted,
 
-			AuthClientDefaultScope: clusterConfig.AuthClientDefaultScope,
-			AuthClientID:           clusterConfig.AuthClientID,
-			AuthClientSecret:       clusterConfig.AuthClientSecret,
-			ServiceAccountToken:    clusterConfig.ServiceAccountToken,
-			ServiceAccountUsername: clusterConfig.ServiceAccountUsername,
-			TokenProviderID:        clusterConfig.TokenProviderID,
+			AuthClientDefaultScope: ososCluster.AuthClientDefaultScope,
+			AuthClientID:           ososCluster.AuthClientID,
+			AuthClientSecret:       ososCluster.AuthClientSecret,
+			ServiceAccountToken:    ososCluster.ServiceAccountToken,
+			ServiceAccountUsername: ososCluster.ServiceAccountUsername,
+			TokenProviderID:        ososCluster.TokenProviderID,
 		}
 		data = append(data, cluster)
 	}

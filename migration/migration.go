@@ -18,6 +18,7 @@ func Steps() Scripts {
 		{"001-cluster.sql"},
 		{"002-cluster-on-delete-cascade.sql"},
 		{"003-unique-index-on-cluster-api-url.sql"},
+		{"004-add-capacity-exhausted-to-cluster.sql"},
 	}
 }
 
