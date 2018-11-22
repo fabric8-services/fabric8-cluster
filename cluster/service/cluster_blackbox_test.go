@@ -41,7 +41,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveOSOClusterOK() {
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), clusters, 3)
 
-	verifyClusters(s.T(), clusters)
+	verifyClusters(s.T(), clusters, s.Configuration.GetOSOClusters())
 }
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
@@ -135,13 +135,10 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, clusters []repository.Cluster) {
-	configClusters, err := test.GetClustersFromConfigFile("./../../configuration/conf-files/oso-clusters.conf")
-	require.NoError(t, err)
-
-	verifyCluster(t, clusters, clusterFromURL(configClusters, "https://api.starter-us-east-2.openshift.com/"))
-	verifyCluster(t, clusters, clusterFromURL(configClusters, "https://api.starter-us-east-2a.openshift.com/"))
-	verifyCluster(t, clusters, clusterFromURL(configClusters, "https://api.starter-us-east-1a.openshift.com/"))
+func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.OSOCluster) {
+	for _, osoCluster := range configClusters {
+		verifyCluster(t, clusters, test.GetClusterFromOSOCluster(osoCluster))
+	}
 }
 
 func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
