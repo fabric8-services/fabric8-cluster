@@ -35,7 +35,7 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 // CreateOrSaveClusterFromConfig creates clusters or save updated cluster info from config
 func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error {
 	for _, configCluster := range c.loader.GetClusters() {
-		cluster := &repository.Cluster{
+		rc := &repository.Cluster{
 			Name:              configCluster.Name,
 			URL:               httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
 			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
@@ -54,7 +54,7 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 		}
 
 		err := c.ExecuteInTransaction(func() error {
-			return c.Repositories().Clusters().CreateOrSave(ctx, cluster)
+			return c.Repositories().Clusters().CreateOrSave(ctx, rc)
 		})
 
 		if err != nil {

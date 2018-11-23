@@ -59,10 +59,10 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// Load configuration from the temp file
 	config, err := configuration.NewConfigurationData("", tmpFileName)
 	require.NoError(t, err)
-	cluster := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
-	require.NotNil(t, cluster)
+	c := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
+	require.NotNil(t, c)
 
-	original := cluster.CapacityExhausted
+	original := c.CapacityExhausted
 
 	// initialize application with new config
 	application := gormapplication.NewGormDB(s.DB, config)
@@ -132,9 +132,9 @@ func updateClusterConfigFile(t *testing.T, to, from string) {
 func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, expected bool) {
 	for i := 0; i < 30; i++ {
 		time.Sleep(100 * time.Millisecond)
-		cluster := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
-		require.NotNil(t, cluster)
-		if expected == cluster.CapacityExhausted {
+		c := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
+		require.NotNil(t, c)
+		if expected == c.CapacityExhausted {
 			return
 		}
 	}
@@ -148,8 +148,8 @@ func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters 
 }
 
 func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	cluster := clusterFromURL(clusters, expected.URL)
-	test.AssertEqualClusterDetails(t, expected, cluster)
+	actual := clusterFromURL(clusters, expected.URL)
+	test.AssertEqualClusterDetails(t, expected, actual)
 }
 
 func clusterFromURL(clusters []repository.Cluster, url string) *repository.Cluster {

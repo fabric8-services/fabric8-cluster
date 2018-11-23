@@ -37,7 +37,7 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 	}
 	var data []*app.ClusterData
 	for _, configCluster := range c.config.GetClusters() {
-		cluster := &app.ClusterData{
+		clusterData := &app.ClusterData{
 			Name:              configCluster.Name,
 			APIURL:            httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
 			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
@@ -47,7 +47,7 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 			Type:              configCluster.Type,
 			CapacityExhausted: configCluster.CapacityExhausted,
 		}
-		data = append(data, cluster)
+		data = append(data, clusterData)
 	}
 	clusters := app.ClusterList{
 		Data: data,
