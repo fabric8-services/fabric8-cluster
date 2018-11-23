@@ -30,7 +30,7 @@ func (s *ClustersTestSuite) SecuredControllerWithServiceAccount(serviceAccount *
 }
 
 func (s *ClustersTestSuite) TestShowForServiceAccountsOK() {
-	require.True(s.T(), len(s.Config.GetOSOClusters()) > 0)
+	require.True(s.T(), len(s.Config.GetClusters()) > 0)
 	s.checkShowForServiceAccount("fabric8-oso-proxy")
 	s.checkShowForServiceAccount("fabric8-tenant")
 	s.checkShowForServiceAccount("fabric8-jenkins-idler")
@@ -47,9 +47,9 @@ func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 	_, clusters := test.ShowClustersOK(s.T(), service.Context, service, controller)
 	require.NotNil(s.T(), clusters)
 	require.NotNil(s.T(), clusters.Data)
-	require.Equal(s.T(), len(s.Config.GetOSOClusters()), len(clusters.Data))
+	require.Equal(s.T(), len(s.Config.GetClusters()), len(clusters.Data))
 	for _, cluster := range clusters.Data {
-		configCluster := s.Config.GetOSOClusterByURL(cluster.APIURL)
+		configCluster := s.Config.GetClusterByURL(cluster.APIURL)
 		require.NotNil(s.T(), configCluster)
 		require.Equal(s.T(), configCluster.Name, cluster.Name)
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
@@ -72,7 +72,7 @@ func (s *ClustersTestSuite) TestShowForUnknownSAFails() {
 }
 
 func (s *ClustersTestSuite) TestShowForAuthServiceAccountsOK() {
-	require.True(s.T(), len(s.Config.GetOSOClusters()) > 0)
+	require.True(s.T(), len(s.Config.GetClusters()) > 0)
 	s.checkShowAuthForServiceAccount("fabric8-auth")
 }
 
@@ -94,9 +94,9 @@ func (s *ClustersTestSuite) checkShowAuthForServiceAccount(saName string) {
 	_, clusters := test.ShowAuthClientClustersOK(s.T(), service.Context, service, controller)
 	require.NotNil(s.T(), clusters)
 	require.NotNil(s.T(), clusters.Data)
-	require.Equal(s.T(), len(s.Config.GetOSOClusters()), len(clusters.Data))
+	require.Equal(s.T(), len(s.Config.GetClusters()), len(clusters.Data))
 	for _, cluster := range clusters.Data {
-		configCluster := s.Config.GetOSOClusterByURL(cluster.APIURL)
+		configCluster := s.Config.GetClusterByURL(cluster.APIURL)
 		require.NotNil(s.T(), configCluster)
 		require.Equal(s.T(), configCluster.Name, cluster.Name)
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)

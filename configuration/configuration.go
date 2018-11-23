@@ -70,12 +70,12 @@ const (
 	varSentryDSN   = "sentry.dsn"
 )
 
-type osoClusterConfig struct {
-	Clusters []OSOCluster
+type clusterConfig struct {
+	Clusters []Cluster
 }
 
-// OSOCluster represents an OSO cluster configuration
-type OSOCluster struct {
+// Cluster represents a cluster from configuration
+type Cluster struct {
 	Name                   string `mapstructure:"name"`
 	APIURL                 string `mapstructure:"api-url"`
 	ConsoleURL             string `mapstructure:"console-url"` // Optional in oso-clusters.conf
@@ -97,8 +97,8 @@ type ConfigurationData struct {
 	// Main Configuration
 	v *viper.Viper
 
-	// OSO Cluster Configuration is a map of clusters where the key == the OSO cluster API URL
-	clusters              map[string]OSOCluster
+	// Cluster Configuration is a map of clusters where the key == the cluster API URL
+	clusters              map[string]Cluster
 	clusterConfigFilePath string
 
 	defaultConfigurationError error
@@ -107,7 +107,7 @@ type ConfigurationData struct {
 }
 
 // NewConfigurationData creates a configuration reader object using configurable configuration file paths
-func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*ConfigurationData, error) {
+func NewConfigurationData(mainConfigFile string, clusterConfigFile string) (*ConfigurationData, error) {
 	c := &ConfigurationData{
 		v: viper.New(),
 	}
@@ -129,7 +129,7 @@ func NewConfigurationData(mainConfigFile string, osoClusterConfigFile string) (*
 	}
 
 	// Set up the OSO cluster configuration (stored in a separate config file)
-	clusterConfigFilePath, err := c.initClusterConfig(osoClusterConfigFile, defaultOsoClusterConfigPath)
+	clusterConfigFilePath, err := c.initClusterConfig(clusterConfigFile, defaultClusterConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +170,8 @@ func (c *ConfigurationData) validateURL(serviceURL, serviceName string) {
 	}
 }
 
-func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClusterConfigFile string) (string, error) {
-	clusterViper, defaultConfigErrorMsg, usedClusterConfigFile, err := readFromJSONFile(osoClusterConfigFile, defaultClusterConfigFile, osoClusterConfigFileName)
+func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterConfigFile string) (string, error) {
+	clusterViper, defaultConfigErrorMsg, usedClusterConfigFile, err := readFromJSONFile(clusterConfigFile, defaultClusterConfigFile, osoClusterConfigFileName)
 	if err != nil {
 		return usedClusterConfigFile, err
 	}
@@ -179,36 +179,36 @@ func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClust
 		c.appendDefaultConfigErrorMessage(*defaultConfigErrorMsg)
 	}
 
-	var clusterConf osoClusterConfig
+	var clusterConf clusterConfig
 	err = clusterViper.Unmarshal(&clusterConf)
 	if err != nil {
 		return usedClusterConfigFile, err
 	}
-	c.clusters = map[string]OSOCluster{}
-	for _, osoCluster := range clusterConf.Clusters {
-		if osoCluster.ConsoleURL == "" {
-			osoCluster.ConsoleURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
+	c.clusters = map[string]Cluster{}
+	for _, configCluster := range clusterConf.Clusters {
+		if configCluster.ConsoleURL == "" {
+			configCluster.ConsoleURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if osoCluster.MetricsURL == "" {
-			osoCluster.MetricsURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "metrics", "")
+		if configCluster.MetricsURL == "" {
+			configCluster.MetricsURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "metrics", "")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if osoCluster.LoggingURL == "" {
+		if configCluster.LoggingURL == "" {
 			// This is not a typo; the logging host is the same as the console host in current k8s
-			osoCluster.LoggingURL, err = cluster.ConvertAPIURL(osoCluster.APIURL, "console", "console")
+			configCluster.LoggingURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
 		}
-		if osoCluster.Type == "" {
-			osoCluster.Type = cluster.OSO
+		if configCluster.Type == "" {
+			configCluster.Type = cluster.OSO
 		}
-		c.clusters[osoCluster.APIURL] = osoCluster
+		c.clusters[configCluster.APIURL] = configCluster
 	}
 
 	err = c.checkClusterConfig()
@@ -378,20 +378,20 @@ func (c *ConfigurationData) GetAuthKeysPath() string {
 	return c.v.GetString(varAuthKeysPath)
 }
 
-// GetOSOClusters returns a map of OSO cluster configurations by cluster API URL
-func (c *ConfigurationData) GetOSOClusters() map[string]OSOCluster {
+// GetClusters returns a map of cluster configurations by cluster API URL
+func (c *ConfigurationData) GetClusters() map[string]Cluster {
 	// Lock for reading because config file watcher can update cluster configuration
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	return c.clusters
 }
 
-// GetOSOClusterByURL returns a OSO cluster configurations by matching URL
+// GetClusterByURL returns a cluster configurations by matching URL
 // Regardless of trailing slashes if cluster API URL == "https://api.openshift.com"
 // or "https://api.openshift.com/" it will match any "https://api.openshift.com*"
 // like "https://api.openshift.com", "https://api.openshift.com/", or "https://api.openshift.com/patch"
 // Returns nil if no matching API URL found
-func (c *ConfigurationData) GetOSOClusterByURL(url string) *OSOCluster {
+func (c *ConfigurationData) GetClusterByURL(url string) *Cluster {
 	// Lock for reading because config file watcher can update cluster configuration
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -405,8 +405,8 @@ func (c *ConfigurationData) GetOSOClusterByURL(url string) *OSOCluster {
 	return nil
 }
 
-// GetOSOConfigurationFilePath returns the oso configuration file path.
-func (c *ConfigurationData) GetOSOConfigurationFilePath() string {
+// GetClusterConfigurationFilePath returns the cluster configuration file path.
+func (c *ConfigurationData) GetClusterConfigurationFilePath() string {
 	return c.clusterConfigFilePath
 }
 

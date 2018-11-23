@@ -20,8 +20,8 @@ type clusterService struct {
 
 type ConfigLoader interface {
 	ReloadClusterConfig() error
-	GetOSOConfigurationFilePath() string
-	GetOSOClusters() map[string]configuration.OSOCluster
+	GetClusterConfigurationFilePath() string
+	GetClusters() map[string]configuration.Cluster
 }
 
 // NewClusterService creates a new cluster service
@@ -32,25 +32,25 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 	}
 }
 
-// CreateOrSaveOSOClusterFromConfig creates clusters or save updated cluster info from config
-func (c clusterService) CreateOrSaveOSOClusterFromConfig(ctx context.Context) error {
-	for _, osoCluster := range c.loader.GetOSOClusters() {
+// CreateOrSaveClusterFromConfig creates clusters or save updated cluster info from config
+func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error {
+	for _, configCluster := range c.loader.GetClusters() {
 		cluster := &repository.Cluster{
-			Name:              osoCluster.Name,
-			URL:               httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
-			AppDNS:            osoCluster.AppDNS,
-			CapacityExhausted: osoCluster.CapacityExhausted,
-			Type:              osoCluster.Type,
+			Name:              configCluster.Name,
+			URL:               httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
+			AppDNS:            configCluster.AppDNS,
+			CapacityExhausted: configCluster.CapacityExhausted,
+			Type:              configCluster.Type,
 
-			SaToken:          osoCluster.ServiceAccountToken,
-			SaUsername:       osoCluster.ServiceAccountUsername,
-			TokenProviderID:  osoCluster.TokenProviderID,
-			AuthClientID:     osoCluster.AuthClientID,
-			AuthClientSecret: osoCluster.AuthClientSecret,
-			AuthDefaultScope: osoCluster.AuthClientDefaultScope,
+			SaToken:          configCluster.ServiceAccountToken,
+			SaUsername:       configCluster.ServiceAccountUsername,
+			TokenProviderID:  configCluster.TokenProviderID,
+			AuthClientID:     configCluster.AuthClientID,
+			AuthClientSecret: configCluster.AuthClientSecret,
+			AuthDefaultScope: configCluster.AuthClientDefaultScope,
 		}
 
 		err := c.ExecuteInTransaction(func() error {
@@ -104,7 +104,7 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 							"file": event.Name,
 							"op":   event.Op.String(),
 						}, "cluster config file modified and reloaded")
-						if err := c.CreateOrSaveOSOClusterFromConfig(context.Background()); err != nil {
+						if err := c.CreateOrSaveClusterFromConfig(context.Background()); err != nil {
 							// Do not crash. Log the error and keep using the existing configuration from DB
 							log.Error(context.Background(), map[string]interface{}{
 								"err":  err,
@@ -124,13 +124,13 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 			}
 		}
 	}()
-	osoConfigPath := c.loader.GetOSOConfigurationFilePath()
+	configPath := c.loader.GetClusterConfigurationFilePath()
 
 	// this will make dev mode config path relative to current directory
-	if osoConfigPath == "./configuration/conf-files/oso-clusters.conf" {
-		osoConfigPath = "./../../" + osoConfigPath
+	if configPath == "./configuration/conf-files/oso-clusters.conf" {
+		configPath = "./../../" + configPath
 	}
-	configFilePath, err := configuration.PathExists(osoConfigPath)
+	configFilePath, err := configuration.PathExists(configPath)
 	if err == nil && configFilePath != "" {
 		err = watcher.Add(configFilePath)
 		log.Info(context.Background(), map[string]interface{}{

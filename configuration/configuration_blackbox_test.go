@@ -149,16 +149,16 @@ func TestGetSentryDSNOK(t *testing.T) {
 func TestLoadDefaultClusterConfiguration(t *testing.T) {
 	resource.Require(t, resource.UnitTest)
 
-	clusters := config.GetOSOClusters()
+	clusters := config.GetClusters()
 	checkClusterConfiguration(t, clusters)
 
-	cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2.openshift.com")
+	cluster := config.GetClusterByURL("https://api.starter-us-east-2.openshift.com")
 	assert.NotNil(t, cluster)
-	cluster = config.GetOSOClusterByURL("https://api.starter-us-east-2.openshift.com/")
+	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/")
 	assert.NotNil(t, cluster)
-	cluster = config.GetOSOClusterByURL("https://api.starter-us-east-2.openshift.com/path")
+	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/path")
 	assert.NotNil(t, cluster)
-	cluster = config.GetOSOClusterByURL("https://api.starter-us-east-2.openshift.unknown")
+	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.unknown")
 	assert.Nil(t, cluster)
 }
 
@@ -167,7 +167,7 @@ func TestLoadClusterConfigurationFromFile(t *testing.T) {
 
 	clusterConfig, err := configuration.NewConfigurationData("", "./conf-files/oso-clusters.conf")
 	require.Nil(t, err)
-	clusters := clusterConfig.GetOSOClusters()
+	clusters := clusterConfig.GetClusters()
 	checkClusterConfiguration(t, clusters)
 }
 
@@ -191,7 +191,7 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 
 	clusterConfig, err := configuration.NewConfigurationData("", "./conf-files/tests/oso-clusters-custom-urls.conf")
 	require.Nil(t, err)
-	checkCluster(t, clusterConfig.GetOSOClusters(), configuration.OSOCluster{
+	checkCluster(t, clusterConfig.GetClusters(), configuration.Cluster{
 		Name:                   "us-east-2",
 		APIURL:                 "https://api.starter-us-east-2.openshift.com",
 		ConsoleURL:             "custom.console.url",
@@ -228,8 +228,8 @@ func TestClusterConfigurationFromInvalidFile(t *testing.T) {
 	assert.Equal(t, err.Error(), "empty cluster config file")
 }
 
-func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.OSOCluster) {
-	checkCluster(t, clusters, configuration.OSOCluster{
+func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.Cluster) {
+	checkCluster(t, clusters, configuration.Cluster{
 		Name:                   "us-east-2",
 		APIURL:                 "https://api.starter-us-east-2.openshift.com",
 		ConsoleURL:             "https://console.starter-us-east-2.openshift.com/console",
@@ -245,7 +245,7 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		Type:              "OSO",
 		CapacityExhausted: false,
 	})
-	checkCluster(t, clusters, configuration.OSOCluster{
+	checkCluster(t, clusters, configuration.Cluster{
 		Name:                   "us-east-2a",
 		APIURL:                 "https://api.starter-us-east-2a.openshift.com",
 		ConsoleURL:             "https://console.starter-us-east-2a.openshift.com/console",
@@ -261,7 +261,7 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		Type:              "OSO",
 		CapacityExhausted: false,
 	})
-	checkCluster(t, clusters, configuration.OSOCluster{
+	checkCluster(t, clusters, configuration.Cluster{
 		Name:                   "us-east-1a",
 		APIURL:                 "https://api.starter-us-east-1a.openshift.com",
 		ConsoleURL:             "https://console.starter-us-east-1a.openshift.com/console",
@@ -277,7 +277,7 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		Type:              "OSO",
 		CapacityExhausted: true,
 	})
-	checkCluster(t, clusters, configuration.OSOCluster{
+	checkCluster(t, clusters, configuration.Cluster{
 		Name:                   "us-east-3a",
 		APIURL:                 "https://api.starter-us-east-3a.openshift.com",
 		ConsoleURL:             "https://console.starter-us-east-3a.openshift.com/console",
@@ -295,7 +295,7 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 	})
 }
 
-func checkCluster(t *testing.T, clusters map[string]configuration.OSOCluster, expected configuration.OSOCluster) {
+func checkCluster(t *testing.T, clusters map[string]configuration.Cluster, expected configuration.Cluster) {
 	require.Contains(t, clusters, expected.APIURL)
 	require.Equal(t, expected, clusters[expected.APIURL])
 	_, err := uuid.FromString(clusters[expected.APIURL].TokenProviderID)

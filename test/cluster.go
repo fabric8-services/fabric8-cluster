@@ -105,22 +105,22 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual *repository.Iden
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 }
 
-func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.Cluster {
+func ClusterFromConfigurationCluster(configCluster configuration.Cluster) *repository.Cluster {
 	return &repository.Cluster{
-		Name:              osoCluster.Name,
-		URL:               httpsupport.AddTrailingSlashToURL(osoCluster.APIURL),
-		ConsoleURL:        httpsupport.AddTrailingSlashToURL(osoCluster.ConsoleURL),
-		MetricsURL:        httpsupport.AddTrailingSlashToURL(osoCluster.MetricsURL),
-		LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
-		AppDNS:            osoCluster.AppDNS,
-		CapacityExhausted: osoCluster.CapacityExhausted,
-		Type:              osoCluster.Type,
+		Name:              configCluster.Name,
+		URL:               httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
+		ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
+		MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
+		LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
+		AppDNS:            configCluster.AppDNS,
+		CapacityExhausted: configCluster.CapacityExhausted,
+		Type:              configCluster.Type,
 
-		SaToken:          osoCluster.ServiceAccountToken,
-		SaUsername:       osoCluster.ServiceAccountUsername,
-		TokenProviderID:  osoCluster.TokenProviderID,
-		AuthClientID:     osoCluster.AuthClientID,
-		AuthClientSecret: osoCluster.AuthClientSecret,
-		AuthDefaultScope: osoCluster.AuthClientDefaultScope,
+		SaToken:          configCluster.ServiceAccountToken,
+		SaUsername:       configCluster.ServiceAccountUsername,
+		TokenProviderID:  configCluster.TokenProviderID,
+		AuthClientID:     configCluster.AuthClientID,
+		AuthClientSecret: configCluster.AuthClientSecret,
+		AuthDefaultScope: configCluster.AuthClientDefaultScope,
 	}
 }

@@ -31,8 +31,8 @@ func (s *ClusterServiceTestSuite) SetupTest() {
 	s.DBTestSuite.SetupTest()
 }
 
-func (s *ClusterServiceTestSuite) TestCreateOrSaveOSOClusterOK() {
-	err := s.Application.ClusterService().CreateOrSaveOSOClusterFromConfig(context.Background())
+func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterOK() {
+	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
 	require.NoError(s.T(), err)
 
 	osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
@@ -47,7 +47,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveOSOClusterOK() {
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), osdClusters, 1)
 
-	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetOSOClusters())
+	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
 }
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
@@ -59,7 +59,7 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// Load configuration from the temp file
 	config, err := configuration.NewConfigurationData("", tmpFileName)
 	require.NoError(t, err)
-	cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
+	cluster := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
 	require.NotNil(t, cluster)
 
 	original := cluster.CapacityExhausted
@@ -132,7 +132,7 @@ func updateClusterConfigFile(t *testing.T, to, from string) {
 func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, expected bool) {
 	for i := 0; i < 30; i++ {
 		time.Sleep(100 * time.Millisecond)
-		cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
+		cluster := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
 		require.NotNil(t, cluster)
 		if expected == cluster.CapacityExhausted {
 			return
@@ -141,9 +141,9 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.OSOCluster) {
-	for _, osoCluster := range configClusters {
-		verifyCluster(t, clusters, test.GetClusterFromOSOCluster(osoCluster))
+func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.Cluster) {
+	for _, configCluster := range configClusters {
+		verifyCluster(t, clusters, test.ClusterFromConfigurationCluster(configCluster))
 	}
 }
 

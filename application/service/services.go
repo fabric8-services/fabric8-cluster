@@ -18,7 +18,7 @@ Steps for adding a new Service:
 
 //
 type ClusterService interface {
-	CreateOrSaveOSOClusterFromConfig(ctx context.Context) error
+	CreateOrSaveClusterFromConfig(ctx context.Context) error
 	InitializeClusterWatcher() (func() error, error)
 }
 
