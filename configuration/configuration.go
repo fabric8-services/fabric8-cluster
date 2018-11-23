@@ -88,6 +88,7 @@ type OSOCluster struct {
 	AuthClientID           string `mapstructure:"auth-client-id"`
 	AuthClientSecret       string `mapstructure:"auth-client-secret"`
 	AuthClientDefaultScope string `mapstructure:"auth-client-default-scope"`
+	Type                   string `mapstructure:"type"`               // Optional in oso-clusters.conf ('OSO' by default)
 	CapacityExhausted      bool   `mapstructure:"capacity-exhausted"` // Optional in oso-clusters.conf ('false' by default)
 }
 
@@ -203,6 +204,9 @@ func (c *ConfigurationData) initClusterConfig(osoClusterConfigFile, defaultClust
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
+		}
+		if osoCluster.Type == "" {
+			osoCluster.Type = cluster.OSO
 		}
 		c.clusters[osoCluster.APIURL] = osoCluster
 	}

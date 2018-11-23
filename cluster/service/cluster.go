@@ -13,12 +13,6 @@ import (
 	"time"
 )
 
-const (
-	OSD = "OSD"
-	OCP = "OCP"
-	OSO = "OSO"
-)
-
 type clusterService struct {
 	base.BaseService
 	loader ConfigLoader
@@ -49,6 +43,7 @@ func (c clusterService) CreateOrSaveOSOClusterFromConfig(ctx context.Context) er
 			LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
 			AppDNS:            osoCluster.AppDNS,
 			CapacityExhausted: osoCluster.CapacityExhausted,
+			Type:              osoCluster.Type,
 
 			SaToken:          osoCluster.ServiceAccountToken,
 			SaUsername:       osoCluster.ServiceAccountUsername,
@@ -56,7 +51,6 @@ func (c clusterService) CreateOrSaveOSOClusterFromConfig(ctx context.Context) er
 			AuthClientID:     osoCluster.AuthClientID,
 			AuthClientSecret: osoCluster.AuthClientSecret,
 			AuthDefaultScope: osoCluster.AuthClientDefaultScope,
-			Type:             OSO,
 		}
 
 		err := c.ExecuteInTransaction(func() error {

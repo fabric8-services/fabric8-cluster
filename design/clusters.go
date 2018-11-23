@@ -27,8 +27,9 @@ var clusterData = a.Type("ClusterData", func() {
 	a.Attribute("metrics-url", d.String, "Metrics URL")
 	a.Attribute("logging-url", d.String, "Logging URL")
 	a.Attribute("app-dns", d.String, "User application domain name in the cluster")
+	a.Attribute("type", d.String, "Cluster type. Such as OSD, OSO, OCP, etc")
 	a.Attribute("capacity-exhausted", d.Boolean, "Cluster is full if set to 'true'")
-	a.Required("name", "console-url", "metrics-url", "api-url", "logging-url", "app-dns", "capacity-exhausted")
+	a.Required("name", "console-url", "metrics-url", "api-url", "logging-url", "app-dns", "type", "capacity-exhausted")
 })
 
 var fullClusterData = a.Type("FullClusterData", func() {
@@ -38,6 +39,7 @@ var fullClusterData = a.Type("FullClusterData", func() {
 	a.Attribute("metrics-url", d.String, "Metrics URL")
 	a.Attribute("logging-url", d.String, "Logging URL")
 	a.Attribute("app-dns", d.String, "User application domain name in the cluster")
+	a.Attribute("type", d.String, "Cluster type. Such as OSD, OSO, OCP, etc")
 	a.Attribute("capacity-exhausted", d.Boolean, "Cluster is full if set to 'true'")
 
 	a.Attribute("service-account-token", d.String, "Decrypted cluster wide token")
@@ -47,7 +49,7 @@ var fullClusterData = a.Type("FullClusterData", func() {
 	a.Attribute("auth-client-secret", d.String, "OAuth client secret")
 	a.Attribute("auth-client-default-scope", d.String, "OAuth client default scope")
 
-	a.Required("name", "console-url", "metrics-url", "api-url", "logging-url", "app-dns", "capacity-exhausted",
+	a.Required("name", "console-url", "metrics-url", "api-url", "logging-url", "app-dns", "type", "capacity-exhausted",
 		"service-account-token", "service-account-username", "token-provider-id", "auth-client-id", "auth-client-secret",
 		"auth-client-default-scope")
 })

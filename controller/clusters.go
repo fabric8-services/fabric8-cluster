@@ -44,6 +44,7 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 			MetricsURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
 			LoggingURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
 			AppDNS:            clusterConfig.AppDNS,
+			Type:              clusterConfig.Type,
 			CapacityExhausted: clusterConfig.CapacityExhausted,
 		}
 		data = append(data, cluster)
@@ -70,6 +71,7 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 			MetricsURL:        httpsupport.AddTrailingSlashToURL(ososCluster.MetricsURL),
 			LoggingURL:        httpsupport.AddTrailingSlashToURL(ososCluster.LoggingURL),
 			AppDNS:            ososCluster.AppDNS,
+			Type:              ososCluster.Type,
 			CapacityExhausted: ososCluster.CapacityExhausted,
 
 			AuthClientDefaultScope: ososCluster.AuthClientDefaultScope,

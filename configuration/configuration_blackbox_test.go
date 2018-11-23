@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/goadesign/goa"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
@@ -203,6 +204,7 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 		AuthClientID:           "autheast2",
 		AuthClientSecret:       "autheast2secret",
 		AuthClientDefaultScope: "user:full",
+		Type: cluster.OSO,
 	})
 }
 
@@ -240,7 +242,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		AuthClientID:           "autheast2",
 		AuthClientSecret:       "autheast2secret",
 		AuthClientDefaultScope: "user:full",
-		CapacityExhausted:      false,
+		Type:              "OSO",
+		CapacityExhausted: false,
 	})
 	checkCluster(t, clusters, configuration.OSOCluster{
 		Name:                   "us-east-2a",
@@ -255,7 +258,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		AuthClientID:           "autheast2a",
 		AuthClientSecret:       "autheast2asecret",
 		AuthClientDefaultScope: "user:full",
-		CapacityExhausted:      false,
+		Type:              "OSO",
+		CapacityExhausted: false,
 	})
 	checkCluster(t, clusters, configuration.OSOCluster{
 		Name:                   "us-east-1a",
@@ -270,7 +274,24 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.O
 		AuthClientID:           "autheast1a",
 		AuthClientSecret:       "autheast1asecret",
 		AuthClientDefaultScope: "user:full",
-		CapacityExhausted:      true,
+		Type:              "OSO",
+		CapacityExhausted: true,
+	})
+	checkCluster(t, clusters, configuration.OSOCluster{
+		Name:                   "us-east-3a",
+		APIURL:                 "https://api.starter-us-east-3a.openshift.com",
+		ConsoleURL:             "https://console.starter-us-east-3a.openshift.com/console",
+		MetricsURL:             "https://metrics.starter-us-east-3a.openshift.com",
+		LoggingURL:             "https://console.starter-us-east-3a.openshift.com/console",
+		AppDNS:                 "b542.starter-us-east-3a.openshiftapps.com",
+		ServiceAccountToken:    "fkdjhfdsjfgfdjlsflhjgsafgskfdsagrwgwerwshbdjasbdjbsahdbsagbdyhsbdesbh",
+		ServiceAccountUsername: "dsaas",
+		TokenProviderID:        "1c09073a-13ad-4add-b0ff-197eaf18fc37",
+		AuthClientID:           "autheast3a",
+		AuthClientSecret:       "autheast3asecret",
+		AuthClientDefaultScope: "user:full",
+		Type:              "OSD",
+		CapacityExhausted: false,
 	})
 }
 

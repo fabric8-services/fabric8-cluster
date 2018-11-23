@@ -6,7 +6,6 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
-	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
@@ -115,6 +114,7 @@ func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.C
 		LoggingURL:        httpsupport.AddTrailingSlashToURL(osoCluster.LoggingURL),
 		AppDNS:            osoCluster.AppDNS,
 		CapacityExhausted: osoCluster.CapacityExhausted,
+		Type:              osoCluster.Type,
 
 		SaToken:          osoCluster.ServiceAccountToken,
 		SaUsername:       osoCluster.ServiceAccountUsername,
@@ -122,6 +122,5 @@ func GetClusterFromOSOCluster(osoCluster configuration.OSOCluster) *repository.C
 		AuthClientID:     osoCluster.AuthClientID,
 		AuthClientSecret: osoCluster.AuthClientSecret,
 		AuthDefaultScope: osoCluster.AuthClientDefaultScope,
-		Type:             service.OSO,
 	}
 }

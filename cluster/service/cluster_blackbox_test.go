@@ -2,8 +2,8 @@ package service_test
 
 import (
 	"context"
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	clustersvc "github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
@@ -35,13 +35,19 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveOSOClusterOK() {
 	err := s.Application.ClusterService().CreateOrSaveOSOClusterFromConfig(context.Background())
 	require.NoError(s.T(), err)
 
-	clusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
-		return db.Where("type = ?", clustersvc.OSO)
+	osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
+		return db.Where("type = ?", cluster.OSO)
 	})
 	require.NoError(s.T(), err)
-	assert.Len(s.T(), clusters, 3)
+	assert.Len(s.T(), osoClusters, 3)
 
-	verifyClusters(s.T(), clusters, s.Configuration.GetOSOClusters())
+	osdClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
+		return db.Where("type = ?", cluster.OSD)
+	})
+	require.NoError(s.T(), err)
+	assert.Len(s.T(), osdClusters, 1)
+
+	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetOSOClusters())
 }
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {

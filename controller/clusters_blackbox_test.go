@@ -57,6 +57,7 @@ func (s *ClustersTestSuite) checkShowForServiceAccount(saName string) {
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
 		require.Equal(s.T(), configCluster.AppDNS, cluster.AppDNS)
+		require.Equal(s.T(), configCluster.Type, cluster.Type)
 		require.Equal(s.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
 	}
 }
@@ -103,6 +104,7 @@ func (s *ClustersTestSuite) checkShowAuthForServiceAccount(saName string) {
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
 		require.Equal(s.T(), httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
 		require.Equal(s.T(), configCluster.AppDNS, cluster.AppDNS)
+		require.Equal(s.T(), configCluster.Type, cluster.Type)
 		require.Equal(s.T(), configCluster.CapacityExhausted, cluster.CapacityExhausted)
 
 		require.Equal(s.T(), configCluster.AuthClientDefaultScope, cluster.AuthClientDefaultScope)

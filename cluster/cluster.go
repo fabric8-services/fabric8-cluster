@@ -5,6 +5,12 @@ import (
 	"net/url"
 )
 
+const (
+	OSD = "OSD"
+	OCP = "OCP"
+	OSO = "OSO"
+)
+
 func ConvertAPIURL(apiURL, newPrefix, newPath string) (string, error) {
 	newURL, err := url.Parse(apiURL)
 	if err != nil {
