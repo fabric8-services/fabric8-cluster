@@ -8,6 +8,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
+	"github.com/fabric8-services/fabric8-common/resource"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ import (
 )
 
 func TestCluster(t *testing.T) {
+	resource.Require(t, resource.Database)
 	suite.Run(t, &ClusterServiceTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
@@ -151,15 +153,6 @@ func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters 
 }
 
 func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	actual := clusterFromURL(clusters, expected.URL)
+	actual := test.FilterClusterByURL(expected.URL, clusters)
 	test.AssertEqualClusterDetails(t, expected, actual)
-}
-
-func clusterFromURL(clusters []repository.Cluster, url string) *repository.Cluster {
-	for _, c := range clusters {
-		if c.URL == url {
-			return &c
-		}
-	}
-	return nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
+	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
@@ -70,6 +71,35 @@ func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluste
 	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
 	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
+}
+
+func AssertEqualClusterData(t *testing.T, clusters []repository.Cluster, clusterList []*app.ClusterData) {
+	require.Len(t, clusterList, len(clusters))
+
+	for _, c := range clusterList {
+		require.NotNil(t, c)
+		apiURL := c.APIURL
+		require.NotNil(t, apiURL)
+		cluster := FilterClusterByURL(apiURL, clusters)
+		require.NotNil(t, cluster, "cluster with url %s could not found", apiURL)
+		assert.Equal(t, cluster.Name, c.Name)
+		assert.Equal(t, cluster.URL, apiURL)
+		assert.Equal(t, cluster.ConsoleURL, c.ConsoleURL)
+		assert.Equal(t, cluster.MetricsURL, c.MetricsURL)
+		assert.Equal(t, cluster.LoggingURL, c.LoggingURL)
+		assert.Equal(t, cluster.AppDNS, c.AppDNS)
+		assert.Equal(t, cluster.Type, c.Type)
+		assert.Equal(t, cluster.CapacityExhausted, c.CapacityExhausted)
+	}
+}
+
+func FilterClusterByURL(url string, clusters []repository.Cluster) *repository.Cluster {
+	for _, cluster := range clusters {
+		if cluster.URL == url {
+			return &cluster
+		}
+	}
+	return nil
 }
 
 func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluster, identityID *uuid.UUID) *repository.IdentityCluster {
