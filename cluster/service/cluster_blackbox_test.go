@@ -2,8 +2,8 @@ package service_test
 
 import (
 	"context"
+	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	clustersvc "github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
@@ -31,17 +31,23 @@ func (s *ClusterServiceTestSuite) SetupTest() {
 	s.DBTestSuite.SetupTest()
 }
 
-func (s *ClusterServiceTestSuite) TestCreateOrSaveOSOClusterOK() {
-	err := s.Application.ClusterService().CreateOrSaveOSOClusterFromConfig(context.Background())
+func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterOK() {
+	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
 	require.NoError(s.T(), err)
 
-	clusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
-		return db.Where("type = ?", clustersvc.OSO)
+	osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
+		return db.Where("type = ?", cluster.OSO)
 	})
 	require.NoError(s.T(), err)
-	assert.Len(s.T(), clusters, 3)
+	assert.Len(s.T(), osoClusters, 3)
 
-	verifyClusters(s.T(), clusters, s.Configuration.GetOSOClusters())
+	osdClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
+		return db.Where("type = ?", cluster.OSD)
+	})
+	require.NoError(s.T(), err)
+	assert.Len(s.T(), osdClusters, 1)
+
+	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
 }
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
@@ -53,10 +59,10 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// Load configuration from the temp file
 	config, err := configuration.NewConfigurationData("", tmpFileName)
 	require.NoError(t, err)
-	cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
-	require.NotNil(t, cluster)
+	c := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
+	require.NotNil(t, c)
 
-	original := cluster.CapacityExhausted
+	original := c.CapacityExhausted
 
 	// initialize application with new config
 	application := gormapplication.NewGormDB(s.DB, config)
@@ -126,24 +132,27 @@ func updateClusterConfigFile(t *testing.T, to, from string) {
 func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, expected bool) {
 	for i := 0; i < 30; i++ {
 		time.Sleep(100 * time.Millisecond)
-		cluster := config.GetOSOClusterByURL("https://api.starter-us-east-2a.openshift.com")
-		require.NotNil(t, cluster)
-		if expected == cluster.CapacityExhausted {
+		c := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
+		require.NotNil(t, c)
+
+		// verify that cluster type set to OSO in case of not present in config
+		require.Equal(t, cluster.OSO, c.Type)
+		if expected == c.CapacityExhausted {
 			return
 		}
 	}
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.OSOCluster) {
-	for _, osoCluster := range configClusters {
-		verifyCluster(t, clusters, test.GetClusterFromOSOCluster(osoCluster))
+func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.Cluster) {
+	for _, configCluster := range configClusters {
+		verifyCluster(t, clusters, test.ClusterFromConfigurationCluster(configCluster))
 	}
 }
 
 func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	cluster := clusterFromURL(clusters, expected.URL)
-	test.AssertEqualClusterDetails(t, expected, cluster)
+	actual := clusterFromURL(clusters, expected.URL)
+	test.AssertEqualClusterDetails(t, expected, actual)
 }
 
 func clusterFromURL(clusters []repository.Cluster, url string) *repository.Cluster {

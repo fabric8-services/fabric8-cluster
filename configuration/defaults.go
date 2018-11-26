@@ -5,8 +5,8 @@ const (
 
 	defaultLogLevel = "info"
 
-	osoClusterConfigFileName    = "oso-clusters.conf"
-	defaultOsoClusterConfigPath = "/etc/fabric8/" + osoClusterConfigFileName
+	osoClusterConfigFileName = "oso-clusters.conf"
+	defaultClusterConfigPath = "/etc/fabric8/" + osoClusterConfigFileName
 
 	prodEnvironment        = "production"
 	prodPreviewEnvironment = "prod-preview"

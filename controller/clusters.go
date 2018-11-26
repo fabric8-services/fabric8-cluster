@@ -12,7 +12,7 @@ import (
 )
 
 type clusterConfiguration interface {
-	GetOSOClusters() map[string]configuration.OSOCluster
+	GetClusters() map[string]configuration.Cluster
 }
 
 // ClustersController implements the clusters resource.
@@ -36,17 +36,18 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
 	var data []*app.ClusterData
-	for _, clusterConfig := range c.config.GetOSOClusters() {
-		cluster := &app.ClusterData{
-			Name:              clusterConfig.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(clusterConfig.APIURL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(clusterConfig.LoggingURL),
-			AppDNS:            clusterConfig.AppDNS,
-			CapacityExhausted: clusterConfig.CapacityExhausted,
+	for _, configCluster := range c.config.GetClusters() {
+		clusterData := &app.ClusterData{
+			Name:              configCluster.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
+			AppDNS:            configCluster.AppDNS,
+			Type:              configCluster.Type,
+			CapacityExhausted: configCluster.CapacityExhausted,
 		}
-		data = append(data, cluster)
+		data = append(data, clusterData)
 	}
 	clusters := app.ClusterList{
 		Data: data,
@@ -62,22 +63,23 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
 	var data []*app.FullClusterData
-	for _, ososCluster := range c.config.GetOSOClusters() {
+	for _, configCluster := range c.config.GetClusters() {
 		cluster := &app.FullClusterData{
-			Name:              ososCluster.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(ososCluster.APIURL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(ososCluster.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(ososCluster.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(ososCluster.LoggingURL),
-			AppDNS:            ososCluster.AppDNS,
-			CapacityExhausted: ososCluster.CapacityExhausted,
+			Name:              configCluster.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
+			AppDNS:            configCluster.AppDNS,
+			Type:              configCluster.Type,
+			CapacityExhausted: configCluster.CapacityExhausted,
 
-			AuthClientDefaultScope: ososCluster.AuthClientDefaultScope,
-			AuthClientID:           ososCluster.AuthClientID,
-			AuthClientSecret:       ososCluster.AuthClientSecret,
-			ServiceAccountToken:    ososCluster.ServiceAccountToken,
-			ServiceAccountUsername: ososCluster.ServiceAccountUsername,
-			TokenProviderID:        ososCluster.TokenProviderID,
+			AuthClientDefaultScope: configCluster.AuthClientDefaultScope,
+			AuthClientID:           configCluster.AuthClientID,
+			AuthClientSecret:       configCluster.AuthClientSecret,
+			ServiceAccountToken:    configCluster.ServiceAccountToken,
+			ServiceAccountUsername: configCluster.ServiceAccountUsername,
+			TokenProviderID:        configCluster.TokenProviderID,
 		}
 		data = append(data, cluster)
 	}
