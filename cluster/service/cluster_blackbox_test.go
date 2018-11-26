@@ -134,6 +134,9 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 		time.Sleep(100 * time.Millisecond)
 		c := config.GetClusterByURL("https://api.starter-us-east-2a.openshift.com")
 		require.NotNil(t, c)
+
+		// verify that cluster type set to OSO in case of not present in config
+		require.Equal(t, cluster.OSO, c.Type)
 		if expected == c.CapacityExhausted {
 			return
 		}
