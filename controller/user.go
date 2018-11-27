@@ -6,7 +6,6 @@ import (
 	"github.com/goadesign/goa"
 
 	"github.com/fabric8-services/fabric8-cluster/application"
-	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/fabric8-services/fabric8-common/log"
 )
 
@@ -25,11 +24,11 @@ func NewUserController(service *goa.Service, app application.Application) *UserC
 func (c *UserController) Clusters(ctx *app.ClustersUserContext) error {
 	tokenMgr, err := token.ReadManagerFromContext(ctx)
 	if err != nil {
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError(err.Error()))
+		return app.JSONErrorResponse(ctx, err)
 	}
 	identityID, err := tokenMgr.Locate(ctx)
 	if err != nil {
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError(err.Error()))
+		return app.JSONErrorResponse(ctx, err)
 	}
 
 	clusters, err := c.app.IdentityClusters().ListClustersForIdentity(ctx, identityID)

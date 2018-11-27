@@ -16,7 +16,6 @@ import (
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware/security/jwt"
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -122,16 +121,13 @@ func (s *UserTestSuite) TestShowClusterAvailableToUser() {
 		})
 	})
 
-	s.T().Run("unauthorized", func(t *testing.T) {
+	s.T().Run("internal error", func(t *testing.T) {
 
 		t.Run("missing token", func(t *testing.T) {
 			// given
-			jwtToken := token.New(token.SigningMethodRS256)
-			jwtToken.Claims.(token.MapClaims)["sub"] = uuid.NewV4().String()
-			ctx := jwt.WithJWT(context.Background(), jwtToken)
 			svc, userCtrl := s.UnsecuredController()
 			// when/then
-			test.ClustersUserUnauthorized(t, ctx, svc, userCtrl)
+			test.ClustersUserInternalServerError(t, svc.Context, svc, userCtrl)
 		})
 
 		t.Run("ID not a UUID", func(t *testing.T) {
@@ -141,7 +137,7 @@ func (s *UserTestSuite) TestShowClusterAvailableToUser() {
 			ctx := jwt.WithJWT(context.Background(), jwtToken)
 			svc, userCtrl := s.UnsecuredController()
 			// when/then
-			test.ClustersUserUnauthorized(t, ctx, svc, userCtrl)
+			test.ClustersUserInternalServerError(t, ctx, svc, userCtrl)
 		})
 
 		t.Run("token without identity", func(t *testing.T) {
@@ -150,7 +146,7 @@ func (s *UserTestSuite) TestShowClusterAvailableToUser() {
 			ctx := jwt.WithJWT(context.Background(), jwtToken)
 			svc, userCtrl := s.UnsecuredController()
 			// when/then
-			test.ClustersUserUnauthorized(t, ctx, svc, userCtrl)
+			test.ClustersUserInternalServerError(t, ctx, svc, userCtrl)
 		})
 	})
 }
