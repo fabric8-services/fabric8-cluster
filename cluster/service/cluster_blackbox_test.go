@@ -8,7 +8,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
-	"github.com/fabric8-services/fabric8-common/resource"
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,6 @@ import (
 )
 
 func TestCluster(t *testing.T) {
-	resource.Require(t, resource.Database)
 	suite.Run(t, &ClusterServiceTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
-	"github.com/fabric8-services/fabric8-common/resource"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware/security/jwt"
 	"github.com/jinzhu/gorm"
@@ -32,7 +31,6 @@ func (s *UserTestSuite) SetupTest() {
 }
 
 func TestRunUserREST(t *testing.T) {
-	resource.Require(t, resource.Database)
 	suite.Run(t, &UserTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
