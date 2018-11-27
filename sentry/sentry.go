@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/sentry"
-	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/getsentry/raven-go"
 	"github.com/goadesign/goa/middleware/security/jwt"
@@ -29,7 +29,7 @@ func Initialize(config configuration, commit string) (func(), error) {
 
 func extractUserInfo() func(ctx context.Context) (*raven.User, error) {
 	return func(ctx context.Context) (*raven.User, error) {
-		m, err := token.ReadManagerFromContext(ctx)
+		m, err := auth.ReadManagerFromContext(ctx)
 		if err != nil {
 			return nil, err
 		}
