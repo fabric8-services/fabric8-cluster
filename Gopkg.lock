@@ -47,12 +47,21 @@
   version = "v3.9.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/fabric8-services/fabric8-auth-client"
+  packages = ["auth"]
+  revision = "0eb93fc6cee1e202cb0f3ade92e99a2423b49283"
+
+[[projects]]
   name = "github.com/fabric8-services/fabric8-common"
   packages = [
+    "auth",
+    "auth/jwk",
     "configuration",
     "convert",
     "errors",
     "goamiddleware",
+    "goasupport",
     "goasupport/jsonapi_errors_helpers",
     "gormsupport",
     "httpsupport",
@@ -61,11 +70,9 @@
     "resource",
     "sentry",
     "test/auth",
-    "test/suite",
-    "token",
-    "token/jwk"
+    "test/suite"
   ]
-  revision = "9830c6e8180475290fef242884f088e9c7ce16c0"
+  revision = "fad7388b32f4fed868290b465b3c81dbf83cfba1"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -423,6 +430,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d7b84e6aa5787e31085bad1d13d1b889ec7011b2d5a9ed7224db063961d85150"
+  inputs-digest = "f43fbc4f53ba46351d60b87de249ca67c95761060dff0e85e55a638fc0fda658"
   solver-name = "gps-cdcl"
   solver-version = 1

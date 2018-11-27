@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
-	"github.com/fabric8-services/fabric8-common/test/auth"
-	"github.com/fabric8-services/fabric8-common/token"
+	"github.com/fabric8-services/fabric8-common/auth"
+	testauth "github.com/fabric8-services/fabric8-common/test/auth"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/raven-go"
@@ -24,7 +24,7 @@ type TestWhiteboxSentry struct {
 }
 
 func failOnNoToken(t *testing.T) context.Context {
-	return token.ContextWithTokenManager(context.Background(), auth.TokenManager)
+	return auth.ContextWithTokenManager(context.Background(), testauth.TokenManager)
 }
 
 func failOnParsingToken(t *testing.T) context.Context {
@@ -37,7 +37,7 @@ func failOnParsingToken(t *testing.T) context.Context {
 
 func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 	f := extractUserInfo()
-	ctx, identity, err := auth.EmbedUserTokenInContext(nil, nil)
+	ctx, identity, err := testauth.EmbedUserTokenInContext(nil, nil)
 	require.NoError(s.T(), err)
 
 	tests := []struct {

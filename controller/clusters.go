@@ -3,10 +3,10 @@ package controller
 import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
-	"github.com/fabric8-services/fabric8-common/token"
 
 	"github.com/goadesign/goa"
 )
@@ -31,7 +31,7 @@ func NewClustersController(service *goa.Service, config clusterConfiguration) *C
 
 // Show returns the list of available OSO clusters.
 func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
-	if !token.IsSpecificServiceAccount(ctx, token.OsoProxy, token.Tenant, token.JenkinsIdler, token.JenkinsProxy, token.Auth) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
@@ -58,7 +58,7 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 // ShowAuthClient returns the list of available OSO clusters with full configuration including Auth client data.
 // To be used by Auth service only
 func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersContext) error {
-	if !token.IsSpecificServiceAccount(ctx, token.Auth) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
