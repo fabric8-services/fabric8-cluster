@@ -8,18 +8,17 @@ import (
 	"runtime"
 	"time"
 
+	"context"
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/controller"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/migration"
 	"github.com/fabric8-services/fabric8-cluster/sentry"
+	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/goamiddleware"
 	"github.com/fabric8-services/fabric8-common/log"
-	"github.com/fabric8-services/fabric8-common/token"
-
-	"context"
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/logging/logrus"
 	"github.com/goadesign/goa/middleware"
@@ -156,7 +155,7 @@ func main() {
 	defer haltWatcher()
 
 	// Setup Security
-	tokenManager, err := token.DefaultManager(config)
+	tokenManager, err := auth.DefaultManager(config)
 	if err != nil {
 		log.Panic(nil, map[string]interface{}{
 			"err": err,
@@ -166,7 +165,7 @@ func main() {
 	jwtMiddlewareTokenContext := goamiddleware.TokenContext(tokenManager, app.NewJWTSecurity())
 	service.Use(jwtMiddlewareTokenContext)
 
-	service.Use(token.InjectTokenManager(tokenManager))
+	service.Use(auth.InjectTokenManager(tokenManager))
 	service.Use(log.LogRequest(config.DeveloperModeEnabled()))
 	app.UseJWTMiddleware(service, jwt.New(tokenManager.PublicKeys(), nil, app.NewJWTSecurity()))
 
