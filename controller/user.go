@@ -37,16 +37,16 @@ func (c *UserController) Clusters(ctx *app.ClustersUserContext) error {
 		return app.JSONErrorResponse(ctx, err)
 	}
 	data := make([]*app.ClusterData, 0)
-	for _, cluster := range clusters {
+	for _, c := range clusters {
 		clusterData := &app.ClusterData{
-			Name:              cluster.Name,
-			APIURL:            cluster.URL,
-			ConsoleURL:        cluster.ConsoleURL,
-			MetricsURL:        cluster.MetricsURL,
-			LoggingURL:        cluster.LoggingURL,
-			AppDNS:            cluster.AppDNS,
-			Type:              cluster.Type,
-			CapacityExhausted: cluster.CapacityExhausted,
+			Name:              c.Name,
+			APIURL:            c.URL,
+			ConsoleURL:        c.ConsoleURL,
+			MetricsURL:        c.MetricsURL,
+			LoggingURL:        c.LoggingURL,
+			AppDNS:            c.AppDNS,
+			Type:              c.Type,
+			CapacityExhausted: c.CapacityExhausted,
 		}
 		data = append(data, clusterData)
 	}

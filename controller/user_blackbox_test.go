@@ -19,30 +19,26 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type UserTestSuite struct {
+type UserControllerTestSuite struct {
 	gormtestsupport.DBTestSuite
 }
 
-func (s *UserTestSuite) SetupTest() {
-	s.DBTestSuite.SetupTest()
+func TestUserController(t *testing.T) {
+	suite.Run(t, &UserControllerTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func TestRunUserREST(t *testing.T) {
-	suite.Run(t, &UserTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
-}
-
-func (s *UserTestSuite) SecuredController(user *auth.Identity) (*goa.Service, *UserController) {
+func (s *UserControllerTestSuite) SecuredController(user *auth.Identity) (*goa.Service, *UserController) {
 	svc, err := auth.ServiceAsUser("User-Service", user)
 	require.NoError(s.T(), err)
 	return svc, NewUserController(svc, s.Application)
 }
-func (s *UserTestSuite) UnsecuredController() (*goa.Service, *UserController) {
+func (s *UserControllerTestSuite) UnsecuredController() (*goa.Service, *UserController) {
 	svc := goa.New("User-Service")
 	controller := NewUserController(svc, s.Application)
 	return svc, controller
 }
 
-func (s *UserTestSuite) TestShowClusterAvailableToUser() {
+func (s *UserControllerTestSuite) TestShowClusterAvailableToUser() {
 
 	s.T().Run("ok", func(t *testing.T) {
 
@@ -55,7 +51,7 @@ func (s *UserTestSuite) TestShowClusterAvailableToUser() {
 			_, clusters := test.ClustersUserOK(t, svc.Context, svc, userCtrl)
 
 			// then
-			assert.NotNil(t, clusters)
+			require.NotNil(t, clusters)
 			assert.Empty(t, clusters.Data)
 
 		})
