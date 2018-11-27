@@ -10,12 +10,10 @@ import (
 	"github.com/fabric8-services/fabric8-common/test/auth"
 
 	"context"
-	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware/security/jwt"
-	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -83,30 +81,18 @@ func (s *UserTestSuite) TestShowClusterAvailableToUser() {
 
 		t.Run("list multiple cluster", func(t *testing.T) {
 			// given
-			expectedClusters := make([]repository.Cluster, 0)
-			// create cluster identity for random cluster
+			// create user identity
 			identity := auth.NewIdentity()
 			identityID := identity.ID
 
-			c := testsupport.CreateCluster(t, s.DB)
-			expectedClusters = append(expectedClusters, *c)
-
-			identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
-			require.NotNil(t, identityCluster)
-
-			// create cluster identity for cluster loading from config
-			err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
-			require.NoError(s.T(), err)
-
-			osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
-				return db.Where("type = ?", cluster.OSO)
-			})
-
-			for _, c := range osoClusters {
-				cl := c
-				identityCluster := testsupport.CreateIdentityCluster(t, s.DB, &cl, &identityID)
+			expectedClusters := make([]repository.Cluster, 3)
+			// create random cluster and cluster identity for user
+			for i := range expectedClusters {
+				c := testsupport.CreateCluster(t, s.DB)
+				identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
 				require.NotNil(t, identityCluster)
-				expectedClusters = append(expectedClusters, cl)
+
+				expectedClusters[i] = *c
 			}
 
 			// when

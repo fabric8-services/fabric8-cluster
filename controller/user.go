@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/fabric8-services/fabric8-cluster/app"
-	"github.com/fabric8-services/fabric8-common/token"
+	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/goadesign/goa"
 
 	"github.com/fabric8-services/fabric8-cluster/application"
@@ -22,11 +22,7 @@ func NewUserController(service *goa.Service, app application.Application) *UserC
 
 // Clusters runs the clusters action.
 func (c *UserController) Clusters(ctx *app.ClustersUserContext) error {
-	tokenMgr, err := token.ReadManagerFromContext(ctx)
-	if err != nil {
-		return app.JSONErrorResponse(ctx, err)
-	}
-	identityID, err := tokenMgr.Locate(ctx)
+	identityID, err := auth.LocateIdentity(ctx)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
