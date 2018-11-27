@@ -38,15 +38,15 @@ const (
 	// default values as well as to get each value
 
 	// General
-	varHTTPAddress          = "http.address"
-	varMetricsHTTPAddress   = "metrics.http.address"
-	varDeveloperModeEnabled = "developer.mode.enabled"
-	varCleanTestDataEnabled = "clean.test.data"
+	varHTTPAddress                         = "http.address"
+	varMetricsHTTPAddress                  = "metrics.http.address"
+	varDeveloperModeEnabled                = "developer.mode.enabled"
+	varCleanTestDataEnabled                = "clean.test.data"
 	varCleanTestDataErrorReportingRequired = "error.reporting.required"
-	varDBLogsEnabled        = "enable.db.logs"
-	defaultConfigFile       = "config.yaml"
-	varLogLevel             = "log.level"
-	varLogJSON              = "log.json"
+	varDBLogsEnabled                       = "enable.db.logs"
+	defaultConfigFile                      = "config.yaml"
+	varLogLevel                            = "log.level"
+	varLogJSON                             = "log.json"
 
 	// Postgres
 	varPostgresHost                 = "postgres.host"
