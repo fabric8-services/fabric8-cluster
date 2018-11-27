@@ -42,7 +42,7 @@ const (
 	varMetricsHTTPAddress   = "metrics.http.address"
 	varDeveloperModeEnabled = "developer.mode.enabled"
 	varCleanTestDataEnabled = "clean.test.data"
-	varCleanTestDataErrorReportingRequired = "clean.test.data.error.reporting.required"
+	varCleanTestDataErrorReportingRequired = "error.reporting.required"
 	varDBLogsEnabled        = "enable.db.logs"
 	defaultConfigFile       = "config.yaml"
 	varLogLevel             = "log.level"
@@ -466,7 +466,7 @@ func (c *ConfigurationData) setConfigDefaults() {
 	// By default, error should be reported while cleaning test data from DB.
 	c.v.SetDefault(varCleanTestDataErrorReportingRequired, true)
 	// By default, DB logs are not output in the console
-	c.v.SetDefault(varDBLogsEnabled, false)
+	c.v.SetDefault(varDBLogsEnabled, true)
 
 	// prod-preview or prod
 	c.v.SetDefault(varEnvironment, "local")
