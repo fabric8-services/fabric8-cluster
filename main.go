@@ -177,6 +177,10 @@ func main() {
 	clustersCtrl := controller.NewClustersController(service, config)
 	app.MountClustersController(service, clustersCtrl)
 
+	// Mount "user" controller
+	userCtrl := controller.NewUserController(service, appDB)
+	app.MountUserController(service, userCtrl)
+
 	log.Logger().Infoln("Git Commit SHA: ", controller.Commit)
 	log.Logger().Infoln("UTC Build Time: ", controller.BuildTime)
 	log.Logger().Infoln("UTC Start Time: ", controller.StartTime)

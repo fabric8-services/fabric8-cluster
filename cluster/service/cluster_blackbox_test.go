@@ -151,15 +151,6 @@ func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters 
 }
 
 func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	actual := clusterFromURL(clusters, expected.URL)
+	actual := test.FilterClusterByURL(expected.URL, clusters)
 	test.AssertEqualClusterDetails(t, expected, actual)
-}
-
-func clusterFromURL(clusters []repository.Cluster, url string) *repository.Cluster {
-	for _, c := range clusters {
-		if c.URL == url {
-			return &c
-		}
-	}
-	return nil
 }
