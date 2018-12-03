@@ -112,7 +112,7 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 		}
 
 		// when
-		err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, identityID.String(), c.URL)
+		err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID.String(), c.URL)
 		require.NoError(t, err)
 
 		// then
@@ -128,10 +128,10 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 			c := test.CreateCluster(t, s.DB)
 
 			// when
-			err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, "unknown", c.URL)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, "unknown", c.URL)
 
 			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'identity-id': 'incorrect Identity ID'")
+			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'identity-id': 'IdentityID is not a valid UUID'")
 		})
 
 		t.Run("random cluster url", func(t *testing.T) {
@@ -139,7 +139,7 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 			url := "http://random.url"
 
 			// when
-			err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, uuid.NewV4().String(), url)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4().String(), url)
 
 			// then
 			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url doesn't exist'")

@@ -27,7 +27,7 @@ func (c *IdentityClustersController) Create(ctx *app.CreateIdentityClustersConte
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to create identity cluster relationship"))
 	}
 
-	if err := c.app.ClusterService().CreateIdentityCluster(ctx, ctx.Payload.Attributes.IdentityID, ctx.Payload.Attributes.ClusterURL); err != nil {
+	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, ctx.Payload.Attributes.IdentityID, ctx.Payload.Attributes.ClusterURL); err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
 

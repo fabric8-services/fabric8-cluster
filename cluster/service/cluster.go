@@ -11,6 +11,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/fsnotify/fsnotify"
+	errs "github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"time"
 )
@@ -148,15 +149,13 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 	return watcher.Close, err
 }
 
-// CreateIdentityCluster populate Identity Cluster relationship
-func (c clusterService) CreateIdentityCluster(ctx context.Context, identityID, clusterURL string) error {
-	var err error
-	var id uuid.UUID
+// LinkIdentityToCluster links Identity to Cluster
+func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string) error {
 	var rc *repository.Cluster
 
-	id, err = uuid.FromString(identityID)
+	id, err := uuid.FromString(identityID)
 	if err != nil {
-		return errors.NewBadParameterError("identity-id", "incorrect Identity ID")
+		return errors.NewBadParameterError("identity-id", "IdentityID is not a valid UUID")
 	}
 
 	rc, err = c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
@@ -172,13 +171,7 @@ func (c clusterService) CreateIdentityCluster(ctx context.Context, identityID, c
 
 	return c.ExecuteInTransaction(func() error {
 		if err := c.Repositories().IdentityClusters().Create(ctx, identityCluster); err != nil {
-			log.Error(ctx, map[string]interface{}{
-				"identity_id": id,
-				"cluster_url": clusterURL,
-				"cluster_id":  rc.ClusterID,
-				"err":         err,
-			}, "failed to create identitycluster")
-			return err
+			return errs.Wrapf(err, "failed to create IdentityCluster with cluster id %s for identity %s", rc.ClusterID, id)
 		}
 		return nil
 	})
