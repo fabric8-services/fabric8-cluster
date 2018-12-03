@@ -20,6 +20,7 @@ Steps for adding a new Service:
 type ClusterService interface {
 	CreateOrSaveClusterFromConfig(ctx context.Context) error
 	InitializeClusterWatcher() (func() error, error)
+	CreateIdentityCluster(ctx context.Context, identityID, clusterURL string) error
 }
 
 //Services creates instances of service layer objects

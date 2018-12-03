@@ -8,7 +8,9 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
+	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -25,10 +27,6 @@ func TestCluster(t *testing.T) {
 
 type ClusterServiceTestSuite struct {
 	gormtestsupport.DBTestSuite
-}
-
-func (s *ClusterServiceTestSuite) SetupTest() {
-	s.DBTestSuite.SetupTest()
 }
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterOK() {
@@ -100,6 +98,53 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefau
 	haltWatcher, err := s.Application.ClusterService().InitializeClusterWatcher()
 	require.NoError(s.T(), err)
 	defer haltWatcher()
+}
+
+func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		c := test.CreateCluster(s.T(), s.DB)
+		identityID := uuid.NewV4()
+		idCluster := &repository.IdentityCluster{
+			ClusterID:  c.ClusterID,
+			IdentityID: identityID,
+		}
+
+		// when
+		err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, identityID.String(), c.URL)
+		require.NoError(t, err)
+
+		// then
+		loaded, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c.ClusterID)
+		require.NoError(t, err)
+		test.AssertEqualClusters(t, c, &loaded.Cluster)
+		test.AssertEqualIdentityClusters(t, idCluster, loaded)
+	})
+
+	s.T().Run("fail", func(t *testing.T) {
+		t.Run("unknown identity", func(t *testing.T) {
+			// given
+			c := test.CreateCluster(t, s.DB)
+
+			// when
+			err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, "unknown", c.URL)
+
+			// then
+			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'identity-id': 'incorrect Identity ID'")
+		})
+
+		t.Run("random cluster url", func(t *testing.T) {
+			// given
+			url := "http://random.url"
+
+			// when
+			err := s.Application.ClusterService().CreateIdentityCluster(s.Ctx, uuid.NewV4().String(), url)
+
+			// then
+			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url doesn't exist'")
+		})
+	})
 }
 
 func createTempClusterConfigFile(t *testing.T) string {
