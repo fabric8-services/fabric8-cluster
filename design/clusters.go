@@ -44,6 +44,7 @@ var fullClusterData = a.Type("FullClusterData", func() {
 
 	a.Attribute("service-account-token", d.String, "Decrypted cluster wide token")
 	a.Attribute("service-account-username", d.String, "Username of the cluster wide user")
+	a.Attribute("sa-token-encrypted", d.Boolean, "encrypted Service Account Token set to 'true'")
 	a.Attribute("token-provider-id", d.String, "Token provider ID")
 	a.Attribute("auth-client-id", d.String, "OAuth client ID")
 	a.Attribute("auth-client-secret", d.String, "OAuth client secret")

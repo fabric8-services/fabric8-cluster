@@ -84,6 +84,7 @@ func (s *MigrationTestSuite) TestMigrate() {
 	s.T().Run("testMigration003UniqueIndexOnClusterApiUrl", testMigration003UniqueIndexOnClusterApiUrl)
 	s.T().Run("testMigration004AddCapacityExhaustedToCluster", testMigration004AddCapacityExhaustedToCluster)
 	s.T().Run("testMigration005AlterClusterAPIURLIndexToUnique", testMigration005AlterClusterAPIURLIndexToUnique)
+	s.T().Run("testMigration006AddSaTokenEncryptedToCluster", testMigration006AddSaTokenEncryptedToCluster)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -209,4 +210,32 @@ func testMigration005AlterClusterAPIURLIndexToUnique(t *testing.T) {
 			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
 
 	require.Error(t, err)
+}
+
+func testMigration006AddSaTokenEncryptedToCluster(t *testing.T) {
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:7])
+	require.NoError(t, err)
+
+	assert.True(t, dialect.HasColumn("cluster", "sa_token_encrypted"))
+
+	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, created_at, updated_at, name, url, console_url,
+                     metrics_url, logging_url, app_dns, sa_token, sa_username, sa_token_encrypted, token_provider_id,
+                     auth_client_id, auth_client_secret, auth_default_scope, type)
+			VALUES ('3eb0fb9a-b7d3-479f-9ec0-e5f93c7b1e53', now(), now(), 'exhausted', 'https://token-encrypted.api.cluster.com', 'https://console.cluster.com',
+			        'https://metrics.cluster.com', 'https://login.cluster.com', 'https://app.cluster.com', 'sometoken', 'dssas-sre', false, 'pr-id',
+			        'client-id', 'cleint-scr', 'somescope', 'OSD')`)
+	require.NoError(t, err)
+
+	// check if ALL the existing rows & new rows have the default value
+	rows, err := sqlDB.Query("SELECT sa_token_encrypted FROM cluster")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sa_token_encrypted bool
+		err = rows.Scan(&sa_token_encrypted)
+		require.NoError(t, err)
+		assert.False(t, sa_token_encrypted)
+	}
 }

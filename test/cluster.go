@@ -42,6 +42,7 @@ func NewCluster() *repository.Cluster {
 		Name:              uuid.NewV4().String(),
 		SaToken:           uuid.NewV4().String(),
 		SaUsername:        uuid.NewV4().String(),
+		SaTokenEncrypted:  true,
 		TokenProviderID:   uuid.NewV4().String(),
 		Type:              uuid.NewV4().String(),
 		URL:               uuid.NewV4().String(),
@@ -62,6 +63,7 @@ func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluste
 	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
 	assert.Equal(t, expected.SaUsername, actual.SaUsername)
 	assert.Equal(t, expected.SaToken, actual.SaToken)
+	assert.Equal(t, expected.SaTokenEncrypted, actual.SaTokenEncrypted)
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.MetricsURL, actual.MetricsURL)
 	assert.Equal(t, expected.LoggingURL, actual.LoggingURL)
@@ -148,6 +150,7 @@ func ClusterFromConfigurationCluster(configCluster configuration.Cluster) *repos
 
 		SaToken:          configCluster.ServiceAccountToken,
 		SaUsername:       configCluster.ServiceAccountUsername,
+		SaTokenEncrypted: configCluster.ServiceAccountTokenEncrypted,
 		TokenProviderID:  configCluster.TokenProviderID,
 		AuthClientID:     configCluster.AuthClientID,
 		AuthClientSecret: configCluster.AuthClientSecret,
