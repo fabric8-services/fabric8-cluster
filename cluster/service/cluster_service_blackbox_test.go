@@ -2,6 +2,12 @@ package service_test
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
@@ -12,14 +18,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"io"
-	"io/ioutil"
-	"os"
-	"testing"
-	"time"
 )
 
-func TestCluster(t *testing.T) {
+func TestClusterService(t *testing.T) {
 	suite.Run(t, &ClusterServiceTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
@@ -31,8 +32,10 @@ func (s *ClusterServiceTestSuite) SetupTest() {
 	s.DBTestSuite.SetupTest()
 }
 
-func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterOK() {
+func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
+	// when
 	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
+	// then
 	require.NoError(s.T(), err)
 
 	osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
@@ -48,6 +51,50 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterOK() {
 	assert.Len(s.T(), osdClusters, 1)
 
 	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
+}
+
+func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		clustr := newTestCluster()
+		// when
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &clustr)
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, clustr.ClusterID)
+	})
+
+	s.T().Run("failure", func(t *testing.T) {
+		// given
+		clustr := newTestCluster()
+		clustr.Name = ""
+		// when
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &clustr)
+		// then
+		require.Error(t, err)
+
+	})
+
+}
+
+func newTestCluster() repository.Cluster {
+	return repository.Cluster{
+		Name:              "foo",
+		Type:              cluster.OCP,
+		AppDNS:            "https://cluster-foo.com",
+		URL:               "https://api.cluster-foo.com",
+		ConsoleURL:        "https://console.cluster-foo.com",
+		LoggingURL:        "https://logging.cluster-foo.com",
+		MetricsURL:        "https://metrics.cluster-foo.com",
+		CapacityExhausted: false,
+		SAToken:           "ServiceAccountToken",
+		SAUsername:        "ServiceAccountUsername",
+		TokenProviderID:   "TokenProviderID",
+		AuthClientID:      "AuthClientID",
+		AuthClientSecret:  "AuthClientSecret",
+		AuthDefaultScope:  "AuthClientDefaultScope",
+	}
 }
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {

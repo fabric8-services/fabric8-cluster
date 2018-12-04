@@ -35,9 +35,9 @@ type Cluster struct {
 	// Application host name used by the cluster
 	AppDNS string
 	// Encrypted Service Account token
-	SaToken string
+	SAToken string
 	// Service Account name
-	SaUsername string
+	SAUsername string
 	// Token Provider ID
 	TokenProviderID string
 	// OAuthClient ID used to link users account

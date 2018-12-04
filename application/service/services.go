@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+
+	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 )
 
 /*
@@ -16,9 +18,10 @@ Steps for adding a new Service:
    and use the factory method from the step #4
 */
 
-//
+// ClusterService the interface for the cluster service
 type ClusterService interface {
 	CreateOrSaveClusterFromConfig(ctx context.Context) error
+	CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error
 	InitializeClusterWatcher() (func() error, error)
 }
 
