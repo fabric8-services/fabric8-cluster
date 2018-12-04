@@ -85,7 +85,7 @@ type Cluster struct {
 	AppDNS                       string `mapstructure:"app-dns"`
 	ServiceAccountToken          string `mapstructure:"service-account-token"`
 	ServiceAccountUsername       string `mapstructure:"service-account-username"`
-	ServiceAccountTokenEncrypted bool   `mapstructure:"service-account-token-encrypted"`
+	ServiceAccountTokenEncrypted *bool  `mapstructure:"service-account-token-encrypted"` // Optional in oso-clusters.conf ('true' by default)
 	TokenProviderID              string `mapstructure:"token-provider-id"`
 	AuthClientID                 string `mapstructure:"auth-client-id"`
 	AuthClientSecret             string `mapstructure:"auth-client-secret"`
@@ -210,6 +210,11 @@ func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterC
 		if configCluster.Type == "" {
 			configCluster.Type = cluster.OSO
 		}
+
+		if configCluster.ServiceAccountTokenEncrypted == nil {
+			configCluster.ServiceAccountTokenEncrypted = IsSaTokenEncrypted(true)
+		}
+
 		c.clusters[configCluster.APIURL] = configCluster
 	}
 
@@ -237,7 +242,7 @@ func (c *ConfigurationData) checkClusterConfig() error {
 					err = errors.Errorf("%s; key %v is missing in cluster config", err.Error(), tag)
 					ok = false
 				}
-			case bool:
+			case bool, *bool:
 				// Ignore
 			default:
 				err = errors.Errorf("%s; wrong type of key %v", err.Error(), tag)
@@ -613,4 +618,9 @@ func (c *ConfigurationData) GetDevModePrivateKey() []byte {
 		return []byte(commoncfg.DevModeRsaPrivateKey)
 	}
 	return nil
+}
+
+// IsSaTokenEncrypted return pointer to bool
+func IsSaTokenEncrypted(encrypted bool) *bool {
+	return &encrypted
 }

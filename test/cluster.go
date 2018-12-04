@@ -150,7 +150,7 @@ func ClusterFromConfigurationCluster(configCluster configuration.Cluster) *repos
 
 		SaToken:          configCluster.ServiceAccountToken,
 		SaUsername:       configCluster.ServiceAccountUsername,
-		SaTokenEncrypted: configCluster.ServiceAccountTokenEncrypted,
+		SaTokenEncrypted: *configCluster.ServiceAccountTokenEncrypted,
 		TokenProviderID:  configCluster.TokenProviderID,
 		AuthClientID:     configCluster.AuthClientID,
 		AuthClientSecret: configCluster.AuthClientSecret,
