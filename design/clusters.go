@@ -13,10 +13,10 @@ var clusterList = JSONList(
 	nil,
 	nil)
 
-// singleCluster represents a single cluster object
+// createCluster represents a single cluster object
 var createCluster = JSONSingle(
 	"Cluster",
-	"Holds the response to a single cluster request",
+	"Holds the data to create a cluster",
 	createClusterData,
 	nil)
 
