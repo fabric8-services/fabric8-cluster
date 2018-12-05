@@ -205,7 +205,7 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 		AuthClientID:                 "autheast2",
 		AuthClientSecret:             "autheast2secret",
 		AuthClientDefaultScope:       "user:full",
-		Type: cluster.OSO,
+		Type:                         cluster.OSO,
 	})
 }
 
@@ -244,8 +244,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast2",
 		AuthClientSecret:             "autheast2secret",
 		AuthClientDefaultScope:       "user:full",
-		Type:              "OSO",
-		CapacityExhausted: false,
+		Type:                         "OSO",
+		CapacityExhausted:            false,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-2a",
@@ -261,8 +261,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast2a",
 		AuthClientSecret:             "autheast2asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:              "OSO",
-		CapacityExhausted: false,
+		Type:                         "OSO",
+		CapacityExhausted:            false,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-1a",
@@ -278,8 +278,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast1a",
 		AuthClientSecret:             "autheast1asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:              "OSO",
-		CapacityExhausted: true,
+		Type:                         "OSO",
+		CapacityExhausted:            true,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-3a",
@@ -295,8 +295,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast3a",
 		AuthClientSecret:             "autheast3asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:              "OSD",
-		CapacityExhausted: false,
+		Type:                         "OSD",
+		CapacityExhausted:            false,
 	})
 }
 

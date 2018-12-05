@@ -147,7 +147,7 @@ test-unit-with-coverage: prebuild-check clean-coverage-unit $(COV_PATH_UNIT)
 test-unit: prebuild-check $(SOURCES)
 	$(call log-info,"Running test: $@")
 	$(eval TEST_PACKAGES:=$(shell go list ./... | grep -v $(ALL_PKGS_EXCLUDE_PATTERN)))
-	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_UNIT_TEST=1 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
+	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_UNIT_TEST=1 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -vet off $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
 
 .PHONY: test-unit-junit
 test-unit-junit: prebuild-check ${GO_JUNIT_BIN} ${TMP_PATH}
@@ -164,12 +164,12 @@ test-integration-with-coverage: prebuild-check clean-coverage-integration migrat
 test-integration: prebuild-check migrate-database $(SOURCES)
 	$(call log-info,"Running test: $@")
 	$(eval TEST_PACKAGES:=$(shell go list ./... | grep -v $(ALL_PKGS_EXCLUDE_PATTERN)))
-	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_DATABASE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
+	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_DATABASE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -vet off $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
 
 test-integration-benchmark: prebuild-check migrate-database $(SOURCES)
 	$(call log-info,"Running benchmarks: $@")
 	$(eval TEST_PACKAGES:=$(shell go list ./... | grep -v $(ALL_PKGS_EXCLUDE_PATTERN)))
-	F8_DEVELOPER_MODE_ENABLED=1 F8_LOG_LEVEL=error F8_RESOURCE_DATABASE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -run=^$$ -bench=. -cpu 1,2,4 -test.benchmem $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
+	F8_DEVELOPER_MODE_ENABLED=1 F8_LOG_LEVEL=error F8_RESOURCE_DATABASE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -vet off -run=^$$ -bench=. -cpu 1,2,4 -test.benchmem $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
 
 .PHONY: test-remote-with-coverage
 ## Runs the remote tests and produces coverage files for each package.
@@ -180,13 +180,13 @@ test-remote-with-coverage: prebuild-check clean-coverage-remote $(COV_PATH_REMOT
 test-remote: prebuild-check $(SOURCES)
 	$(call log-info,"Running test: $@")
 	$(eval TEST_PACKAGES:=$(shell go list ./... | grep -v $(ALL_PKGS_EXCLUDE_PATTERN)))
-	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_REMOTE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
+	F8_DEVELOPER_MODE_ENABLED=1 F8_RESOURCE_REMOTE=1 F8_RESOURCE_UNIT_TEST=0 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -vet off $(GO_TEST_VERBOSITY_FLAG) $(TEST_PACKAGES)
 
 .PHONY: test-migration
 ## Runs the migration tests and should be executed before running the integration tests
 ## in order to have a clean database
 test-migration: prebuild-check
-	F8_RESOURCE_DATABASE=1 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test $(GO_TEST_VERBOSITY_FLAG) github.com/fabric8-services/fabric8-cluster/migration
+	F8_RESOURCE_DATABASE=1 F8_LOG_LEVEL=$(F8_LOG_LEVEL) go test -vet off $(GO_TEST_VERBOSITY_FLAG) github.com/fabric8-services/fabric8-cluster/migration
 
 # Downloads docker-compose to tmp/docker-compose if it does not already exist.
 define download-docker-compose
@@ -425,6 +425,7 @@ $(eval COV_OUT_FILE := $(COV_DIR)/$(PACKAGE_NAME)/coverage.$(TEST_NAME).mode-$(C
 @$(ENV_VAR) F8_DEVELOPER_MODE_ENABLED=1 F8_POSTGRES_HOST=$(F8_POSTGRES_HOST) F8_LOG_LEVEL=$(F8_LOG_LEVEL) \
 	go test $(PACKAGE_NAME) \
 		$(GO_TEST_VERBOSITY_FLAG) \
+		-vet off \
 		-coverprofile $(COV_OUT_FILE) \
 		-coverpkg $(ALL_PKGS_COMMA_SEPARATED) \
 		-covermode=$(COVERAGE_MODE) \
