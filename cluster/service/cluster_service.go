@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/application/service"
@@ -90,7 +91,7 @@ const (
 
 // validate checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
 func validate(clustr *repository.Cluster) error {
-	if clustr.Name == "" {
+	if strings.TrimSpace(clustr.Name) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "name"))
 	}
 	err := validateURL(clustr.URL)
@@ -103,7 +104,7 @@ func validate(clustr *repository.Cluster) error {
 		"logging": &clustr.LoggingURL,
 		"metrics": &clustr.MetricsURL} {
 		// check the url
-		if *urlStr == "" {
+		if strings.TrimSpace(*urlStr) == "" {
 			switch kind {
 			case "console":
 				consoleURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
@@ -138,22 +139,22 @@ func validate(clustr *repository.Cluster) error {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidTypeMsg, clustr.Type))
 	}
 	// validate other non empty fields
-	if clustr.AuthClientID == "" {
+	if strings.TrimSpace(clustr.AuthClientID) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "auth-client-id"))
 	}
-	if clustr.AuthClientSecret == "" {
+	if strings.TrimSpace(clustr.AuthClientSecret) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "auth-client-secret"))
 	}
-	if clustr.AuthDefaultScope == "" {
+	if strings.TrimSpace(clustr.AuthDefaultScope) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "auth-client-default-scope"))
 	}
-	if clustr.SAToken == "" {
+	if strings.TrimSpace(clustr.SAToken) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "service-account-token"))
 	}
-	if clustr.SAUsername == "" {
+	if strings.TrimSpace(clustr.SAUsername) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "service-account-username"))
 	}
-	if clustr.TokenProviderID == "" {
+	if strings.TrimSpace(clustr.TokenProviderID) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "token-provider-id"))
 	}
 	return nil

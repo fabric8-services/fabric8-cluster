@@ -25,9 +25,9 @@ func TestValidation(t *testing.T) {
 		t.Run("valid with missing URLs", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.ConsoleURL = ""
-			c.LoggingURL = ""
-			c.MetricsURL = ""
+			c.ConsoleURL = " "
+			c.LoggingURL = " "
+			c.MetricsURL = " "
 			// when
 			err := validate(&c)
 			// then
@@ -52,7 +52,7 @@ func TestValidation(t *testing.T) {
 		t.Run("empty name", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.Name = ""
+			c.Name = " "
 			// when
 			err := validate(&c)
 			// then
@@ -64,7 +64,7 @@ func TestValidation(t *testing.T) {
 		t.Run("empty service-account-token", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.SAToken = ""
+			c.SAToken = " "
 			// when
 			err := validate(&c)
 			// then
@@ -76,7 +76,7 @@ func TestValidation(t *testing.T) {
 		t.Run("empty service-account-username", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.SAUsername = ""
+			c.SAUsername = " "
 			// when
 			err := validate(&c)
 			// then
@@ -88,7 +88,7 @@ func TestValidation(t *testing.T) {
 		t.Run("token-provider-id", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.TokenProviderID = ""
+			c.TokenProviderID = " "
 			// when
 			err := validate(&c)
 			// then
@@ -100,7 +100,7 @@ func TestValidation(t *testing.T) {
 		t.Run("auth-client-id", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.AuthClientID = ""
+			c.AuthClientID = " "
 			// when
 			err := validate(&c)
 			// then
@@ -112,7 +112,7 @@ func TestValidation(t *testing.T) {
 		t.Run("token-provider-id", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.AuthClientSecret = ""
+			c.AuthClientSecret = " "
 			// when
 			err := validate(&c)
 			// then
@@ -124,7 +124,7 @@ func TestValidation(t *testing.T) {
 		t.Run("auth-client-default-scope", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.AuthDefaultScope = ""
+			c.AuthDefaultScope = " "
 			// when
 			err := validate(&c)
 			// then
@@ -138,13 +138,13 @@ func TestValidation(t *testing.T) {
 			t.Run("empty", func(t *testing.T) {
 				// given
 				c := newTestCluster()
-				c.URL = ""
+				c.URL = " "
 				// when
 				err := validate(&c)
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, "'API' URL '' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'API' URL ' ' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing scheme", func(t *testing.T) {
