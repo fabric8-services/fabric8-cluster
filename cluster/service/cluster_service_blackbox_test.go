@@ -14,7 +14,9 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
+	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/jinzhu/gorm"
+	errs "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -73,7 +75,8 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &clustr)
 		// then
 		require.Error(t, err)
-
+		assert.IsType(t, errors.BadParameterError{}, errs.Cause(err))
+		assert.Equal(t, "failed to create or save cluster named '': empty field 'name' is not allowed", err.Error())
 	})
 
 }
