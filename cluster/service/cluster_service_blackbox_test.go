@@ -66,14 +66,27 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c.ConsoleURL = " "
 			c.LoggingURL = " "
 			c.MetricsURL = " "
+			c.TokenProviderID = " "
 			// when
 			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
 			// then
 			require.NoError(t, err)
-			assert.NotNil(t, c.ClusterID) // then
+			assert.NotNil(t, c.ClusterID)
+			assert.Equal(t, "foo", c.Name)
+			assert.Equal(t, cluster.OCP, c.Type)
+			assert.Equal(t, "https://cluster-foo.com", c.AppDNS)
+			assert.Equal(t, "https://api.cluster-foo.com", c.URL)
+			assert.Equal(t, false, c.CapacityExhausted)
+			assert.Equal(t, "ServiceAccountToken", c.SAToken)
+			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
+			assert.Equal(t, "AuthClientID", c.AuthClientID)
+			assert.Equal(t, "AuthClientSecret", c.AuthClientSecret)
+			assert.Equal(t, "AuthClientDefaultScope", c.AuthDefaultScope)
+			// optional fields: generated values
 			assert.Equal(t, "https://console.cluster-foo.com/console", c.ConsoleURL)
 			assert.Equal(t, "https://metrics.cluster-foo.com", c.MetricsURL)
 			assert.Equal(t, "https://console.cluster-foo.com/console", c.LoggingURL)
+			assert.Equal(t, c.ClusterID.String(), c.TokenProviderID)
 		})
 
 		t.Run("valid with all URLs", func(t *testing.T) {
@@ -83,7 +96,22 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
 			// then
 			require.NoError(t, err)
-			assert.NotNil(t, c.ClusterID) // then
+			assert.NotNil(t, c.ClusterID)
+			assert.Equal(t, "foo", c.Name)
+			assert.Equal(t, cluster.OCP, c.Type)
+			assert.Equal(t, "https://cluster-foo.com", c.AppDNS)
+			assert.Equal(t, "https://api.cluster-foo.com", c.URL)
+			assert.Equal(t, false, c.CapacityExhausted)
+			assert.Equal(t, "ServiceAccountToken", c.SAToken)
+			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
+			assert.Equal(t, "AuthClientID", c.AuthClientID)
+			assert.Equal(t, "AuthClientSecret", c.AuthClientSecret)
+			assert.Equal(t, "AuthClientDefaultScope", c.AuthDefaultScope)
+			// optional fields: keep provided values
+			assert.Equal(t, "https://console.cluster-foo.com/bar", c.ConsoleURL)
+			assert.Equal(t, "https://metrics.cluster-foo.com/bar", c.MetricsURL)
+			assert.Equal(t, "https://logging.cluster-foo.com/bar", c.LoggingURL)
+			assert.Equal(t, "TokenProviderID", c.TokenProviderID)
 		})
 	})
 
@@ -126,19 +154,6 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			err = errs.Cause(err)
 			require.IsType(t, errors.BadParameterError{}, err)
 			assert.Equal(t, "empty field 'service-account-username' is not allowed", err.(errors.BadParameterError).Error())
-		})
-
-		t.Run("token-provider-id", func(t *testing.T) {
-			// given
-			c := newTestCluster()
-			c.TokenProviderID = " "
-			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
-			// then
-			require.Error(t, err)
-			err = errs.Cause(err)
-			require.IsType(t, errors.BadParameterError{}, err)
-			assert.Equal(t, "empty field 'token-provider-id' is not allowed", err.(errors.BadParameterError).Error())
 		})
 
 		t.Run("auth-client-id", func(t *testing.T) {
@@ -334,9 +349,9 @@ func newTestCluster() repository.Cluster {
 		Type:              cluster.OCP,
 		AppDNS:            "https://cluster-foo.com",
 		URL:               "https://api.cluster-foo.com",
-		ConsoleURL:        "https://console.cluster-foo.com",
-		LoggingURL:        "https://logging.cluster-foo.com",
-		MetricsURL:        "https://metrics.cluster-foo.com",
+		ConsoleURL:        "https://console.cluster-foo.com/bar",
+		LoggingURL:        "https://logging.cluster-foo.com/bar",
+		MetricsURL:        "https://metrics.cluster-foo.com/bar",
 		CapacityExhausted: false,
 		SAToken:           "ServiceAccountToken",
 		SAUsername:        "ServiceAccountUsername",

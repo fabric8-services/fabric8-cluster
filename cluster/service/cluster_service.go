@@ -19,6 +19,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	errs "github.com/pkg/errors"
+	"github.com/satori/go.uuid"
 )
 
 type clusterService struct {
@@ -156,7 +157,9 @@ func validate(clustr *repository.Cluster) error {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "service-account-username"))
 	}
 	if strings.TrimSpace(clustr.TokenProviderID) == "" {
-		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "token-provider-id"))
+		// generated a value based on the ID of this cluster, so it's easier to track
+		clustr.ClusterID = uuid.NewV4()
+		clustr.TokenProviderID = clustr.ClusterID.String()
 	}
 	return nil
 }

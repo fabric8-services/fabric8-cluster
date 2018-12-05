@@ -106,15 +106,13 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 		AppDNS:           ctx.Payload.Data.AppDNS,
 		SAToken:          ctx.Payload.Data.ServiceAccountToken,
 		SAUsername:       ctx.Payload.Data.ServiceAccountUsername,
-		TokenProviderID:  ctx.Payload.Data.TokenProviderID,
-		AuthClientID:     ctx.Payload.Data.TokenProviderID,
+		AuthClientID:     ctx.Payload.Data.AuthClientID,
 		AuthClientSecret: ctx.Payload.Data.AuthClientSecret,
 		AuthDefaultScope: ctx.Payload.Data.AuthClientDefaultScope,
 	}
 	if ctx.Payload.Data.ConsoleURL != nil {
 		clustr.ConsoleURL = *ctx.Payload.Data.ConsoleURL
 	}
-
 	if ctx.Payload.Data.LoggingURL != nil {
 		clustr.LoggingURL = *ctx.Payload.Data.LoggingURL
 	}
@@ -123,6 +121,9 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 	}
 	if ctx.Payload.Data.CapacityExhausted != nil {
 		clustr.CapacityExhausted = *ctx.Payload.Data.CapacityExhausted
+	}
+	if ctx.Payload.Data.TokenProviderID != nil {
+		clustr.TokenProviderID = *ctx.Payload.Data.TokenProviderID
 	}
 	clusterSvc := c.app.ClusterService()
 	err := clusterSvc.CreateOrSaveCluster(ctx, &clustr)

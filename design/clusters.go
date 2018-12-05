@@ -38,7 +38,7 @@ var createClusterData = a.Type("createClusterData", func() {
 
 	a.Required("name", "api-url", // other URLs are optional, they can be derived from the `api-url` if not explicitely provided
 		"app-dns", "type",
-		"service-account-token", "service-account-username", "token-provider-id", "auth-client-id", "auth-client-secret",
+		"service-account-token", "service-account-username", "auth-client-id", "auth-client-secret",
 		"auth-client-default-scope")
 })
 
