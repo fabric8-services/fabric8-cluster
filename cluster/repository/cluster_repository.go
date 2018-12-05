@@ -38,6 +38,8 @@ type Cluster struct {
 	SAToken string
 	// Service Account name
 	SAUsername string
+	// SA Token encrypted
+	SATokenEncrypted bool
 	// Token Provider ID
 	TokenProviderID string
 	// OAuthClient ID used to link users account

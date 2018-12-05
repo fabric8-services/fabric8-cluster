@@ -54,6 +54,7 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			Type:              configCluster.Type,
 			SAToken:           configCluster.ServiceAccountToken,
 			SAUsername:        configCluster.ServiceAccountUsername,
+			SATokenEncrypted:  *configCluster.ServiceAccountTokenEncrypted,
 			TokenProviderID:   configCluster.TokenProviderID,
 			AuthClientID:      configCluster.AuthClientID,
 			AuthClientSecret:  configCluster.AuthClientSecret,
