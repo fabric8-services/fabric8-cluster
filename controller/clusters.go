@@ -102,6 +102,7 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 	clustr := cluster.Cluster{
 		Name:             ctx.Payload.Data.Name,
 		Type:             ctx.Payload.Data.Type,
+		URL:              ctx.Payload.Data.APIURL,
 		AppDNS:           ctx.Payload.Data.AppDNS,
 		SAToken:          ctx.Payload.Data.ServiceAccountToken,
 		SAUsername:       ctx.Payload.Data.ServiceAccountUsername,

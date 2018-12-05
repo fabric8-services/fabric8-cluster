@@ -72,7 +72,7 @@
     "test/auth",
     "test/suite"
   ]
-  revision = "9767f96777d8bc28ef73ead4901c3ef059117520"
+  revision = "2efd83d29b1e5c657728e83fe03878569c0f122f"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -458,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5f8577d465786bd2cc86cdb57b5adabff0cacac69dbdeaf29618591fa6eb8a8"
+  inputs-digest = "346b93c026ae6abf6e9dc4292f2c5f7e1915e1274cf0931aa40274fa8d3ac79f"
   solver-name = "gps-cdcl"
   solver-version = 1

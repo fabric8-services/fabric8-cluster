@@ -1,8 +1,6 @@
 package controller_test
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
@@ -10,16 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fabric8-services/fabric8-cluster/app/test"
-	"github.com/fabric8-services/fabric8-cluster/application"
-	appservice "github.com/fabric8-services/fabric8-cluster/application/service"
-	servicecontext "github.com/fabric8-services/fabric8-cluster/application/service/context"
-	"github.com/fabric8-services/fabric8-cluster/application/service/factory"
-	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	clusterservice "github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/fabric8-services/fabric8-cluster/controller"
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
-	testservice "github.com/fabric8-services/fabric8-cluster/test/generated/application/service"
 	authsupport "github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	authtestsupport "github.com/fabric8-services/fabric8-common/test/auth"
@@ -38,16 +28,10 @@ func TestClusterController(t *testing.T) {
 	suite.Run(t, &ClusterControllerTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func newClusterServiceConstructor(clusterSvc appservice.ClusterService) factory.ClusterServiceConstructor {
-	return func(context servicecontext.ServiceContext, loader clusterservice.ConfigLoader) appservice.ClusterService {
-		return clusterSvc
-	}
-}
-
-func (s *ClusterControllerTestSuite) newSecuredControllerWithServiceAccount(serviceAccount *authtestsupport.Identity, app application.Application) (*goa.Service, *controller.ClustersController) {
+func (s *ClusterControllerTestSuite) newSecuredControllerWithServiceAccount(serviceAccount *authtestsupport.Identity) (*goa.Service, *controller.ClustersController) {
 	svc, err := authtestsupport.ServiceAsServiceAccountUser("Token-Service", serviceAccount)
 	require.NoError(s.T(), err)
-	return svc, controller.NewClustersController(svc, s.Configuration, app)
+	return svc, controller.NewClustersController(svc, s.Configuration, s.Application)
 }
 
 func (s *ClusterControllerTestSuite) TestShowForServiceAccountsOK() {
@@ -64,7 +48,7 @@ func (s *ClusterControllerTestSuite) checkShowForServiceAccount(saName string) {
 		Username: saName,
 		ID:       uuid.NewV4(),
 	}
-	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, s.Application)
+	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 	_, clusters := test.ShowClustersOK(s.T(), svc.Context, svc, ctrl)
 	require.NotNil(s.T(), clusters)
 	require.NotNil(s.T(), clusters.Data)
@@ -88,7 +72,7 @@ func (s *ClusterControllerTestSuite) TestShowForUnknownSAFails() {
 		Username: "unknown-sa",
 		ID:       uuid.NewV4(),
 	}
-	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, s.Application)
+	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 	test.ShowClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
 }
 
@@ -102,7 +86,7 @@ func (s *ClusterControllerTestSuite) TestShowAuthForUnknownSAFails() {
 		Username: "fabric8-tenant",
 		ID:       uuid.NewV4(),
 	}
-	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, s.Application)
+	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 	test.ShowAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
 }
 
@@ -111,7 +95,7 @@ func (s *ClusterControllerTestSuite) checkShowAuthForServiceAccount(saName strin
 		Username: saName,
 		ID:       uuid.NewV4(),
 	}
-	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, s.Application)
+	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 	_, clusters := test.ShowAuthClientClustersOK(s.T(), svc.Context, svc, ctrl)
 	require.NotNil(s.T(), clusters)
 	require.NotNil(s.T(), clusters.Data)
@@ -138,8 +122,49 @@ func (s *ClusterControllerTestSuite) checkShowAuthForServiceAccount(saName strin
 
 func (s *ClusterControllerTestSuite) TestCreate() {
 
-	// given
-	clusterPayload := app.CreateClustersPayload{
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		sa := &authtestsupport.Identity{
+			Username: authsupport.ToolChainOperator,
+			ID:       uuid.NewV4(),
+		}
+		clusterPayload := newCreateClusterPayload()
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		// when/then
+		test.CreateClustersCreated(t, svc.Context, svc, ctrl, &clusterPayload)
+	})
+
+	s.T().Run("failure", func(t *testing.T) {
+
+		t.Run("invalid token account", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.Auth, // use another, unaccepted SA token
+				ID:       uuid.NewV4(),
+			}
+			clusterPayload := newCreateClusterPayload()
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.CreateClustersUnauthorized(t, svc.Context, svc, ctrl, &clusterPayload)
+		})
+
+		t.Run("bad request", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.ToolChainOperator,
+				ID:       uuid.NewV4(),
+			}
+			clusterPayload := newCreateClusterPayload()
+			clusterPayload.Data.APIURL = " "
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.CreateClustersBadRequest(t, svc.Context, svc, ctrl, &clusterPayload)
+		})
+	})
+}
+
+func newCreateClusterPayload() app.CreateClustersPayload {
+	return app.CreateClustersPayload{
 		Data: &app.CreateClusterData{
 			Name:                   "foo-cluster",
 			APIURL:                 "https://api.foo.com",
@@ -153,48 +178,4 @@ func (s *ClusterControllerTestSuite) TestCreate() {
 			Type:                   "OSD",
 		},
 	}
-	clusterSvc := testservice.NewClusterServiceMock(s.T())
-	// default func behaviour: do not return an error
-	clusterSvc.CreateOrSaveClusterFunc = func(ctx context.Context, cl *repository.Cluster) error {
-		return nil
-	}
-
-	s.T().Run("ok", func(t *testing.T) {
-		// given
-		sa := &authtestsupport.Identity{
-			Username: authsupport.ToolChainOperator,
-			ID:       uuid.NewV4(),
-		}
-		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, gormapplication.NewGormDB(s.DB, s.Configuration, factory.WithClusterService(newClusterServiceConstructor(clusterSvc))))
-		// when/then
-		test.CreateClustersCreated(t, svc.Context, svc, ctrl, &clusterPayload)
-	})
-
-	s.T().Run("failure", func(t *testing.T) {
-
-		t.Run("invalid token account", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: authsupport.Auth, // use another, unaccepted SA token
-				ID:       uuid.NewV4(),
-			}
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, gormapplication.NewGormDB(s.DB, s.Configuration, factory.WithClusterService(newClusterServiceConstructor(clusterSvc))))
-			// when/then
-			test.CreateClustersUnauthorized(t, svc.Context, svc, ctrl, &clusterPayload)
-		})
-
-		t.Run("service error", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: authsupport.ToolChainOperator,
-				ID:       uuid.NewV4(),
-			}
-			clusterSvc.CreateOrSaveClusterFunc = func(ctx context.Context, cl *repository.Cluster) error {
-				return fmt.Errorf("mock error!")
-			}
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa, gormapplication.NewGormDB(s.DB, s.Configuration, factory.WithClusterService(newClusterServiceConstructor(clusterSvc))))
-			// when/then
-			test.CreateClustersInternalServerError(t, svc.Context, svc, ctrl, &clusterPayload)
-		})
-	})
 }

@@ -29,7 +29,6 @@ var createClusterData = a.Type("createClusterData", func() {
 	a.Attribute("app-dns", d.String, "User application domain name in the cluster")
 	a.Attribute("type", d.String, "Cluster type. Such as OSD, OSO, OCP, etc")
 	a.Attribute("capacity-exhausted", d.Boolean, "Cluster is full if set to 'true'")
-
 	a.Attribute("service-account-token", d.String, "Decrypted cluster wide token")
 	a.Attribute("service-account-username", d.String, "Username of the cluster wide user")
 	a.Attribute("token-provider-id", d.String, "Token provider ID")
@@ -117,6 +116,7 @@ var _ = a.Resource("clusters", func() {
 		a.Payload(createCluster)
 		a.Description("Add a cluster configuration")
 		a.Response(d.Created)
+		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
 		a.Response(d.InternalServerError, JSONAPIErrors)
 	})

@@ -115,17 +115,14 @@ type ServiceContextProducer func() context.ServiceContext
 
 // ServiceFactory the service factory
 type ServiceFactory struct {
-	contextProducer   ServiceContextProducer
-	config            *configuration.ConfigurationData
-	newClusterService ClusterServiceConstructor
+	contextProducer ServiceContextProducer
+	config          *configuration.ConfigurationData
 }
 
 // NewServiceFactory initializes a new factory with some options to use alternative implementation of the underlying services
 func NewServiceFactory(producer ServiceContextProducer, config *configuration.ConfigurationData, options ...Option) *ServiceFactory {
 	f := &ServiceFactory{contextProducer: producer, config: config}
 	log.Info(nil, map[string]interface{}{}, "configuring a new service factory with %d options", len(options))
-	// default service producers
-	f.newClusterService = clusterservice.NewClusterService
 	// and options
 	for _, opt := range options {
 		opt(f)
@@ -136,24 +133,11 @@ func NewServiceFactory(producer ServiceContextProducer, config *configuration.Co
 // Option an option to configure the Service Factory
 type Option func(f *ServiceFactory)
 
-// ClusterServiceConstructor the function with the signature to initialize a new cluster service
-type ClusterServiceConstructor func(context context.ServiceContext, loader clusterservice.ConfigLoader) service.ClusterService
-
-// verifies that the `clusterservice.NewClusterService` constructor matches the signature of the `ClusterServiceProducer` function
-var _ ClusterServiceConstructor = clusterservice.NewClusterService
-
-// WithClusterService configures a service factory to use the given function when creating a new cluster service
-func WithClusterService(s ClusterServiceConstructor) Option {
-	return func(f *ServiceFactory) {
-		f.newClusterService = s
-	}
-}
-
 func (f *ServiceFactory) getContext() context.ServiceContext {
 	return f.contextProducer()
 }
 
 // ClusterService returns a new cluster service implementation
 func (f *ServiceFactory) ClusterService() service.ClusterService {
-	return f.newClusterService(f.getContext(), f.config)
+	return clusterservice.NewClusterService(f.getContext(), f.config)
 }
