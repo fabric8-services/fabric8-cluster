@@ -126,6 +126,9 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 	clusterSvc := c.app.ClusterService()
 	err := clusterSvc.CreateOrSaveCluster(ctx, &clustr)
 	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"error": err,
+		}, "error while creating new cluster configuration")
 		return app.JSONErrorResponse(ctx, err)
 	}
 	return ctx.Created() // TODO: include a `Location` response if we want to "show" a single cluster at a time (eg: `/api/clusters/:clusterID`)
