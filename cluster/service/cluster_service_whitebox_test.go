@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"net/url"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster"
@@ -33,9 +32,9 @@ func TestValidation(t *testing.T) {
 			err := validate(&c)
 			// then
 			require.NoError(t, err)
-			assert.Equal(t, "https://console.cluster-foo.com", c.ConsoleURL)
+			assert.Equal(t, "https://console.cluster-foo.com/console", c.ConsoleURL)
 			assert.Equal(t, "https://metrics.cluster-foo.com", c.MetricsURL)
-			assert.Equal(t, "https://logging.cluster-foo.com", c.LoggingURL)
+			assert.Equal(t, "https://console.cluster-foo.com/console", c.LoggingURL)
 		})
 
 		t.Run("valid with all URLs", func(t *testing.T) {
@@ -77,7 +76,7 @@ func TestValidation(t *testing.T) {
 		t.Run("empty service-account-username", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			c.SAToken = ""
+			c.SAUsername = ""
 			// when
 			err := validate(&c)
 			// then
@@ -145,7 +144,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "API", c.URL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'API' URL '' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing scheme", func(t *testing.T) {
@@ -157,7 +156,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "API", c.URL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'API' URL 'api.cluster.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing host", func(t *testing.T) {
@@ -169,7 +168,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "API", c.URL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'API' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 		})
 
@@ -184,7 +183,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "console", c.ConsoleURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'console' URL 'console.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing host", func(t *testing.T) {
@@ -196,7 +195,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "console", c.ConsoleURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'console' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 		})
@@ -212,7 +211,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "logging", c.LoggingURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'logging' URL 'logging.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing host", func(t *testing.T) {
@@ -224,7 +223,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "logging", c.LoggingURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'logging' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 		})
@@ -240,7 +239,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "metrics", c.MetricsURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'metrics' URL 'metrics.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 			t.Run("missing host", func(t *testing.T) {
@@ -252,7 +251,7 @@ func TestValidation(t *testing.T) {
 				// then
 				require.Error(t, err)
 				require.IsType(t, errors.BadParameterError{}, err)
-				assert.Equal(t, fmt.Sprintf(errInvalidURLMsg, "metrics", c.MetricsURL), err.(errors.BadParameterError).Error())
+				assert.Equal(t, "'metrics' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
 			})
 
 		})
@@ -289,59 +288,4 @@ func newTestCluster() repository.Cluster {
 		AuthClientSecret:  "AuthClientSecret",
 		AuthDefaultScope:  "AuthClientDefaultScope",
 	}
-}
-
-func TestForgeURL(t *testing.T) {
-
-	t.Run("ok", func(t *testing.T) {
-
-		t.Run("without path", func(t *testing.T) {
-			// given
-			baseURL, err := url.Parse("https://api.foo-cluster.com")
-			require.NoError(t, err)
-			// when
-			result, err := forgeURL(*baseURL, "console")
-			// then
-			require.NoError(t, err)
-			assert.Equal(t, "https://console.foo-cluster.com", result)
-		})
-
-		t.Run("with path", func(t *testing.T) {
-			// given
-			baseURL, err := url.Parse("https://api.foo-cluster.com/path")
-			require.NoError(t, err)
-			// when
-			result, err := forgeURL(*baseURL, "console")
-			// then
-			require.NoError(t, err)
-			assert.Equal(t, "https://console.foo-cluster.com/path", result)
-		})
-	})
-
-	t.Run("failure", func(t *testing.T) {
-
-		t.Run("missing subdomains", func(t *testing.T) {
-			// given
-			baseURL, err := url.Parse("https://foo-cluster.com")
-			require.NoError(t, err)
-			// when
-			_, err = forgeURL(*baseURL, "console")
-			// then
-			require.Error(t, err)
-			require.IsType(t, errors.BadParameterError{}, err)
-			assert.Equal(t, fmt.Sprintf(errInvalidURLGenerationMsg, "console", "https://foo-cluster.com"), err.(errors.BadParameterError).Error())
-		})
-		t.Run("missing API subdomain", func(t *testing.T) {
-			// given
-			baseURL, err := url.Parse("https://bar.foo-cluster.com")
-			require.NoError(t, err)
-			// when
-			_, err = forgeURL(*baseURL, "console")
-			// then
-			require.Error(t, err)
-			require.IsType(t, errors.BadParameterError{}, err)
-			assert.Equal(t, fmt.Sprintf(errInvalidURLGenerationMsg, "console", "https://bar.foo-cluster.com"), err.(errors.BadParameterError).Error())
-
-		})
-	})
 }

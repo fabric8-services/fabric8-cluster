@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/fabric8-services/fabric8-cluster/application/service"
@@ -84,7 +83,7 @@ func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *reposit
 
 const (
 	errEmptyFieldMsg           = "empty field '%s' is not allowed"
-	errInvalidURLMsg           = "'%s' URL is invalid: '%s'"
+	errInvalidURLMsg           = "'%s' URL '%s' is invalid: %v"
 	errInvalidURLGenerationMsg = "unable to generate '%s' URL from '%s' (expected an 'api' subdomain)"
 	errInvalidTypeMsg          = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
 )
@@ -94,9 +93,9 @@ func validate(clustr *repository.Cluster) error {
 	if clustr.Name == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "name"))
 	}
-	apiURL, valid := validURL(clustr.URL)
-	if !valid {
-		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, "API", clustr.URL))
+	err := validateURL(clustr.URL)
+	if err != nil {
+		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, "API", clustr.URL, err))
 	}
 	// check other urls (console, logging, metrics)
 	for kind, urlStr := range map[string]*string{
@@ -105,15 +104,30 @@ func validate(clustr *repository.Cluster) error {
 		"metrics": &clustr.MetricsURL} {
 		// check the url
 		if *urlStr == "" {
-			// "forge" the console-url from the api-url
-			forgedURL, err := forgeURL(apiURL, kind)
-			if err != nil {
-				return err
+			switch kind {
+			case "console":
+				consoleURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
+				if err != nil {
+					return err
+				}
+				*urlStr = consoleURL
+			case "metrics":
+				metricsURL, err := cluster.ConvertAPIURL(clustr.URL, "metrics", "")
+				if err != nil {
+					return err
+				}
+				*urlStr = metricsURL
+			case "logging":
+				// This is not a typo; the logging host is the same as the console host in current k8s
+				loggingURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
+				if err != nil {
+					return err
+				}
+				*urlStr = loggingURL
 			}
-			*urlStr = forgedURL
-		} else if _, valid := validURL(*urlStr); !valid {
+		} else if err := validateURL(*urlStr); err != nil {
 			// validate the URL
-			return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, kind, *urlStr))
+			return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, kind, *urlStr, err))
 		}
 	}
 	// validate the cluster type
@@ -147,21 +161,15 @@ func validate(clustr *repository.Cluster) error {
 
 // validateURL validates the URL: return `false` if the given url could not be parsed or if it is missing
 // the `scheme` or `host` parts. Returns `true` otherwise.
-func validURL(urlStr string) (url.URL, bool) {
+func validateURL(urlStr string) error {
 	u, err := url.Parse(urlStr)
-	if err != nil || u.Scheme == "" || u.Host == "" {
-		return url.URL{}, false
+	if err != nil {
+		return err
 	}
-	return *u, true
-}
-
-func forgeURL(baseURL url.URL, subdomain string) (string, error) {
-	domains := strings.Split(baseURL.Host, ".")
-	if len(domains) < 3 || domains[0] != "api" {
-		return "", errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLGenerationMsg, subdomain, baseURL.String()))
+	if u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("missing scheme or host")
 	}
-	domains[0] = subdomain
-	return fmt.Sprintf("%s://%s%s", baseURL.Scheme, strings.Join(domains, "."), baseURL.Path), nil
+	return nil
 }
 
 // InitializeClusterWatcher initializes a file watcher for the cluster config file
