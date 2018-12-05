@@ -164,8 +164,8 @@ func validate(clustr *repository.Cluster) error {
 	return nil
 }
 
-// validateURL validates the URL: return `false` if the given url could not be parsed or if it is missing
-// the `scheme` or `host` parts. Returns `true` otherwise.
+// validateURL validates the URL: return an error if the given url could not be parsed or if it is missing
+// the `scheme` or `host` parts.
 func validateURL(urlStr string) error {
 	u, err := url.Parse(urlStr)
 	if err != nil {
