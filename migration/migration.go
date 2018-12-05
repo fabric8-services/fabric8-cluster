@@ -20,6 +20,7 @@ func Steps() Scripts {
 		{"003-unique-index-on-cluster-api-url.sql"},
 		{"004-add-capacity-exhausted-to-cluster.sql"},
 		{"005-alter-cluster-api-url-index-to-unique.sql"},
+		{"006-add-sa-token-encrypted-to-cluster.sql"},
 	}
 }
 
