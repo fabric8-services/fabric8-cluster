@@ -15,6 +15,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
+
 	"github.com/jinzhu/gorm"
 	errs "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -57,28 +58,274 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 
-	s.T().Run("ok", func(t *testing.T) {
-		// given
-		clustr := newTestCluster()
-		// when
-		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &clustr)
-		// then
-		require.NoError(t, err)
-		assert.NotNil(t, clustr.ClusterID)
+	s.T().Run("valid", func(t *testing.T) {
+
+		t.Run("valid with missing URLs", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.ConsoleURL = " "
+			c.LoggingURL = " "
+			c.MetricsURL = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.NoError(t, err)
+			assert.NotNil(t, c.ClusterID) // then
+			assert.Equal(t, "https://console.cluster-foo.com/console", c.ConsoleURL)
+			assert.Equal(t, "https://metrics.cluster-foo.com", c.MetricsURL)
+			assert.Equal(t, "https://console.cluster-foo.com/console", c.LoggingURL)
+		})
+
+		t.Run("valid with all URLs", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.NoError(t, err)
+			assert.NotNil(t, c.ClusterID) // then
+		})
 	})
 
-	s.T().Run("failure", func(t *testing.T) {
-		// given
-		clustr := newTestCluster()
-		clustr.Name = ""
-		// when
-		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &clustr)
-		// then
-		require.Error(t, err)
-		assert.IsType(t, errors.BadParameterError{}, errs.Cause(err))
-		assert.Equal(t, "failed to create or save cluster named '': empty field 'name' is not allowed", err.Error())
-	})
+	s.T().Run("invalid", func(t *testing.T) {
 
+		t.Run("empty name", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.Name = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'name' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("empty service-account-token", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.SAToken = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'service-account-token' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("empty service-account-username", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.SAUsername = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'service-account-username' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("token-provider-id", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.TokenProviderID = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'token-provider-id' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("auth-client-id", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.AuthClientID = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'auth-client-id' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("token-provider-id", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.AuthClientSecret = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'auth-client-secret' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("auth-client-default-scope", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.AuthDefaultScope = " "
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "empty field 'auth-client-default-scope' is not allowed", err.(errors.BadParameterError).Error())
+		})
+
+		t.Run("invalid API URL", func(t *testing.T) {
+
+			t.Run("empty", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.URL = " "
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'API' URL ' ' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+			t.Run("missing scheme", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.URL = "api.cluster.com"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'API' URL 'api.cluster.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+			t.Run("missing host", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.URL = "https://"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'API' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+		})
+
+		t.Run("invalid console URL", func(t *testing.T) {
+
+			t.Run("missing scheme", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.ConsoleURL = "console.cluster-foo.com"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'console' URL 'console.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+			t.Run("missing host", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.ConsoleURL = "https://"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'console' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+		})
+
+		t.Run("invalid logging URL", func(t *testing.T) {
+
+			t.Run("missing scheme", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.LoggingURL = "logging.cluster-foo.com"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'logging' URL 'logging.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+			t.Run("missing host", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.LoggingURL = "https://"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'logging' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+		})
+
+		t.Run("invalid metrics URL", func(t *testing.T) {
+
+			t.Run("missing scheme", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.MetricsURL = "metrics.cluster-foo.com"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'metrics' URL 'metrics.cluster-foo.com' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+			t.Run("missing host", func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				c.MetricsURL = "https://"
+				// when
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				// then
+				require.Error(t, err)
+				err = errs.Cause(err)
+				require.IsType(t, errors.BadParameterError{}, err)
+				assert.Equal(t, "'metrics' URL 'https://' is invalid: missing scheme or host", err.(errors.BadParameterError).Error())
+			})
+
+		})
+
+		t.Run("invalid type", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			c.Type = "FOO"
+			// when
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			// then
+			require.Error(t, err)
+			err = errs.Cause(err)
+			require.IsType(t, errors.BadParameterError{}, err)
+			assert.Equal(t, "invalid type of cluster: 'FOO' (expected 'OSO', 'OCP' or 'OSD')", err.(errors.BadParameterError).Error())
+
+		})
+	})
 }
 
 func newTestCluster() repository.Cluster {
