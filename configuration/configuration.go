@@ -212,7 +212,7 @@ func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterC
 		}
 
 		if configCluster.ServiceAccountTokenEncrypted == nil {
-			configCluster.ServiceAccountTokenEncrypted = IsSaTokenEncrypted(true)
+			configCluster.ServiceAccountTokenEncrypted = PointerToBool(true)
 		}
 
 		c.clusters[configCluster.APIURL] = configCluster
@@ -620,7 +620,7 @@ func (c *ConfigurationData) GetDevModePrivateKey() []byte {
 	return nil
 }
 
-// IsSaTokenEncrypted return pointer to bool
-func IsSaTokenEncrypted(encrypted bool) *bool {
-	return &encrypted
+// PointerToBool return pointer to bool
+func PointerToBool(b bool) *bool {
+	return &b
 }

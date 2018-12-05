@@ -228,9 +228,8 @@ func testMigration006AddSaTokenEncryptedToCluster(t *testing.T) {
 
 	// check if ALL the existing rows & new rows have the default value
 	rows, err := sqlDB.Query("SELECT sa_token_encrypted FROM cluster")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	defer rows.Close()
 	for rows.Next() {
 		var sa_token_encrypted bool
