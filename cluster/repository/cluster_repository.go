@@ -34,9 +34,9 @@ type Cluster struct {
 	LoggingURL string
 	// Application host name used by the cluster
 	AppDNS string
-	// Encrypted Service Account token
+	// Service Account token (encrypted or not, depending on the state of the sibling SATokenEncrypted field)
 	SAToken string
-	// Service Account name
+	// Service Account username
 	SAUsername string
 	// SA Token encrypted
 	SATokenEncrypted bool
