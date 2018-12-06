@@ -2,11 +2,12 @@ package configuration_test
 
 import (
 	"fmt"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-common/resource"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-common/resource"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/goadesign/goa"
@@ -152,11 +153,11 @@ func TestLoadDefaultClusterConfiguration(t *testing.T) {
 	clusters := config.GetClusters()
 	checkClusterConfiguration(t, clusters)
 
-	cluster := config.GetClusterByURL("https://api.starter-us-east-2.openshift.com")
+	cluster := config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/")
 	assert.NotNil(t, cluster)
 	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/")
 	assert.NotNil(t, cluster)
-	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/path")
+	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.com/path/")
 	assert.NotNil(t, cluster)
 	cluster = config.GetClusterByURL("https://api.starter-us-east-2.openshift.unknown")
 	assert.Nil(t, cluster)
@@ -193,10 +194,10 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 	require.Nil(t, err)
 	checkCluster(t, clusterConfig.GetClusters(), configuration.Cluster{
 		Name:                         "us-east-2",
-		APIURL:                       "https://api.starter-us-east-2.openshift.com",
-		ConsoleURL:                   "custom.console.url",
-		MetricsURL:                   "custom.metrics.url",
-		LoggingURL:                   "custom.logging.url",
+		APIURL:                       "https://api.starter-us-east-2.openshift.com/",
+		ConsoleURL:                   "custom.console.url/",
+		MetricsURL:                   "custom.metrics.url/",
+		LoggingURL:                   "custom.logging.url/",
 		AppDNS:                       "8a09.starter-us-east-2.openshiftapps.com",
 		ServiceAccountToken:          "fX0nH3d68LQ6SK5wBE6QeKJ6X8AZGVQO3dGQZZETakhmgmWAqr2KDFXE65KUwBO69aWoq",
 		ServiceAccountUsername:       "dsaas",
@@ -205,7 +206,7 @@ func TestClusterConfigurationWithGeneratedURLs(t *testing.T) {
 		AuthClientID:                 "autheast2",
 		AuthClientSecret:             "autheast2secret",
 		AuthClientDefaultScope:       "user:full",
-		Type:                         cluster.OSO,
+		Type: cluster.OSO,
 	})
 }
 
@@ -232,10 +233,10 @@ func TestClusterConfigurationFromInvalidFile(t *testing.T) {
 func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.Cluster) {
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-2",
-		APIURL:                       "https://api.starter-us-east-2.openshift.com",
-		ConsoleURL:                   "https://console.starter-us-east-2.openshift.com/console",
-		MetricsURL:                   "https://metrics.starter-us-east-2.openshift.com",
-		LoggingURL:                   "https://console.starter-us-east-2.openshift.com/console",
+		APIURL:                       "https://api.starter-us-east-2.openshift.com/",
+		ConsoleURL:                   "https://console.starter-us-east-2.openshift.com/console/",
+		MetricsURL:                   "https://metrics.starter-us-east-2.openshift.com/",
+		LoggingURL:                   "https://console.starter-us-east-2.openshift.com/console/",
 		AppDNS:                       "8a09.starter-us-east-2.openshiftapps.com",
 		ServiceAccountToken:          "fX0nH3d68LQ6SK5wBE6QeKJ6X8AZGVQO3dGQZZETakhmgmWAqr2KDFXE65KUwBO69aWoq",
 		ServiceAccountUsername:       "dsaas",
@@ -244,15 +245,15 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast2",
 		AuthClientSecret:             "autheast2secret",
 		AuthClientDefaultScope:       "user:full",
-		Type:                         "OSO",
-		CapacityExhausted:            false,
+		Type:              "OSO",
+		CapacityExhausted: false,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-2a",
-		APIURL:                       "https://api.starter-us-east-2a.openshift.com",
-		ConsoleURL:                   "https://console.starter-us-east-2a.openshift.com/console",
-		MetricsURL:                   "https://metrics.starter-us-east-2a.openshift.com",
-		LoggingURL:                   "https://console.starter-us-east-2a.openshift.com/console",
+		APIURL:                       "https://api.starter-us-east-2a.openshift.com/",
+		ConsoleURL:                   "https://console.starter-us-east-2a.openshift.com/console/",
+		MetricsURL:                   "https://metrics.starter-us-east-2a.openshift.com/",
+		LoggingURL:                   "https://console.starter-us-east-2a.openshift.com/console/",
 		AppDNS:                       "b542.starter-us-east-2a.openshiftapps.com",
 		ServiceAccountToken:          "ak61T6RSAacWFruh1vZP8cyUOBtQ3Chv1rdOBddSuc9nZ2wEcs81DHXRO55NpIpVQ8uiH",
 		ServiceAccountUsername:       "dsaas",
@@ -261,15 +262,15 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast2a",
 		AuthClientSecret:             "autheast2asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:                         "OSO",
-		CapacityExhausted:            false,
+		Type:              "OSO",
+		CapacityExhausted: false,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-1a",
-		APIURL:                       "https://api.starter-us-east-1a.openshift.com",
-		ConsoleURL:                   "https://console.starter-us-east-1a.openshift.com/console",
-		MetricsURL:                   "https://metrics.starter-us-east-1a.openshift.com",
-		LoggingURL:                   "https://console.starter-us-east-1a.openshift.com/console",
+		APIURL:                       "https://api.starter-us-east-1a.openshift.com/",
+		ConsoleURL:                   "https://console.starter-us-east-1a.openshift.com/console/",
+		MetricsURL:                   "https://metrics.starter-us-east-1a.openshift.com/",
+		LoggingURL:                   "https://console.starter-us-east-1a.openshift.com/console/",
 		AppDNS:                       "b542.starter-us-east-1a.openshiftapps.com",
 		ServiceAccountToken:          "sdfjdlfjdfkjdlfjd12324434543085djdfjd084508gfdkjdofkjg43854085dlkjdlk",
 		ServiceAccountUsername:       "dsaas",
@@ -278,15 +279,15 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast1a",
 		AuthClientSecret:             "autheast1asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:                         "OSO",
-		CapacityExhausted:            true,
+		Type:              "OSO",
+		CapacityExhausted: true,
 	})
 	checkCluster(t, clusters, configuration.Cluster{
 		Name:                         "us-east-3a",
-		APIURL:                       "https://api.starter-us-east-3a.openshift.com",
-		ConsoleURL:                   "https://console.starter-us-east-3a.openshift.com/console",
-		MetricsURL:                   "https://metrics.starter-us-east-3a.openshift.com",
-		LoggingURL:                   "https://console.starter-us-east-3a.openshift.com/console",
+		APIURL:                       "https://api.starter-us-east-3a.openshift.com/",
+		ConsoleURL:                   "https://console.starter-us-east-3a.openshift.com/console/",
+		MetricsURL:                   "https://metrics.starter-us-east-3a.openshift.com/",
+		LoggingURL:                   "https://console.starter-us-east-3a.openshift.com/console/",
 		AppDNS:                       "b542.starter-us-east-3a.openshiftapps.com",
 		ServiceAccountToken:          "fkdjhfdsjfgfdjlsflhjgsafgskfdsagrwgwerwshbdjasbdjbsahdbsagbdyhsbdesbh",
 		ServiceAccountUsername:       "dsaas",
@@ -295,8 +296,8 @@ func checkClusterConfiguration(t *testing.T, clusters map[string]configuration.C
 		AuthClientID:                 "autheast3a",
 		AuthClientSecret:             "autheast3asecret",
 		AuthClientDefaultScope:       "user:full",
-		Type:                         "OSD",
-		CapacityExhausted:            false,
+		Type:              "OSD",
+		CapacityExhausted: false,
 	})
 }
 

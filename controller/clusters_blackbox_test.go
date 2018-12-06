@@ -164,17 +164,18 @@ func (s *ClusterControllerTestSuite) TestCreate() {
 }
 
 func newCreateClusterPayload() app.CreateClustersPayload {
+	random := uuid.NewV4().String()
 	return app.CreateClustersPayload{
 		Data: &app.CreateClusterData{
 			Name:                   "foo-cluster",
 			APIURL:                 "https://api.foo.com",
 			AppDNS:                 "foo.com",
 			AuthClientDefaultScope: "foo",
-			AuthClientID:           uuid.NewV4().String(),
-			AuthClientSecret:       uuid.NewV4().String(),
-			ServiceAccountToken:    uuid.NewV4().String(),
+			AuthClientID:           random,
+			AuthClientSecret:       random,
+			ServiceAccountToken:    random,
 			ServiceAccountUsername: "foo-sa",
-			TokenProviderID:        uuid.NewV4().String(),
+			TokenProviderID:        &random,
 			Type:                   "OSD",
 		},
 	}

@@ -157,6 +157,8 @@ func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster
 			return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, kind, *urlStr, err))
 		}
 	}
+	// ensure that AppDNS URL ends with a slash
+	clustr.AppDNS = httpsupport.AddTrailingSlashToURL(clustr.AppDNS)
 	// validate the cluster type
 	switch clustr.Type {
 	case cluster.OSD, cluster.OCP, cluster.OSO:
@@ -181,13 +183,13 @@ func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "service-account-username"))
 	}
 	if strings.TrimSpace(clustr.TokenProviderID) == "" {
-		// attempt to load the existing cluster based on the given API URL
 		if existingClustr != nil {
+			// use the existing value in the DB
+			clustr.TokenProviderID = existingClustr.TokenProviderID
+		} else {
+			// otherwise, assign same value as ID, for convenience
 			clustr.ClusterID = uuid.NewV4()
 			clustr.TokenProviderID = clustr.ClusterID.String()
-		} else {
-			// otherwise, use the existing value in the DB
-			clustr.TokenProviderID = existingClustr.TokenProviderID
 		}
 	}
 	return nil
