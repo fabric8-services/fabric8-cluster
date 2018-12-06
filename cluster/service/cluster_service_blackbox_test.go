@@ -77,18 +77,18 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 			assert.NotNil(t, c.ClusterID)
 			assert.Equal(t, name, c.Name)
 			assert.Equal(t, cluster.OCP, c.Type)
-			assert.Equal(t, fmt.Sprintf("https://cluster.%s", name), c.AppDNS)
-			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s", name), c.URL)
+			assert.Equal(t, fmt.Sprintf("https://cluster.%s/", name), c.AppDNS)
+			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", name), c.URL)
 			assert.Equal(t, false, c.CapacityExhausted)
 			assert.Equal(t, "ServiceAccountToken", c.SAToken)
 			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
 			assert.Equal(t, "AuthClientID", c.AuthClientID)
 			assert.Equal(t, "AuthClientSecret", c.AuthClientSecret)
 			assert.Equal(t, "AuthClientDefaultScope", c.AuthDefaultScope)
-			// optional fields: generated values
-			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console", name), c.ConsoleURL)
-			assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s", name), c.MetricsURL)
-			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console", name), c.LoggingURL)
+			// optional fields: generated values with a trailing slash
+			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console/", name), c.ConsoleURL)
+			assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s/", name), c.MetricsURL)
+			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console/", name), c.LoggingURL)
 			assert.Equal(t, c.ClusterID.String(), c.TokenProviderID)
 		})
 
@@ -103,18 +103,18 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 			assert.NotNil(t, c.ClusterID)
 			assert.Equal(t, name, c.Name)
 			assert.Equal(t, cluster.OCP, c.Type)
-			assert.Equal(t, fmt.Sprintf("https://cluster.%s", name), c.AppDNS)
-			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s", name), c.URL)
+			assert.Equal(t, fmt.Sprintf("https://cluster.%s/", name), c.AppDNS)
+			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", name), c.URL)
 			assert.Equal(t, false, c.CapacityExhausted)
 			assert.Equal(t, "ServiceAccountToken", c.SAToken)
 			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
 			assert.Equal(t, "AuthClientID", c.AuthClientID)
 			assert.Equal(t, "AuthClientSecret", c.AuthClientSecret)
 			assert.Equal(t, "AuthClientDefaultScope", c.AuthDefaultScope)
-			// optional fields: keep provided values
-			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s", name), c.ConsoleURL)
-			assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s", name), c.MetricsURL)
-			assert.Equal(t, fmt.Sprintf("https://logging.cluster.%s", name), c.LoggingURL)
+			// optional fields: keep provided values, but with a trailing slash
+			assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/", name), c.ConsoleURL)
+			assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s/", name), c.MetricsURL)
+			assert.Equal(t, fmt.Sprintf("https://logging.cluster.%s/", name), c.LoggingURL)
 			assert.Equal(t, "TokenProviderID", c.TokenProviderID)
 		})
 	})
@@ -130,17 +130,17 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			c, err = s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
 			require.NoError(t, err)
-			c.TokenProviderID = "UpdatedTokenProviderID"
-			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			reloaded.TokenProviderID = "UpdatedTokenProviderID"
+			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
-			assert.Equal(t, c.ClusterID, reloaded.ClusterID)
-			assert.Equal(t, "UpdatedTokenProviderID", reloaded.TokenProviderID)
+			assert.Equal(t, c.ClusterID, updated.ClusterID)
+			assert.Equal(t, "UpdatedTokenProviderID", updated.TokenProviderID)
 		})
 
 		t.Run("with missing TokenProviderID", func(t *testing.T) {
@@ -152,19 +152,70 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating without any TokenProviderID value
-			c, err = s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
 			require.NoError(t, err)
-			c.TokenProviderID = ""
-			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			reloaded.TokenProviderID = ""
+			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
+			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			require.NoError(t, err)
+			assert.Equal(t, c.ClusterID, updated.ClusterID)
+			// expect TokenProviderID to be equal to old value
+			assert.Equal(t, c.TokenProviderID, updated.TokenProviderID)
+		})
+
+		t.Run("without trailing slashed in updated URLs", func(t *testing.T) {
+			// given an existing cluster
+			c := newTestCluster()
+			require.Equal(t, uuid.Nil, c.ClusterID)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			t.Logf("created cluster ID: %v", c.ClusterID)
+			require.NotEqual(t, uuid.Nil, c.ClusterID)
+			// when updating with an updated TokenProviderID value
 			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
 			require.NoError(t, err)
-			assert.Equal(t, c.ClusterID, reloaded.ClusterID)
-			// expect TokenProviderID to be equal to old value
-			assert.Equal(t, c.TokenProviderID, reloaded.TokenProviderID)
+			reloaded.ConsoleURL = "https://console.cluster.com/console"
+			reloaded.MetricsURL = "https://metrics.cluster.com"
+			reloaded.LoggingURL = "https://console.cluster.com/console"
+			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
+			// then
+			require.NoError(t, err)
+			// read again from DB
+			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			require.NoError(t, err)
+			assert.Equal(t, c.ClusterID, updated.ClusterID)
+			assert.Equal(t, "https://console.cluster.com/console/", updated.ConsoleURL)
+			assert.Equal(t, "https://metrics.cluster.com/", updated.MetricsURL)
+			assert.Equal(t, "https://console.cluster.com/console/", updated.LoggingURL)
+		})
 
+		t.Run("with empty updated URLs", func(t *testing.T) {
+			// given an existing cluster
+			c := newTestCluster()
+			require.Equal(t, uuid.Nil, c.ClusterID)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			t.Logf("created cluster ID: %v", c.ClusterID)
+			require.NotEqual(t, uuid.Nil, c.ClusterID)
+			// when updating with an updated TokenProviderID value
+			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			require.NoError(t, err)
+			reloaded.ConsoleURL = ""
+			reloaded.MetricsURL = ""
+			reloaded.LoggingURL = ""
+			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
+			// then
+			require.NoError(t, err)
+			// read again from DB
+			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			require.NoError(t, err)
+			assert.Equal(t, c.ClusterID, updated.ClusterID)
+			assert.Equal(t, c.ConsoleURL, updated.ConsoleURL)
+			assert.Equal(t, c.MetricsURL, updated.MetricsURL)
+			assert.Equal(t, c.LoggingURL, updated.LoggingURL)
 		})
 
 	})

@@ -97,10 +97,18 @@ const (
 
 // validate checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
 func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster) error {
+	existingClustr, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clustr.URL)
+	if err != nil {
+		if notFound, _ := errors.IsNotFoundError(err); !notFound {
+			// oops, something wrong happened, not just the cluster not found in the db
+			return errs.Wrapf(err, "unable to validate cluster")
+		}
+	}
+
 	if strings.TrimSpace(clustr.Name) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "name"))
 	}
-	err := validateURL(clustr.URL)
+	err = validateURL(&clustr.URL)
 	if err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, "API", clustr.URL, err))
 	}
@@ -113,26 +121,38 @@ func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster
 		if strings.TrimSpace(*urlStr) == "" {
 			switch kind {
 			case "console":
-				consoleURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
-				if err != nil {
-					return err
+				if existingClustr != nil {
+					*urlStr = existingClustr.ConsoleURL
+				} else {
+					consoleURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
+					if err != nil {
+						return err
+					}
+					*urlStr = consoleURL
 				}
-				*urlStr = consoleURL
 			case "metrics":
-				metricsURL, err := cluster.ConvertAPIURL(clustr.URL, "metrics", "")
-				if err != nil {
-					return err
+				if existingClustr != nil {
+					*urlStr = existingClustr.MetricsURL
+				} else {
+					metricsURL, err := cluster.ConvertAPIURL(clustr.URL, "metrics", "")
+					if err != nil {
+						return err
+					}
+					*urlStr = metricsURL
 				}
-				*urlStr = metricsURL
 			case "logging":
-				// This is not a typo; the logging host is the same as the console host in current k8s
-				loggingURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
-				if err != nil {
-					return err
+				if existingClustr != nil {
+					*urlStr = existingClustr.LoggingURL
+				} else {
+					// This is not a typo; the logging host is the same as the console host in current k8s
+					loggingURL, err := cluster.ConvertAPIURL(clustr.URL, "console", "console")
+					if err != nil {
+						return err
+					}
+					*urlStr = loggingURL
 				}
-				*urlStr = loggingURL
 			}
-		} else if err := validateURL(*urlStr); err != nil {
+		} else if err := validateURL(urlStr); err != nil {
 			// validate the URL
 			return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, kind, *urlStr, err))
 		}
@@ -162,14 +182,9 @@ func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster
 	}
 	if strings.TrimSpace(clustr.TokenProviderID) == "" {
 		// attempt to load the existing cluster based on the given API URL
-		existingClustr, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clustr.URL)
-		if notFound, _ := errors.IsNotFoundError(err); notFound {
-			// no existing clister
+		if existingClustr != nil {
 			clustr.ClusterID = uuid.NewV4()
 			clustr.TokenProviderID = clustr.ClusterID.String()
-		} else if err != nil {
-			// oops, something wrong happened, not just the cluster not found in the db
-			return errs.Wrapf(err, "unable to validate cluster")
 		} else {
 			// otherwise, use the existing value in the DB
 			clustr.TokenProviderID = existingClustr.TokenProviderID
@@ -180,14 +195,16 @@ func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster
 
 // validateURL validates the URL: return an error if the given url could not be parsed or if it is missing
 // the `scheme` or `host` parts.
-func validateURL(urlStr string) error {
-	u, err := url.Parse(urlStr)
+func validateURL(urlStr *string) error {
+	u, err := url.Parse(*urlStr)
 	if err != nil {
 		return err
 	}
 	if u.Scheme == "" || u.Host == "" {
 		return fmt.Errorf("missing scheme or host")
 	}
+	// make sure that the URL ends with a slash in all cases
+	*urlStr = httpsupport.AddTrailingSlashToURL(*urlStr)
 	return nil
 }
 
