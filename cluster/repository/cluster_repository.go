@@ -170,7 +170,12 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 	obj, err := m.LoadClusterByURL(ctx, c.URL)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
-			return m.Create(ctx, c)
+			err = m.Create(ctx, c)
+			log.Info(ctx, map[string]interface{}{
+				"cluster_url": c.URL,
+				"cluster_id":  c.ClusterID,
+			}, "created cluster")
+			return err
 		}
 		log.Error(ctx, map[string]interface{}{
 			"cluster_url": c.URL,

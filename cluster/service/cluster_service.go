@@ -75,7 +75,7 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 
 // CreateOrSaveCluster creates clusters or save updated cluster info
 func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error {
-	err := validate(clustr)
+	err := c.validate(ctx, clustr)
 	if err != nil {
 		return errs.Wrapf(err, "failed to create or save cluster named '%s'", clustr.Name)
 	}
@@ -85,14 +85,18 @@ func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *reposit
 }
 
 const (
-	errEmptyFieldMsg           = "empty field '%s' is not allowed"
-	errInvalidURLMsg           = "'%s' URL '%s' is invalid: %v"
+	// errEmptyFieldMsg the error template when a field is empty
+	errEmptyFieldMsg = "empty field '%s' is not allowed"
+	// errInvalidURLMsg the error template when an URL is invalid
+	errInvalidURLMsg = "'%s' URL '%s' is invalid: %v"
+	// errInvalidURLGenerationMsg the error template when an URL cannot be generated
 	errInvalidURLGenerationMsg = "unable to generate '%s' URL from '%s' (expected an 'api' subdomain)"
-	errInvalidTypeMsg          = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
+	// errInvalidTypeMsg the error template when the type of cluster is invalid
+	errInvalidTypeMsg = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
 )
 
 // validate checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
-func validate(clustr *repository.Cluster) error {
+func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster) error {
 	if strings.TrimSpace(clustr.Name) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "name"))
 	}
@@ -157,9 +161,19 @@ func validate(clustr *repository.Cluster) error {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "service-account-username"))
 	}
 	if strings.TrimSpace(clustr.TokenProviderID) == "" {
-		// generated a value based on the ID of this cluster, so it's easier to track
-		clustr.ClusterID = uuid.NewV4()
-		clustr.TokenProviderID = clustr.ClusterID.String()
+		// attempt to load the existing cluster based on the given API URL
+		existingClustr, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clustr.URL)
+		if notFound, _ := errors.IsNotFoundError(err); notFound {
+			// no existing clister
+			clustr.ClusterID = uuid.NewV4()
+			clustr.TokenProviderID = clustr.ClusterID.String()
+		} else if err != nil {
+			// oops, something wrong happened, not just the cluster not found in the db
+			return errs.Wrapf(err, "unable to validate cluster")
+		} else {
+			// otherwise, use the existing value in the DB
+			clustr.TokenProviderID = existingClustr.TokenProviderID
+		}
 	}
 	return nil
 }
