@@ -92,18 +92,18 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 	return ctx.OK(&clusters)
 }
 
-// Create populates Identity Cluster relationship
+// LinkIdentityToCluster populates Identity Cluster relationship
 func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToClusterClustersContext) error {
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to create identity cluster relationship"))
 	}
-	// ignoreIfAlreadyExisted by default true
-	ignore := true
-	if ignoreIfExists := ctx.Payload.Attributes.IgnoreIfAlreadyExists; ignoreIfExists != nil {
-		ignore = *ignoreIfExists
-	}
-	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, ctx.Payload.Attributes.IdentityID, ctx.Payload.Attributes.ClusterURL, ignore); err != nil {
+	identityID := ctx.Payload.Attributes.IdentityID
+	clusterURL := ctx.Payload.Attributes.ClusterURL
+	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, clusterURL); err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"error": err,
+		}, "error while linking identity-id %s to cluster with url %s", identityID, clusterURL)
 		return app.JSONErrorResponse(ctx, err)
 	}
 

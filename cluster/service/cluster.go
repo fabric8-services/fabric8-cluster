@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/base"
 	servicectx "github.com/fabric8-services/fabric8-cluster/application/service/context"
@@ -13,6 +14,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	errs "github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -151,29 +154,26 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 }
 
 // LinkIdentityToCluster links Identity to Cluster
-func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string, ignoreIfExists bool) error {
-	var rc *repository.Cluster
+func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string) error {
+	if err := validateParams(identityID, clusterURL); err != nil {
+		return errs.Wrapf(err, "failed to link identity %s to cluster with url '%s'", identityID, clusterURL)
+	}
 
 	id, err := uuid.FromString(identityID)
 	if err != nil {
-		return errors.NewBadParameterError("identity-id", "IdentityID is not a valid UUID")
+		return errors.NewBadParameterError("identity-id", fmt.Sprintf("identity-id %s is not a valid UUID", identityID))
 	}
 
-	rc, err = c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
+	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_url": clusterURL,
 			"err":         err,
 		}, "failed to load cluster with url %s", clusterURL)
-		return errors.NewBadParameterError("cluster-url", "cluster with requested url doesn't exist")
+		return errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
 	}
 
 	clusterID := rc.ClusterID
-
-	if !ignoreIfExists {
-		return c.createIdentityCluster(ctx, id, clusterID)
-	}
-
 	_, err = c.Repositories().IdentityClusters().Load(ctx, id, clusterID)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
@@ -181,6 +181,32 @@ func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, c
 		}
 		return err
 	}
+	return nil
+}
+
+func validateParams(identityID string, url string) error {
+	if strings.TrimSpace(identityID) == "" {
+		return errors.NewBadParameterErrorFromString("empty field identity-id is not allowed")
+	}
+
+	if err := validateURL(&url); err != nil {
+		return errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid: %v", url, err))
+	}
+	return nil
+}
+
+// validateURL validates the URL: return an error if the given url could not be parsed or if it is missing
+// the `scheme` or `host` parts.
+func validateURL(urlStr *string) error {
+	u, err := url.Parse(*urlStr)
+	if err != nil {
+		return err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("missing scheme or host")
+	}
+	// make sure that the URL ends with a slash in all cases
+	*urlStr = httpsupport.AddTrailingSlashToURL(*urlStr)
 	return nil
 }
 

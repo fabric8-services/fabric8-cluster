@@ -99,6 +99,7 @@ func (s *ClustersTestSuite) TestLinkIdentityClusters() {
 		service, controller := s.SecuredControllerWithServiceAccount(sa)
 
 		cluster := testsupport.CreateCluster(t, s.DB)
+
 		payload := createLinkIdentityClusterPayload(cluster.URL, uuid.NewV4().String())
 
 		// when/then
@@ -118,6 +119,22 @@ func (s *ClustersTestSuite) TestLinkIdentityClusters() {
 
 			cluster := testsupport.CreateCluster(t, s.DB)
 			payload := createLinkIdentityClusterPayload(cluster.URL, "foo")
+
+			// when/then
+			test.LinkIdentityToClusterClustersBadRequest(t, service.Context, service, controller, payload)
+		})
+
+		t.Run("empty space uuid", func(t *testing.T) {
+			// given
+			sa := &auth.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			service, controller := s.SecuredControllerWithServiceAccount(sa)
+
+			cluster := testsupport.CreateCluster(t, s.DB)
+			payload := createLinkIdentityClusterPayload(cluster.URL, "  ")
 
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, service.Context, service, controller, payload)
@@ -153,6 +170,21 @@ func (s *ClustersTestSuite) TestLinkIdentityClusters() {
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, service.Context, service, controller, payload)
 		})
+
+		t.Run("invalid cluster url", func(t *testing.T) {
+			// given
+			sa := &auth.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			service, controller := s.SecuredControllerWithServiceAccount(sa)
+
+			payload := createLinkIdentityClusterPayload("foo.com", uuid.NewV4().String())
+
+			// when/then
+			test.LinkIdentityToClusterClustersBadRequest(t, service.Context, service, controller, payload)
+		})
 	})
 
 	s.T().Run("unauthorized", func(t *testing.T) {
@@ -173,7 +205,7 @@ func (s *ClustersTestSuite) TestLinkIdentityClusters() {
 }
 
 func createLinkIdentityClusterPayload(clusterURL, identityID string) *app.LinkIdentityToClusterData {
-	attributes := app.LinkIdentityToClusterAttributes{clusterURL, identityID, nil}
+	attributes := app.LinkIdentityToClusterAttributes{clusterURL, identityID}
 
 	return &app.LinkIdentityToClusterData{Type: "identityclusters", Attributes: &attributes}
 }

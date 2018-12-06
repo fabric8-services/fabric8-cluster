@@ -45,7 +45,7 @@ func NewCluster() *repository.Cluster {
 		SaTokenEncrypted:  true,
 		TokenProviderID:   uuid.NewV4().String(),
 		Type:              uuid.NewV4().String(),
-		URL:               uuid.NewV4().String(),
+		URL:               "http://" + uuid.NewV4().String(),
 		CapacityExhausted: false,
 	}
 }
