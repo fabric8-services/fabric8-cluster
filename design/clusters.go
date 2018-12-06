@@ -79,4 +79,33 @@ var _ = a.Resource("clusters", func() {
 		a.Response(d.InternalServerError, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
 	})
+
+	a.Action("linkIdentityToCluster", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.POST("/identities"),
+		)
+		a.Payload(linkIdentityToClusterData)
+		a.Description("create a identitycluster using a service account")
+		a.Response(d.NoContent)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.BadRequest, JSONAPIErrors)
+	})
+})
+
+// linkIdentityToClusterData represents the data of an identified IdentityCluster object to create
+var linkIdentityToClusterData = a.Type("linkIdentityToClusterData", func() {
+	a.Attribute("type", d.String, "type of the identity cluster")
+	a.Attribute("attributes", linkIdentityToClusterAttributes, "Attributes of the identity cluster")
+	a.Attribute("links", genericLinks)
+	a.Required("type", "attributes")
+})
+
+var linkIdentityToClusterAttributes = a.Type("linkIdentityToClusterAttributes", func() {
+	a.Attribute("identity-id", d.String, "The id of corresponding Identity")
+	a.Attribute("cluster-url", d.String, "Cluster URL")
+	a.Attribute("ignore-if-already-exists", d.Boolean, "Do not link this identity if already exists. By default 'True'")
+
+	a.Required("cluster-url", "identity-id")
 })

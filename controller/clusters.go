@@ -8,6 +8,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
 
+	"github.com/fabric8-services/fabric8-cluster/application"
 	"github.com/goadesign/goa"
 )
 
@@ -19,13 +20,15 @@ type clusterConfiguration interface {
 type ClustersController struct {
 	*goa.Controller
 	config clusterConfiguration
+	app    application.Application
 }
 
 // NewClustersController creates a clusters controller.
-func NewClustersController(service *goa.Service, config clusterConfiguration) *ClustersController {
+func NewClustersController(service *goa.Service, config clusterConfiguration, app application.Application) *ClustersController {
 	return &ClustersController{
 		Controller: service.NewController("ClustersController"),
 		config:     config,
+		app:        app,
 	}
 }
 
@@ -87,4 +90,22 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 		Data: data,
 	}
 	return ctx.OK(&clusters)
+}
+
+// Create populates Identity Cluster relationship
+func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToClusterClustersContext) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to create identity cluster relationship"))
+	}
+	// ignoreIfAlreadyExisted by default true
+	ignore := true
+	if ignoreIfExists := ctx.Payload.Attributes.IgnoreIfAlreadyExists; ignoreIfExists != nil {
+		ignore = *ignoreIfExists
+	}
+	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, ctx.Payload.Attributes.IdentityID, ctx.Payload.Attributes.ClusterURL, ignore); err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
+
+	return ctx.NoContent()
 }

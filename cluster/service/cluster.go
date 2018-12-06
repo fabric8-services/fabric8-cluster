@@ -151,7 +151,7 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 }
 
 // LinkIdentityToCluster links Identity to Cluster
-func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string) error {
+func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string, ignoreIfExists bool) error {
 	var rc *repository.Cluster
 
 	id, err := uuid.FromString(identityID)
@@ -168,11 +168,28 @@ func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, c
 		return errors.NewBadParameterError("cluster-url", "cluster with requested url doesn't exist")
 	}
 
-	identityCluster := &repository.IdentityCluster{IdentityID: id, ClusterID: rc.ClusterID}
+	clusterID := rc.ClusterID
+
+	if !ignoreIfExists {
+		return c.createIdentityCluster(ctx, id, clusterID)
+	}
+
+	_, err = c.Repositories().IdentityClusters().Load(ctx, id, clusterID)
+	if err != nil {
+		if ok, _ := errors.IsNotFoundError(err); ok {
+			return c.createIdentityCluster(ctx, id, clusterID)
+		}
+		return err
+	}
+	return nil
+}
+
+func (c clusterService) createIdentityCluster(ctx context.Context, identityID, clusterID uuid.UUID) error {
+	identityCluster := &repository.IdentityCluster{IdentityID: identityID, ClusterID: clusterID}
 
 	return c.ExecuteInTransaction(func() error {
 		if err := c.Repositories().IdentityClusters().Create(ctx, identityCluster); err != nil {
-			return errs.Wrapf(err, "failed to create IdentityCluster with cluster id %s for identity %s", rc.ClusterID, id)
+			return errs.Wrapf(err, "failed to link identity %s with cluster %s", identityID, clusterID)
 		}
 		return nil
 	})
