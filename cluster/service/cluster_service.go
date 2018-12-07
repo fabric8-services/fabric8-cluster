@@ -19,7 +19,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	errs "github.com/pkg/errors"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 type clusterService struct {
@@ -75,7 +75,7 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 
 // CreateOrSaveCluster creates clusters or save updated cluster info
 func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error {
-	err := c.validate(ctx, clustr)
+	err := c.validateAndNormalize(ctx, clustr)
 	if err != nil {
 		return errs.Wrapf(err, "failed to create or save cluster named '%s'", clustr.Name)
 	}
@@ -95,8 +95,8 @@ const (
 	errInvalidTypeMsg = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
 )
 
-// validate checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
-func (c clusterService) validate(ctx context.Context, clustr *repository.Cluster) error {
+// validateAndNormalize checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
+func (c clusterService) validateAndNormalize(ctx context.Context, clustr *repository.Cluster) error {
 	existingClustr, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clustr.URL)
 	if err != nil {
 		if notFound, _ := errors.IsNotFoundError(err); !notFound {

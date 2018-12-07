@@ -12,7 +12,7 @@ import (
 	"github.com/goadesign/goa"
 	"github.com/jinzhu/gorm"
 	errs "github.com/pkg/errors"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"fmt"
 )
@@ -170,12 +170,7 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 	obj, err := m.LoadClusterByURL(ctx, c.URL)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
-			err = m.Create(ctx, c)
-			log.Info(ctx, map[string]interface{}{
-				"cluster_url": c.URL,
-				"cluster_id":  c.ClusterID,
-			}, "created cluster")
-			return err
+			return m.Create(ctx, c)
 		}
 		log.Error(ctx, map[string]interface{}{
 			"cluster_url": c.URL,
