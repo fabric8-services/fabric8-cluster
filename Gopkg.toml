@@ -42,7 +42,8 @@ required = [
   "github.com/jteeuwen/go-bindata/go-bindata",
   "github.com/jstemmer/go-junit-report",
   "github.com/wadey/gocovmerge",
-  "github.com/pilu/fresh"
+  "github.com/pilu/fresh",
+  "github.com/gojuno/minimock/cmd/minimock",
 ]
 
 [[constraint]]
@@ -95,4 +96,4 @@ required = [
 
 [[constraint]]
   name = "github.com/fabric8-services/fabric8-common"
-  revision = "9767f96777d8bc28ef73ead4901c3ef059117520"
+  revision = "2efd83d29b1e5c657728e83fe03878569c0f122f"

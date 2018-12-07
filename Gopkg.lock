@@ -69,10 +69,11 @@
     "migration",
     "resource",
     "sentry",
+    "test",
     "test/auth",
     "test/suite"
   ]
-  revision = "9767f96777d8bc28ef73ead4901c3ef059117520"
+  revision = "2efd83d29b1e5c657728e83fe03878569c0f122f"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -122,6 +123,21 @@
   ]
   revision = "5646a430cdeb66983d5ace3384e0a667c185abc7"
   version = "v1.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gojuno/generator"
+  packages = ["."]
+  revision = "487ec858da35ab9b34dea233bb8d91c048645add"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/gojuno/minimock"
+  packages = [
+    ".",
+    "cmd/minimock"
+  ]
+  revision = "2692d7ec07f98b20146c0b6afa17c5dcbf8acb56"
 
 [[projects]]
   branch = "travis-1.9"
@@ -220,6 +236,16 @@
   name = "github.com/manveru/faker"
   packages = ["."]
   revision = "717f7cf83fb78669bfab612749c2e8ff63d5be11"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/marwan-at-work/vgop"
+  packages = [
+    "modfile",
+    "module",
+    "semver"
+  ]
+  revision = "054e5a7d7b48f5bd875b2541501914dab87fe5a2"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -407,8 +433,11 @@
   packages = [
     "cover",
     "go/ast/astutil",
+    "go/buildutil",
     "go/gcexportdata",
-    "go/gcimporter15"
+    "go/gcimporter15",
+    "go/loader",
+    "imports"
   ]
   revision = "a888bfdffa4526cc6987572bca9a2c6b7758290f"
 
@@ -430,6 +459,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "142d8986a10e3624ee0fb5ab6a6febda14b6c78599e13762b432c1191b0c35a4"
+  inputs-digest = "d3c6e8745c479d3ed87af4259ea98b38c8a84795f766a28b0ffd2a87ca181cdd"
   solver-name = "gps-cdcl"
   solver-version = 1

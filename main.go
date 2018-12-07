@@ -174,7 +174,7 @@ func main() {
 	app.MountStatusController(service, statusCtrl)
 
 	// Mount "clusters" controller
-	clustersCtrl := controller.NewClustersController(service, config)
+	clustersCtrl := controller.NewClustersController(service, config, appDB)
 	app.MountClustersController(service, clustersCtrl)
 
 	// Mount "user" controller

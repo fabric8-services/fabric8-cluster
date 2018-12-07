@@ -2,8 +2,9 @@ package repository_test
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
 	"testing"
+
+	"github.com/satori/go.uuid"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
@@ -11,6 +12,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/errors"
 
 	"fmt"
+
 	"github.com/jinzhu/gorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -89,8 +91,8 @@ func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
 	cluster.LoggingURL = uuid.NewV4().String()
 	cluster.MetricsURL = uuid.NewV4().String()
 	cluster.Name = uuid.NewV4().String()
-	cluster.SaToken = uuid.NewV4().String()
-	cluster.SaUsername = uuid.NewV4().String()
+	cluster.SAToken = uuid.NewV4().String()
+	cluster.SAUsername = uuid.NewV4().String()
 	cluster.TokenProviderID = uuid.NewV4().String()
 	cluster.Type = uuid.NewV4().String()
 	cluster.CapacityExhausted = true
@@ -140,8 +142,8 @@ func (s *clusterTestSuite) TestSaveOK() {
 	cluster1.LoggingURL = uuid.NewV4().String()
 	cluster1.MetricsURL = uuid.NewV4().String()
 	cluster1.Name = uuid.NewV4().String()
-	cluster1.SaToken = uuid.NewV4().String()
-	cluster1.SaUsername = uuid.NewV4().String()
+	cluster1.SAToken = uuid.NewV4().String()
+	cluster1.SAUsername = uuid.NewV4().String()
 	cluster1.TokenProviderID = uuid.NewV4().String()
 	cluster1.Type = uuid.NewV4().String()
 	cluster1.URL = uuid.NewV4().String()

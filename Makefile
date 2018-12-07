@@ -264,6 +264,10 @@ migrate-database: $(BINARY_SERVER_BIN)
 ## Generate GOA sources. Only necessary after clean of if changed `design` folder.
 generate: app/controllers.go migration/sqlbindata.go configuration/confbindata.go
 
+$(MINIMOCK_BIN):
+	@echo "building the minimock binary..."
+	@cd $(VENDOR_DIR)/github.com/gojuno/minimock/cmd/minimock && go build -v minimock.go
+
 .PHONY: generate-client
 generate-client: $(GOAGEN_BIN)
 	$(GOAGEN_BIN) client -d github.com/fabric8-services/fabric8-cluster/design --pkg cluster
