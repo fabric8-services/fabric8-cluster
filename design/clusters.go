@@ -5,17 +5,9 @@ import (
 	a "github.com/goadesign/goa/design/apidsl"
 )
 
-// clusterList represents an array of cluster objects
-var clusterList = JSONList(
-	"Cluster",
-	"Holds the response to a cluster list request",
-	clusterData,
-	nil,
-	nil)
-
 // createCluster represents a single cluster object
 var createCluster = JSONSingle(
-	"Cluster",
+	"CreateCluster",
 	"Holds the data to create a cluster",
 	createClusterData,
 	nil)
@@ -42,10 +34,11 @@ var createClusterData = a.Type("createClusterData", func() {
 		"auth-client-default-scope")
 })
 
-var fullClusterList = JSONList(
-	"FullCluster",
-	"Holds the response to a full cluster list request",
-	fullClusterData,
+// clusterList represents an array of cluster objects
+var clusterList = JSONList(
+	"Cluster",
+	"Holds the response to a cluster list request",
+	clusterData,
 	nil,
 	nil)
 
@@ -60,6 +53,13 @@ var clusterData = a.Type("ClusterData", func() {
 	a.Attribute("capacity-exhausted", d.Boolean, "Cluster is full if set to 'true'")
 	a.Required("name", "console-url", "metrics-url", "api-url", "logging-url", "app-dns", "type", "capacity-exhausted")
 })
+
+var fullClusterList = JSONList(
+	"FullCluster",
+	"Holds the response to a full cluster list request",
+	fullClusterData,
+	nil,
+	nil)
 
 var fullClusterData = a.Type("FullClusterData", func() {
 	a.Attribute("name", d.String, "Cluster name")
@@ -84,29 +84,75 @@ var fullClusterData = a.Type("FullClusterData", func() {
 		"auth-client-default-scope")
 })
 
+// singleCluster represents a single cluster object
+var showSingleCluster = JSONSingle(
+	"Cluster",
+	"Holds the response to a cluster request",
+	clusterData,
+	nil)
+
+// singleCluster represents a single cluster object, including auth data
+var showSingleFullCluster = JSONSingle(
+	"FullCluster",
+	"Holds the response to a cluster request",
+	fullClusterData,
+	nil)
+
 var _ = a.Resource("clusters", func() {
 	a.BasePath("/clusters")
 
-	a.Action("show", func() {
+	a.Action("list", func() {
 		a.Security("jwt")
 		a.Routing(
 			a.GET("/"),
 		)
-		a.Description("Get clusters configuration")
+		a.Description("Get all cluster configurations")
 		a.Response(d.OK, clusterList)
 		a.Response(d.InternalServerError, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
 	})
 
-	a.Action("showAuthClient", func() {
+	a.Action("listForAuthClient", func() {
 		a.Security("jwt")
 		a.Routing(
 			a.GET("/auth"),
 		)
-		a.Description("Get full cluster configuration including Auth information")
+		a.Description("Get all cluster configurations (including Auth information)")
 		a.Response(d.OK, fullClusterList)
 		a.Response(d.InternalServerError, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
+	})
+
+	a.Action("show", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.GET("/:clusterID"),
+		)
+		a.Params(func() {
+			a.Param("clusterID", d.UUID, "the ID of the cluster to show")
+			a.Required("clusterID")
+		})
+		a.Description("Get single cluster configuration")
+		a.Response(d.OK, showSingleCluster)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+	})
+
+	a.Action("showForAuthClient", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.GET("/:clusterID/auth"),
+		)
+		a.Params(func() {
+			a.Param("clusterID", d.UUID, "the ID of the cluster to show")
+			a.Required("clusterID")
+		})
+		a.Description("Get single cluster configuration (including Auth information)")
+		a.Response(d.OK, showSingleFullCluster)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
 	a.Action("create", func() {

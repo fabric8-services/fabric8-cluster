@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 /*
@@ -23,6 +25,7 @@ type ClusterService interface {
 	CreateOrSaveClusterFromConfig(ctx context.Context) error
 	CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error
 	InitializeClusterWatcher() (func() error, error)
+	Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
 }
 
 //Services creates instances of service layer objects

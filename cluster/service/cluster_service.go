@@ -27,6 +27,7 @@ type clusterService struct {
 	loader ConfigLoader
 }
 
+// ConfigLoader to interface for the config watcher/loader
 type ConfigLoader interface {
 	ReloadClusterConfig() error
 	GetClusterConfigurationFilePath() string
@@ -82,6 +83,10 @@ func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *reposit
 	return c.ExecuteInTransaction(func() error {
 		return c.Repositories().Clusters().CreateOrSave(ctx, clustr)
 	})
+}
+
+func (c clusterService) Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error) {
+	return c.Repositories().Clusters().Load(ctx, clusterID)
 }
 
 const (

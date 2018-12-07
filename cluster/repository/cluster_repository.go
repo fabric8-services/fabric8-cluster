@@ -161,7 +161,7 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 
 	log.Debug(ctx, map[string]interface{}{
 		"cluster_id": c.ClusterID.String(),
-	}, "Cluster saved!")
+	}, "cluster saved")
 	return nil
 }
 

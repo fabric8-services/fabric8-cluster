@@ -19,7 +19,7 @@ import (
 	testsupport "github.com/fabric8-services/fabric8-common/test"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -58,7 +58,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
 }
 
-func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
+func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 
 	s.T().Run("create", func(t *testing.T) {
 
@@ -396,6 +396,43 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')", c.Name, c.Type))
 		})
+	})
+}
+
+func (s *ClusterServiceTestSuite) TestLoad() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		c := newTestCluster()
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+		require.NoError(t, err)
+		// when
+		result, err := s.Application.ClusterService().Load(context.Background(), c.ClusterID)
+		// then
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, c.Name, result.Name)
+		assert.Equal(t, c.Type, result.Type)
+		assert.Equal(t, fmt.Sprintf("https://cluster.%s/", c.Name), result.AppDNS)
+		assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", c.Name), result.URL)
+		assert.Equal(t, false, result.CapacityExhausted)
+		assert.Equal(t, "ServiceAccountToken", result.SAToken)
+		assert.Equal(t, "ServiceAccountUsername", result.SAUsername)
+		assert.Equal(t, "AuthClientID", result.AuthClientID)
+		assert.Equal(t, "AuthClientSecret", result.AuthClientSecret)
+		assert.Equal(t, "AuthClientDefaultScope", result.AuthDefaultScope)
+		assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/", c.Name), result.ConsoleURL)
+		assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s/", c.Name), result.MetricsURL)
+		assert.Equal(t, fmt.Sprintf("https://logging.cluster.%s/", c.Name), result.LoggingURL)
+		assert.Equal(t, "TokenProviderID", result.TokenProviderID)
+	})
+
+	s.T().Run("not found", func(t *testing.T) {
+		// when
+		_, err := s.Application.ClusterService().Load(context.Background(), uuid.NewV4())
+		// then
+		require.Error(t, err)
+		assert.IsType(t, errors.NotFoundError{}, err)
 	})
 }
 

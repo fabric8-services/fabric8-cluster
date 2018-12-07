@@ -33,8 +33,8 @@ func NewClustersController(service *goa.Service, config clusterConfiguration, ap
 	}
 }
 
-// Show returns the list of available OSO clusters.
-func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
+// List returns the list of available clusters.
+func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
@@ -59,9 +59,9 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 	return ctx.OK(&clusters)
 }
 
-// ShowAuthClient returns the list of available OSO clusters with full configuration including Auth client data.
+// ListForAuthClient returns the list of available clusters with full configuration including Auth client data.
 // To be used by Auth service only
-func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersContext) error {
+func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientClustersContext) error {
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
@@ -90,6 +90,61 @@ func (c *ClustersController) ShowAuthClient(ctx *app.ShowAuthClientClustersConte
 		Data: data,
 	}
 	return ctx.OK(&clusters)
+}
+
+// Show returns the single clusters.
+func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
+		log.Error(ctx, nil, "unauthorized access to cluster info")
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
+	}
+	clustr, err := c.app.ClusterService().Load(ctx, ctx.ClusterID)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
+	return ctx.OK(&app.ClusterSingle{
+		Data: &app.ClusterData{
+			Name:              clustr.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(clustr.URL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
+			AppDNS:            clustr.AppDNS,
+			Type:              clustr.Type,
+			CapacityExhausted: clustr.CapacityExhausted,
+		},
+	})
+}
+
+// ShowForAuthClient returns the cluster with full configuration including Auth client data.
+// To be used by Auth service only
+func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientClustersContext) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "unauthorized access to cluster info")
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
+	}
+	clustr, err := c.app.ClusterService().Load(ctx, ctx.ClusterID)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
+	return ctx.OK(&app.FullClusterSingle{
+		Data: &app.FullClusterData{
+			Name:                   clustr.Name,
+			APIURL:                 httpsupport.AddTrailingSlashToURL(clustr.URL),
+			ConsoleURL:             httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
+			MetricsURL:             httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
+			LoggingURL:             httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
+			AppDNS:                 clustr.AppDNS,
+			Type:                   clustr.Type,
+			CapacityExhausted:      clustr.CapacityExhausted,
+			AuthClientDefaultScope: clustr.AuthDefaultScope,
+			AuthClientID:           clustr.AuthClientID,
+			AuthClientSecret:       clustr.AuthClientSecret,
+			ServiceAccountToken:    clustr.SAToken,
+			ServiceAccountUsername: clustr.SAUsername,
+			TokenProviderID:        clustr.TokenProviderID,
+		},
+	})
 }
 
 // Create creates a new cluster configuration for later use
@@ -133,5 +188,6 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 		}, "error while creating new cluster configuration")
 		return app.JSONErrorResponse(ctx, err)
 	}
-	return ctx.Created() // TODO: include a `Location` response if we want to "show" a single cluster at a time (eg: `/api/clusters/:clusterID`)
+	ctx.ResponseData.Header().Set("Location", app.ClustersHref(clustr.ClusterID.String()))
+	return ctx.Created()
 }
