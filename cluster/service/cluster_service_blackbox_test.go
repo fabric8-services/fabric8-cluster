@@ -411,28 +411,17 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, c.Name, result.Name)
-		assert.Equal(t, c.Type, result.Type)
-		assert.Equal(t, fmt.Sprintf("https://cluster.%s/", c.Name), result.AppDNS)
-		assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", c.Name), result.URL)
-		assert.Equal(t, false, result.CapacityExhausted)
-		assert.Equal(t, "ServiceAccountToken", result.SAToken)
-		assert.Equal(t, "ServiceAccountUsername", result.SAUsername)
-		assert.Equal(t, "AuthClientID", result.AuthClientID)
-		assert.Equal(t, "AuthClientSecret", result.AuthClientSecret)
-		assert.Equal(t, "AuthClientDefaultScope", result.AuthDefaultScope)
-		assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/", c.Name), result.ConsoleURL)
-		assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s/", c.Name), result.MetricsURL)
-		assert.Equal(t, fmt.Sprintf("https://logging.cluster.%s/", c.Name), result.LoggingURL)
-		assert.Equal(t, "TokenProviderID", result.TokenProviderID)
+		test.AssertEqualClusters(t, c, result)
 	})
 
 	s.T().Run("not found", func(t *testing.T) {
+		// given
+		id := uuid.NewV4()
 		// when
-		_, err := s.Application.ClusterService().Load(context.Background(), uuid.NewV4())
+		_, err := s.Application.ClusterService().Load(context.Background(), id)
 		// then
 		require.Error(t, err)
-		assert.IsType(t, errors.NotFoundError{}, err)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", id.String()).Error())
 	})
 }
 
