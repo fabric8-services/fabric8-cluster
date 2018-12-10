@@ -144,7 +144,12 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 	}
 	identityID := ctx.Payload.Attributes.IdentityID
 	clusterURL := ctx.Payload.Attributes.ClusterURL
-	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, clusterURL); err != nil {
+	// ignoreIfAlreadyExisted by default true
+	ignore := true
+	if ignoreIfExists := ctx.Payload.Attributes.IgnoreIfAlreadyExists; ignoreIfExists != nil {
+		ignore = *ignoreIfExists
+	}
+	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, clusterURL, ignore); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
 		}, "error while linking identity-id %s to cluster with url %s", identityID, clusterURL)

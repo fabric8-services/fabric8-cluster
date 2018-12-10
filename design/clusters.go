@@ -147,6 +147,7 @@ var linkIdentityToClusterData = a.Type("linkIdentityToClusterData", func() {
 var linkIdentityToClusterAttributes = a.Type("linkIdentityToClusterAttributes", func() {
 	a.Attribute("identity-id", d.String, "The id of corresponding Identity")
 	a.Attribute("cluster-url", d.String, "Cluster URL")
+	a.Attribute("ignore-if-already-exists", d.Boolean, "Ignore creation error if this identity already exists. By default 'True'")
 
 	a.Required("cluster-url", "identity-id")
 })

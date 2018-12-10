@@ -89,8 +89,6 @@ const (
 	errEmptyFieldMsg = "empty field '%s' is not allowed"
 	// errInvalidURLMsg the error template when an URL is invalid
 	errInvalidURLMsg = "'%s' URL '%s' is invalid: %v"
-	// errInvalidURLGenerationMsg the error template when an URL cannot be generated
-	errInvalidURLGenerationMsg = "unable to generate '%s' URL from '%s' (expected an 'api' subdomain)"
 	// errInvalidTypeMsg the error template when the type of cluster is invalid
 	errInvalidTypeMsg = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
 )
@@ -293,7 +291,7 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 }
 
 // LinkIdentityToCluster links Identity to Cluster
-func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string) error {
+func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, clusterURL string, ignoreIfExists bool) error {
 	if err := validateParams(identityID, clusterURL); err != nil {
 		return errs.Wrapf(err, "failed to link identity %s to cluster with url '%s'", identityID, clusterURL)
 	}
@@ -313,6 +311,12 @@ func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID, c
 	}
 
 	clusterID := rc.ClusterID
+
+	// do not fail silently even if identity is linked to cluster and ignoreIfExists is false
+	if !ignoreIfExists {
+		return c.createIdentityCluster(ctx, id, clusterID)
+	}
+
 	_, err = c.Repositories().IdentityClusters().Load(ctx, id, clusterID)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
@@ -339,7 +343,7 @@ func (c clusterService) createIdentityCluster(ctx context.Context, identityID, c
 
 	return c.ExecuteInTransaction(func() error {
 		if err := c.Repositories().IdentityClusters().Create(ctx, identityCluster); err != nil {
-			return errs.Wrapf(err, "failed to link identity %s with cluster %s", identityID, clusterID)
+			return errors.NewInternalErrorFromString(fmt.Sprintf("failed to link identity %s with cluster %s: %v", identityID, clusterID, err))
 		}
 		return nil
 	})

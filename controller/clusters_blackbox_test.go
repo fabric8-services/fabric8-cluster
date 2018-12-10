@@ -92,8 +92,8 @@ func (s *ClusterControllerTestSuite) TestShowAuthForUnknownSAFails() {
 	test.ShowAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
 }
 
-func createLinkIdentityClusterPayload(clusterURL, identityID string) *app.LinkIdentityToClusterData {
-	attributes := app.LinkIdentityToClusterAttributes{clusterURL, identityID}
+func createLinkIdentityClusterPayload(clusterURL, identityID string, ignoreIfExists *bool) *app.LinkIdentityToClusterData {
+	attributes := app.LinkIdentityToClusterAttributes{clusterURL, identityID, ignoreIfExists}
 
 	return &app.LinkIdentityToClusterData{Type: "identityclusters", Attributes: &attributes}
 }
@@ -174,20 +174,40 @@ func (s *ClusterControllerTestSuite) TestCreate() {
 func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 
 	s.T().Run("ok", func(t *testing.T) {
-		// given
-		sa := &authtestsupport.Identity{
-			Username: "fabric8-auth",
-			ID:       uuid.NewV4(),
-		}
+		t.Run("ignore if exists - nil", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
 
-		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-		cluster := testsupport.CreateCluster(t, s.DB)
+			c := testsupport.CreateCluster(t, s.DB)
 
-		payload := createLinkIdentityClusterPayload(cluster.URL, uuid.NewV4().String())
+			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), nil)
 
-		// when/then
-		test.LinkIdentityToClusterClustersNoContent(t, svc.Context, svc, ctrl, payload)
+			// when/then
+			test.LinkIdentityToClusterClustersNoContent(t, svc.Context, svc, ctrl, payload)
+		})
+
+		t.Run("ignore if exists - true", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			c := testsupport.CreateCluster(t, s.DB)
+			ignore := true
+			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), &ignore)
+
+			// when/then
+			test.LinkIdentityToClusterClustersNoContent(t, svc.Context, svc, ctrl, payload)
+		})
+
 	})
 
 	s.T().Run("bad", func(t *testing.T) {
@@ -201,8 +221,8 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-			cluster := testsupport.CreateCluster(t, s.DB)
-			payload := createLinkIdentityClusterPayload(cluster.URL, "foo")
+			c := testsupport.CreateCluster(t, s.DB)
+			payload := createLinkIdentityClusterPayload(c.URL, "foo", nil)
 
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
@@ -217,24 +237,8 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-			cluster := testsupport.CreateCluster(t, s.DB)
-			payload := createLinkIdentityClusterPayload(cluster.URL, "  ")
-
-			// when/then
-			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
-		})
-
-		t.Run("empty uuid", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
-
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
-			cluster := testsupport.CreateCluster(t, s.DB)
-			payload := createLinkIdentityClusterPayload(cluster.URL, " ")
+			c := testsupport.CreateCluster(t, s.DB)
+			payload := createLinkIdentityClusterPayload(c.URL, "  ", nil)
 
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
@@ -249,7 +253,7 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-			payload := createLinkIdentityClusterPayload("http://foo.com", uuid.NewV4().String())
+			payload := createLinkIdentityClusterPayload("http://foo.com", uuid.NewV4().String(), nil)
 
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
@@ -264,7 +268,7 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-			payload := createLinkIdentityClusterPayload("foo.com", uuid.NewV4().String())
+			payload := createLinkIdentityClusterPayload("foo.com", uuid.NewV4().String(), nil)
 
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
@@ -278,13 +282,33 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "unknown",
 				ID:       uuid.NewV4(),
 			}
-			cluster := testsupport.CreateCluster(t, s.DB)
-			payload := createLinkIdentityClusterPayload(cluster.URL, uuid.NewV4().String())
+			c := testsupport.CreateCluster(t, s.DB)
+			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), nil)
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
 			// when/then
 			test.LinkIdentityToClusterClustersUnauthorized(t, svc.Context, svc, ctrl, payload)
 		})
+	})
+
+	s.T().Run("internal error - ignore false", func(t *testing.T) {
+		// given
+		c := testsupport.CreateCluster(s.T(), s.DB)
+		identityID := uuid.NewV4()
+
+		testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
+
+		sa := &authtestsupport.Identity{
+			Username: "fabric8-auth",
+			ID:       uuid.NewV4(),
+		}
+
+		ignore := false
+		payload := createLinkIdentityClusterPayload(c.URL, identityID.String(), &ignore)
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+		// when/then
+		test.LinkIdentityToClusterClustersInternalServerError(t, svc.Context, svc, ctrl, payload)
 	})
 }
 
