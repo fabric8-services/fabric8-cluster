@@ -110,16 +110,16 @@ func (s *serviceContextImpl) endTransaction() {
 	s.inTransaction = false
 }
 
+// ServiceContextProducer the service factory producer function
 type ServiceContextProducer func() context.ServiceContext
 
+// ServiceFactory the service factory
 type ServiceFactory struct {
 	contextProducer ServiceContextProducer
 	config          *configuration.ConfigurationData
 }
 
-// Option an option to configure the Service Factory
-type Option func(f *ServiceFactory)
-
+// NewServiceFactory initializes a new factory with some options to use alternative implementation of the underlying services
 func NewServiceFactory(producer ServiceContextProducer, config *configuration.ConfigurationData, options ...Option) *ServiceFactory {
 	f := &ServiceFactory{contextProducer: producer, config: config}
 	log.Info(nil, map[string]interface{}{}, "configuring a new service factory with %d options", len(options))
@@ -130,10 +130,14 @@ func NewServiceFactory(producer ServiceContextProducer, config *configuration.Co
 	return f
 }
 
+// Option an option to configure the Service Factory
+type Option func(f *ServiceFactory)
+
 func (f *ServiceFactory) getContext() context.ServiceContext {
 	return f.contextProducer()
 }
 
+// ClusterService returns a new cluster service implementation
 func (f *ServiceFactory) ClusterService() service.ClusterService {
 	return clusterservice.NewClusterService(f.getContext(), f.config)
 }

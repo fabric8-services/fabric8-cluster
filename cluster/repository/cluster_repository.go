@@ -12,7 +12,7 @@ import (
 	"github.com/goadesign/goa"
 	"github.com/jinzhu/gorm"
 	errs "github.com/pkg/errors"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"fmt"
 )
@@ -34,12 +34,12 @@ type Cluster struct {
 	LoggingURL string
 	// Application host name used by the cluster
 	AppDNS string
-	// Service Account token
-	SaToken string
-	// Service Account name
-	SaUsername string
+	// Service Account token (encrypted or not, depending on the state of the sibling SATokenEncrypted field)
+	SAToken string
+	// Service Account username
+	SAUsername string
 	// SA Token encrypted
-	SaTokenEncrypted bool
+	SATokenEncrypted bool
 	// Token Provider ID
 	TokenProviderID string
 	// OAuthClient ID used to link users account

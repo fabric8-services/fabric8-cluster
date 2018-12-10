@@ -188,17 +188,23 @@ func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterC
 	}
 	c.clusters = map[string]Cluster{}
 	for _, configCluster := range clusterConf.Clusters {
+		// ensure that API URL ends with a slash
+		configCluster.APIURL = httpsupport.AddTrailingSlashToURL(configCluster.APIURL)
 		if configCluster.ConsoleURL == "" {
 			configCluster.ConsoleURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "console", "console")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
+		} else {
+			configCluster.ConsoleURL = httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL)
 		}
 		if configCluster.MetricsURL == "" {
 			configCluster.MetricsURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "metrics", "")
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
+		} else {
+			configCluster.MetricsURL = httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL)
 		}
 		if configCluster.LoggingURL == "" {
 			// This is not a typo; the logging host is the same as the console host in current k8s
@@ -206,6 +212,8 @@ func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterC
 			if err != nil {
 				return usedClusterConfigFile, err
 			}
+		} else {
+			configCluster.LoggingURL = httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL)
 		}
 		if configCluster.Type == "" {
 			configCluster.Type = cluster.OSO
