@@ -56,7 +56,7 @@ func main() {
 			"config_file":                 configFile,
 			"service_account_config_file": serviceAccountConfigFile,
 			"cluster_config_file":         clusterConfigFile,
-			"err":                         err,
+			"err": err,
 		}, "failed to setup the configuration")
 	}
 
