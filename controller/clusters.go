@@ -10,7 +10,10 @@ import (
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
 
+	"fmt"
+	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/goadesign/goa"
+	"github.com/satori/go.uuid"
 )
 
 type clusterConfiguration interface {
@@ -142,11 +145,20 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to create identity cluster relationship"))
 	}
-	identityID := ctx.Payload.Attributes.IdentityID
-	clusterURL := ctx.Payload.Attributes.ClusterURL
+
+	identityID, err := uuid.FromString(ctx.Payload.IdentityID)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
+	}
+
+	clusterURL := ctx.Payload.ClusterURL
+	if err := service.ValidateURL(&clusterURL); err != nil {
+		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL)))
+	}
+
 	// ignoreIfAlreadyExisted by default true
 	ignore := true
-	if ignoreIfExists := ctx.Payload.Attributes.IgnoreIfAlreadyExists; ignoreIfExists != nil {
+	if ignoreIfExists := ctx.Payload.IgnoreIfAlreadyExists; ignoreIfExists != nil {
 		ignore = *ignoreIfExists
 	}
 	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, clusterURL, ignore); err != nil {

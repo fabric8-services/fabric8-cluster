@@ -483,7 +483,7 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID.String(), c1.URL, true)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, true)
 			require.NoError(t, err)
 
 			// then
@@ -507,7 +507,7 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID.String(), c1.URL, false)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, false)
 			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity %s with cluster %s: pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityID, c1.ClusterID)
 
 			// then
@@ -537,7 +537,7 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 			}
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID.String(), c2.URL, true)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c2.URL, true)
 			require.NoError(t, err)
 
 			// then
@@ -554,24 +554,12 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 	})
 
 	s.T().Run("fail", func(t *testing.T) {
-		t.Run("unknown identity", func(t *testing.T) {
-			// given
-			c := test.CreateCluster(t, s.DB)
-			identityID := "unknown"
-
-			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c.URL, true)
-
-			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'identity-id': 'identity-id %s is not a valid UUID'", identityID)
-		})
-
 		t.Run("random cluster url", func(t *testing.T) {
 			// given
 			url := "http://random.url"
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4().String(), url, true)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), url, true)
 
 			// then
 			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)

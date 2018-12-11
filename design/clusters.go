@@ -138,13 +138,6 @@ var _ = a.Resource("clusters", func() {
 
 // linkIdentityToClusterData represents the data of an identified IdentityCluster object to create
 var linkIdentityToClusterData = a.Type("linkIdentityToClusterData", func() {
-	a.Attribute("type", d.String, "type of the identity cluster")
-	a.Attribute("attributes", linkIdentityToClusterAttributes, "Attributes of the identity cluster")
-	a.Attribute("links", genericLinks)
-	a.Required("type", "attributes")
-})
-
-var linkIdentityToClusterAttributes = a.Type("linkIdentityToClusterAttributes", func() {
 	a.Attribute("identity-id", d.String, "The id of corresponding Identity")
 	a.Attribute("cluster-url", d.String, "Cluster URL")
 	a.Attribute("ignore-if-already-exists", d.Boolean, "Ignore creation error if this identity already exists. By default 'True'")

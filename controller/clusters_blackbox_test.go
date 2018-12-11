@@ -93,9 +93,7 @@ func (s *ClusterControllerTestSuite) TestShowAuthForUnknownSAFails() {
 }
 
 func createLinkIdentityClusterPayload(clusterURL, identityID string, ignoreIfExists *bool) *app.LinkIdentityToClusterData {
-	attributes := app.LinkIdentityToClusterAttributes{clusterURL, identityID, ignoreIfExists}
-
-	return &app.LinkIdentityToClusterData{Type: "identityclusters", Attributes: &attributes}
+	return &app.LinkIdentityToClusterData{ClusterURL: clusterURL, IdentityID: identityID, IgnoreIfAlreadyExists: ignoreIfExists}
 }
 
 func (s *ClusterControllerTestSuite) checkShowAuthForServiceAccount(saName string) {
