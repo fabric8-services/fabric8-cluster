@@ -134,6 +134,20 @@ var _ = a.Resource("clusters", func() {
 		a.Response(d.Unauthorized, JSONAPIErrors)
 		a.Response(d.BadRequest, JSONAPIErrors)
 	})
+
+	a.Action("removeIdentityToClusterLink", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.DELETE("/identities"),
+		)
+		a.Payload(unLinkIdentityToClusterdata)
+		a.Description("Remove a identity cluster relation using a service account")
+		a.Response(d.OK)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.BadRequest, JSONAPIErrors)
+	})
 })
 
 // linkIdentityToClusterData represents the data of an identified IdentityCluster object to create
@@ -141,6 +155,14 @@ var linkIdentityToClusterData = a.Type("linkIdentityToClusterData", func() {
 	a.Attribute("identity-id", d.String, "The id of corresponding Identity")
 	a.Attribute("cluster-url", d.String, "Cluster URL")
 	a.Attribute("ignore-if-already-exists", d.Boolean, "Ignore creation error if this identity already exists. By default 'True'")
+
+	a.Required("cluster-url", "identity-id")
+})
+
+// unLinkIdentityToClusterdata represents data of an identified IdentityCluster object to remove
+var unLinkIdentityToClusterdata = a.Type("unLinkIdentityToClusterdata", func() {
+	a.Attribute("identity-id", d.String, "The id of corresponding Identity")
+	a.Attribute("cluster-url", d.String, "Cluster URL")
 
 	a.Required("cluster-url", "identity-id")
 })

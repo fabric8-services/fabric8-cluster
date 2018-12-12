@@ -170,3 +170,30 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 
 	return ctx.NoContent()
 }
+
+// RemoveIdentityToClusterLink removes Identity Cluster relationship
+func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentityToClusterLinkClustersContext) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to remove identity cluster relationship")
+		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to remove identity cluster relationship"))
+	}
+
+	identityID, err := uuid.FromString(ctx.Payload.IdentityID)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
+	}
+
+	clusterURL := ctx.Payload.ClusterURL
+	if err := service.ValidateURL(&clusterURL); err != nil {
+		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL)))
+	}
+
+	if err := c.app.ClusterService().RemoveIdentityToClusterLink(ctx, identityID, clusterURL); err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"error": err,
+		}, "error while removing link of identity-id %s to cluster with url %s", identityID, clusterURL)
+		return app.JSONErrorResponse(ctx, err)
+	}
+
+	return ctx.OK([]byte{})
+}

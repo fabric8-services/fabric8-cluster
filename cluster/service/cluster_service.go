@@ -19,7 +19,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	errs "github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 type clusterService struct {
@@ -326,5 +326,22 @@ func (c clusterService) createIdentityCluster(ctx context.Context, identityID, c
 			return errors.NewInternalErrorFromString(fmt.Sprintf("failed to link identity %s with cluster %s: %v", identityID, clusterID, err))
 		}
 		return nil
+	})
+}
+
+// RemoveIdentityToClusterLink removes Identity to Cluster link/relation
+func (c clusterService) RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
+	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
+	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"cluster_url": clusterURL,
+			"err":         err,
+		}, "failed to load cluster with url %s", clusterURL)
+		return errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+	}
+
+	clusterID := rc.ClusterID
+	return c.ExecuteInTransaction(func() error {
+		return c.Repositories().IdentityClusters().Delete(ctx, identityID, clusterID)
 	})
 }

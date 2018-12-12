@@ -471,7 +471,7 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefau
 	defer haltWatcher()
 }
 
-func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
+func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 
 	s.T().Run("ok", func(t *testing.T) {
 
@@ -560,6 +560,74 @@ func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
 
 			// when
 			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), url, true)
+
+			// then
+			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+		})
+	})
+}
+
+func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
+
+	s.T().Run("ok", func(t *testing.T) {
+
+		t.Run("unlink completely", func(t *testing.T) {
+			// given
+			c1 := test.CreateCluster(s.T(), s.DB)
+			identityID := uuid.NewV4()
+
+			test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+
+			// when
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, c1.URL)
+			require.NoError(t, err)
+
+			// then
+			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c1.ClusterID))
+
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			require.NoError(t, err)
+
+			assert.Len(t, clusters, 0)
+		})
+
+		t.Run("unlink single cluster", func(t *testing.T) {
+			// given
+			c1 := test.CreateCluster(s.T(), s.DB)
+			c2 := test.CreateCluster(s.T(), s.DB)
+			identityID := uuid.NewV4()
+
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+			test.CreateIdentityCluster(s.T(), s.DB, c2, &identityID)
+
+			// when
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, c2.URL)
+			require.NoError(t, err)
+
+			// then
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			require.NoError(t, err)
+			require.Len(t, clusters, 1)
+			test.AssertEqualClusters(t, c1, &clusters[0])
+
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			require.NoError(t, err)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+
+			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c2.ClusterID))
+		})
+	})
+
+	s.T().Run("fail", func(t *testing.T) {
+		t.Run("random cluster url", func(t *testing.T) {
+			// given
+			url := "http://random.url"
+
+			// when
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, uuid.NewV4(), url)
 
 			// then
 			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)

@@ -310,6 +310,121 @@ func (s *ClusterControllerTestSuite) TestLinkIdentityClusters() {
 	})
 }
 
+func (s *ClusterControllerTestSuite) TestRemoveIdentityToClustersLink() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		t.Run("unlink", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			c := testsupport.CreateCluster(t, s.DB)
+			identityID := uuid.NewV4()
+
+			testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
+
+			payload := createUnLinkIdentityToClusterData(c.URL, identityID.String())
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersOK(t, svc.Context, svc, ctrl, payload)
+		})
+	})
+
+	s.T().Run("not found", func(t *testing.T) {
+		t.Run("different identity", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			c := testsupport.CreateCluster(t, s.DB)
+			identityID := uuid.NewV4()
+
+			testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
+			payload := createUnLinkIdentityToClusterData(c.URL, uuid.NewV4().String())
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersNotFound(t, svc.Context, svc, ctrl, payload)
+		})
+	})
+
+	s.T().Run("bad", func(t *testing.T) {
+
+		t.Run("empty space uuid", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			c := testsupport.CreateCluster(t, s.DB)
+			payload := createUnLinkIdentityToClusterData(c.URL, "  ")
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+		})
+
+		t.Run("unknown cluster", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			payload := createUnLinkIdentityToClusterData("http://foo.com", uuid.NewV4().String())
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+		})
+
+		t.Run("invalid cluster url", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			payload := createUnLinkIdentityToClusterData("foo.com", uuid.NewV4().String())
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+		})
+	})
+
+	s.T().Run("unauthorized", func(t *testing.T) {
+		t.Run("unknown token", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "unknown",
+				ID:       uuid.NewV4(),
+			}
+			c := testsupport.CreateCluster(t, s.DB)
+			payload := createUnLinkIdentityToClusterData(c.URL, uuid.NewV4().String())
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+
+			// when/then
+			test.RemoveIdentityToClusterLinkClustersUnauthorized(t, svc.Context, svc, ctrl, payload)
+		})
+	})
+}
+
+func createUnLinkIdentityToClusterData(clusterURL, identityID string) *app.UnLinkIdentityToClusterdata {
+	return &app.UnLinkIdentityToClusterdata{ClusterURL: clusterURL, IdentityID: identityID}
+}
+
 func newCreateClusterPayload() app.CreateClustersPayload {
 	random := uuid.NewV4().String()
 	return app.CreateClustersPayload{
