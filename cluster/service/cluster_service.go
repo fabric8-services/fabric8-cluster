@@ -89,8 +89,6 @@ const (
 	errEmptyFieldMsg = "empty field '%s' is not allowed"
 	// errInvalidURLMsg the error template when an URL is invalid
 	errInvalidURLMsg = "'%s' URL '%s' is invalid: %v"
-	// errInvalidURLGenerationMsg the error template when an URL cannot be generated
-	errInvalidURLGenerationMsg = "unable to generate '%s' URL from '%s' (expected an 'api' subdomain)"
 	// errInvalidTypeMsg the error template when the type of cluster is invalid
 	errInvalidTypeMsg = "invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')"
 )
@@ -108,7 +106,7 @@ func (c clusterService) validateAndNormalize(ctx context.Context, clustr *reposi
 	if strings.TrimSpace(clustr.Name) == "" {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errEmptyFieldMsg, "name"))
 	}
-	err = validateURL(&clustr.URL)
+	err = ValidateURL(&clustr.URL)
 	if err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, "API", clustr.URL, err))
 	}
@@ -152,7 +150,7 @@ func (c clusterService) validateAndNormalize(ctx context.Context, clustr *reposi
 					*urlStr = loggingURL
 				}
 			}
-		} else if err := validateURL(urlStr); err != nil {
+		} else if err := ValidateURL(urlStr); err != nil {
 			// validate the URL
 			return errors.NewBadParameterErrorFromString(fmt.Sprintf(errInvalidURLMsg, kind, *urlStr, err))
 		}
@@ -195,9 +193,9 @@ func (c clusterService) validateAndNormalize(ctx context.Context, clustr *reposi
 	return nil
 }
 
-// validateURL validates the URL: return an error if the given url could not be parsed or if it is missing
+// ValidateURL validates the URL: return an error if the given url could not be parsed or if it is missing
 // the `scheme` or `host` parts.
-func validateURL(urlStr *string) error {
+func ValidateURL(urlStr *string) error {
 	u, err := url.Parse(*urlStr)
 	if err != nil {
 		return err
@@ -290,4 +288,43 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 	}
 
 	return watcher.Close, err
+}
+
+// LinkIdentityToCluster links Identity to Cluster
+func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreIfExists bool) error {
+	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
+	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"cluster_url": clusterURL,
+			"err":         err,
+		}, "failed to load cluster with url %s", clusterURL)
+		return errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+	}
+
+	clusterID := rc.ClusterID
+
+	// do not fail silently even if identity is linked to cluster and ignoreIfExists is false
+	if !ignoreIfExists {
+		return c.createIdentityCluster(ctx, identityID, clusterID)
+	}
+
+	_, err = c.Repositories().IdentityClusters().Load(ctx, identityID, clusterID)
+	if err != nil {
+		if ok, _ := errors.IsNotFoundError(err); ok {
+			return c.createIdentityCluster(ctx, identityID, clusterID)
+		}
+		return err
+	}
+	return nil
+}
+
+func (c clusterService) createIdentityCluster(ctx context.Context, identityID, clusterID uuid.UUID) error {
+	identityCluster := &repository.IdentityCluster{IdentityID: identityID, ClusterID: clusterID}
+
+	return c.ExecuteInTransaction(func() error {
+		if err := c.Repositories().IdentityClusters().Create(ctx, identityCluster); err != nil {
+			return errors.NewInternalErrorFromString(fmt.Sprintf("failed to link identity %s with cluster %s: %v", identityID, clusterID, err))
+		}
+		return nil
+	})
 }

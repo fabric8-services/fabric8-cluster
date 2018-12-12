@@ -471,6 +471,102 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefau
 	defer haltWatcher()
 }
 
+func (s *ClusterServiceTestSuite) TestCreateIdentityCluster() {
+
+	s.T().Run("ok", func(t *testing.T) {
+
+		t.Run("ignore if exists", func(t *testing.T) {
+			// given
+			c1 := test.CreateCluster(s.T(), s.DB)
+			identityID := uuid.NewV4()
+
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+
+			// when
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, true)
+			require.NoError(t, err)
+
+			// then
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			require.NoError(t, err)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			require.NoError(t, err)
+
+			assert.Len(t, clusters, 1)
+			test.AssertEqualClusters(t, c1, &clusters[0])
+		})
+
+		t.Run("do not ignore if exists", func(t *testing.T) {
+			// given
+			c1 := test.CreateCluster(s.T(), s.DB)
+			identityID := uuid.NewV4()
+
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+
+			// when
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, false)
+			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity %s with cluster %s: pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityID, c1.ClusterID)
+
+			// then
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			require.NoError(t, err)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			require.NoError(t, err)
+
+			assert.Len(t, clusters, 1)
+			test.AssertEqualClusters(t, c1, &clusters[0])
+		})
+
+		t.Run("link multiple clusters to single identity", func(t *testing.T) {
+			// given
+			c1 := test.CreateCluster(s.T(), s.DB)
+			c2 := test.CreateCluster(s.T(), s.DB)
+			identityID := uuid.NewV4()
+
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+
+			identityCluster2 := &repository.IdentityCluster{
+				ClusterID:  c2.ClusterID,
+				IdentityID: identityID,
+			}
+
+			// when
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c2.URL, true)
+			require.NoError(t, err)
+
+			// then
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			require.NoError(t, err)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+
+			loaded2, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
+			require.NoError(t, err)
+			test.AssertEqualClusters(t, c2, &loaded2.Cluster)
+			test.AssertEqualIdentityClusters(t, identityCluster2, loaded2)
+		})
+	})
+
+	s.T().Run("fail", func(t *testing.T) {
+		t.Run("random cluster url", func(t *testing.T) {
+			// given
+			url := "http://random.url"
+
+			// when
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), url, true)
+
+			// then
+			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+		})
+	})
+}
+
 func createTempClusterConfigFile(t *testing.T) string {
 	to, err := ioutil.TempFile("", "oso-clusters.conf")
 	require.NoError(t, err)
