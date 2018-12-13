@@ -11,9 +11,10 @@ import (
 	"github.com/fabric8-services/fabric8-common/log"
 
 	"fmt"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/goadesign/goa"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 type clusterConfiguration interface {

@@ -19,7 +19,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	errs "github.com/pkg/errors"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 type clusterService struct {
@@ -85,6 +85,8 @@ func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *reposit
 	})
 }
 
+// Load loads the cluster given its ID.
+// returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (c clusterService) Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error) {
 	return c.Repositories().Clusters().Load(ctx, clusterID)
 }
