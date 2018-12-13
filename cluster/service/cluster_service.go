@@ -292,13 +292,9 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 
 // LinkIdentityToCluster links Identity to Cluster
 func (c clusterService) LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreIfExists bool) error {
-	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
+	rc, err := c.loadClusterByURL(ctx, clusterURL)
 	if err != nil {
-		log.Error(ctx, map[string]interface{}{
-			"cluster_url": clusterURL,
-			"err":         err,
-		}, "failed to load cluster with url %s", clusterURL)
-		return errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+		return err
 	}
 
 	clusterID := rc.ClusterID
@@ -331,17 +327,29 @@ func (c clusterService) createIdentityCluster(ctx context.Context, identityID, c
 
 // RemoveIdentityToClusterLink removes Identity to Cluster link/relation
 func (c clusterService) RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
+	rc, err := c.loadClusterByURL(ctx, clusterURL)
+	if err != nil {
+		return err
+	}
+
+	return c.ExecuteInTransaction(func() error {
+		return c.Repositories().IdentityClusters().Delete(ctx, identityID, rc.ClusterID)
+	})
+}
+
+func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
 	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_url": clusterURL,
 			"err":         err,
 		}, "failed to load cluster with url %s", clusterURL)
-		return errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+		if notFound, _ := errors.IsNotFoundError(err); !notFound {
+			// oops, something wrong happened, not just the cluster not found in the db
+			return nil, errs.Wrapf(err, "unable to load cluster")
+		} else {
+			return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+		}
 	}
-
-	clusterID := rc.ClusterID
-	return c.ExecuteInTransaction(func() error {
-		return c.Repositories().IdentityClusters().Delete(ctx, identityID, clusterID)
-	})
+	return rc, nil
 }
