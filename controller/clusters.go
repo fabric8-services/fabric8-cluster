@@ -195,5 +195,5 @@ func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentity
 		return app.JSONErrorResponse(ctx, err)
 	}
 
-	return ctx.OK([]byte{})
+	return ctx.NoContent()
 }

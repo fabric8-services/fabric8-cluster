@@ -142,7 +142,7 @@ var _ = a.Resource("clusters", func() {
 		)
 		a.Payload(unLinkIdentityToClusterdata)
 		a.Description("Remove a identity cluster relation using a service account")
-		a.Response(d.OK)
+		a.Response(d.NoContent)
 		a.Response(d.NotFound, JSONAPIErrors)
 		a.Response(d.InternalServerError, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)

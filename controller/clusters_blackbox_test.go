@@ -330,7 +330,7 @@ func (s *ClusterControllerTestSuite) TestRemoveIdentityToClustersLink() {
 			payload := createUnLinkIdentityToClusterData(c.URL, identityID.String())
 
 			// when/then
-			test.RemoveIdentityToClusterLinkClustersOK(t, svc.Context, svc, ctrl, payload)
+			test.RemoveIdentityToClusterLinkClustersNoContent(t, svc.Context, svc, ctrl, payload)
 		})
 	})
 
