@@ -19,9 +19,8 @@ import (
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	authtestsupport "github.com/fabric8-services/fabric8-common/test/auth"
 
-	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/goadesign/goa"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
