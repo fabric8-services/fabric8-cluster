@@ -58,6 +58,8 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
+	t.Logf("verifying cluster %+v", actual)
+	t.Logf("expected cluster %+v", expected)
 	assert.Equal(t, expected.URL, actual.URL)
 	assert.Equal(t, expected.Type, actual.Type)
 	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)

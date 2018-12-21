@@ -703,13 +703,13 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.Cluster) {
-	for _, configCluster := range configClusters {
-		verifyCluster(t, clusters, test.ClusterFromConfigurationCluster(configCluster))
+func verifyClusters(t *testing.T, actualClusters []repository.Cluster, expectedClusters map[string]configuration.Cluster) {
+	for _, expectedCluster := range expectedClusters {
+		verifyCluster(t, actualClusters, test.ClusterFromConfigurationCluster(expectedCluster))
 	}
 }
 
-func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	actual := test.FilterClusterByURL(expected.URL, clusters)
-	test.AssertEqualClusterDetails(t, expected, actual)
+func verifyCluster(t *testing.T, actualClusters []repository.Cluster, expectedCluster *repository.Cluster) {
+	actualCluster := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
+	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster)
 }
