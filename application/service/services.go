@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 /*
@@ -24,6 +24,7 @@ type ClusterService interface {
 	CreateOrSaveClusterFromConfig(ctx context.Context) error
 	CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error
 	InitializeClusterWatcher() (func() error, error)
+	Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
 	LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreError bool) error
 	RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error
 }

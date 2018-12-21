@@ -19,7 +19,7 @@ import (
 	testsupport "github.com/fabric8-services/fabric8-common/test"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -58,7 +58,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
 }
 
-func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
+func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 
 	s.T().Run("create", func(t *testing.T) {
 
@@ -399,6 +399,32 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromEndpoint() {
 	})
 }
 
+func (s *ClusterServiceTestSuite) TestLoad() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		c := newTestCluster()
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+		require.NoError(t, err)
+		// when
+		result, err := s.Application.ClusterService().Load(context.Background(), c.ClusterID)
+		// then
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		test.AssertEqualClusters(t, c, result)
+	})
+
+	s.T().Run("not found", func(t *testing.T) {
+		// given
+		id := uuid.NewV4()
+		// when
+		_, err := s.Application.ClusterService().Load(context.Background(), id)
+		// then
+		require.Error(t, err)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", id.String()).Error())
+	})
+}
+
 func newTestCluster() *repository.Cluster {
 	name := uuid.NewV4().String()
 	return &repository.Cluster{
@@ -677,13 +703,13 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, clusters []repository.Cluster, configClusters map[string]configuration.Cluster) {
-	for _, configCluster := range configClusters {
-		verifyCluster(t, clusters, test.ClusterFromConfigurationCluster(configCluster))
+func verifyClusters(t *testing.T, actualClusters []repository.Cluster, expectedClusters map[string]configuration.Cluster) {
+	for _, expectedCluster := range expectedClusters {
+		verifyCluster(t, actualClusters, test.ClusterFromConfigurationCluster(expectedCluster))
 	}
 }
 
-func verifyCluster(t *testing.T, clusters []repository.Cluster, expected *repository.Cluster) {
-	actual := test.FilterClusterByURL(expected.URL, clusters)
-	test.AssertEqualClusterDetails(t, expected, actual)
+func verifyCluster(t *testing.T, actualClusters []repository.Cluster, expectedCluster *repository.Cluster) {
+	actualCluster := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
+	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster)
 }
