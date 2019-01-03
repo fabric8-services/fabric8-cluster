@@ -1,0 +1,14 @@
+@startuml
+title Register new user
+
+actor "RHD user" as rhduser
+participant "OSO registration app" as oso
+box "OSIO"
+	participant "Cluster Service" as cs
+	participant "Auth Service" as auth
+end box
+
+rhduser -> oso : sign up
+oso -> auth : create user (cluster URL)
+auth -> cs : Create new identity_cluster\nPOST /clusters/identity
+@enduml
