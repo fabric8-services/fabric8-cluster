@@ -1,0 +1,18 @@
+= Cluster Management Service Flows
+:toc:
+:toclevels: 5
+:sectnums:
+:sectnumlevels: 4
+:toc-placement: preamble
+
+==== Configure OSD cluster to be used by Toolchain
+image::http://www.plantuml.com/plantuml/proxy?idx=0&src=https://raw.githubusercontent.com/fabric8-services/fabric8-cluster/master/docs/resources/configure_cluster.plantuml&fmt=svg[Configure OSD cluster to be used by Toolchain]
+link:https://github.com/fabric8-services/fabric8-cluster/edit/master/docs/resources/configure_cluster.plantuml[Edit plantuml]
+
+==== Register New User
+image::http://www.plantuml.com/plantuml/proxy?idx=0&src=https://raw.githubusercontent.com/fabric8-services/fabric8-cluster/master/docs/resources/new_user.plantuml&fmt=svg[Configure OSD cluster to be used by Toolchain]
+link:https://github.com/fabric8-services/fabric8-cluster/edit/master/docs/resources/new_user.plantuml[Edit plantuml]
+
+==== Add New Cluster
+image::http://www.plantuml.com/plantuml/proxy?idx=0&src=https://raw.githubusercontent.com/fabric8-services/fabric8-cluster/master/docs/resources/new_cluster.plantuml&fmt=svg[Configure OSD cluster to be used by Toolchain]
+link:https://github.com/fabric8-services/fabric8-cluster/edit/master/docs/resources/new_cluster.plantuml[Edit plantuml]
