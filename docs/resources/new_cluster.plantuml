@@ -2,13 +2,13 @@
 title Add new cluster
 
 actor "OSIO user" as user
+box "OSIO"
+	participant "UI\nuser settings page" as usersettings
+	participant "Auth Service" as auth
+	participant "Cluster Service" as cs
+end box
 box "OSD Cluster" #LightBlue
 	participant "cluster API" as cluster
-end box
-box "OSIO"
-	participant "Cluster Service" as cs
-	participant "Auth Service" as auth
-	participant "UI\nuser settings page" as usersettings
 end box
 
 user -> usersettings : Add cluster API URL
