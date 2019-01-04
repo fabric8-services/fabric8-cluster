@@ -25,9 +25,11 @@ type ClusterService interface {
 	CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error
 	InitializeClusterWatcher() (func() error, chan bool, error)
 	Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
+	LoadWithSensitiveInfo(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
 	LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreError bool) error
 	RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error
 	List(ctx context.Context) ([]repository.Cluster, error)
+	ListWithSensitiveInfo(ctx context.Context) ([]repository.Cluster, error)
 }
 
 //Services creates instances of service layer objects

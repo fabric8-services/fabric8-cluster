@@ -27,7 +27,7 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 	cls, err := repo.Load(context.Background(), cluster.ClusterID)
 	require.NoError(t, err)
 
-	AssertEqualClusters(t, cluster, cls)
+	AssertEqualClusters(t, cluster, cls, true)
 	return cluster
 }
 
@@ -53,31 +53,31 @@ func NewCluster() *repository.Cluster {
 	}
 }
 
-func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
-	AssertEqualClusterDetails(t, expected, actual)
+func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster, compareSensitiveInfo bool) {
+	AssertEqualClusterDetails(t, expected, actual, compareSensitiveInfo)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 }
 
-func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
+func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster, compareSensitiveInfo bool) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
-	// t.Logf("verifying cluster %+v", actual)
-	// t.Logf("expected cluster %+v", expected)
 	assert.Equal(t, expected.URL, actual.URL)
+	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.Type, actual.Type)
-	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
-	assert.Equal(t, expected.SAUsername, actual.SAUsername)
-	assert.Equal(t, expected.SAToken, actual.SAToken)
-	assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.MetricsURL, actual.MetricsURL)
 	assert.Equal(t, expected.LoggingURL, actual.LoggingURL)
 	assert.Equal(t, expected.ConsoleURL, actual.ConsoleURL)
-	assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
-	assert.Equal(t, expected.AppDNS, actual.AppDNS)
-	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
-	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
 	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
+	if compareSensitiveInfo {
+		assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
+		assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
+		assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
+		assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
+		assert.Equal(t, expected.SAUsername, actual.SAUsername)
+		assert.Equal(t, expected.SAToken, actual.SAToken)
+		assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
+	}
 }
 
 func AssertEqualClusterData(t *testing.T, clusters []repository.Cluster, clusterList []*app.ClusterData) {
@@ -129,7 +129,7 @@ func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluste
 	loaded, err := repo.Load(context.Background(), idCluster.IdentityID, idCluster.ClusterID)
 	require.NoError(t, err)
 	require.NotNil(t, loaded)
-	AssertEqualClusters(t, cluster, &loaded.Cluster)
+	AssertEqualClusters(t, cluster, &loaded.Cluster, true)
 	AssertEqualIdentityClusters(t, idCluster, loaded)
 
 	return loaded

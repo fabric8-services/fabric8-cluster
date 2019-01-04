@@ -18,6 +18,7 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
 	testsupport "github.com/fabric8-services/fabric8-common/test"
+	authtestsupport "github.com/fabric8-services/fabric8-common/test/auth"
 
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
@@ -39,20 +40,20 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
 	// then
 	require.NoError(s.T(), err)
-
+	// lookup OSO clusters
 	osoClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
 		return db.Where("type = ?", cluster.OSO)
 	})
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), osoClusters, 3)
-
+	// lookup OSD cluster
 	osdClusters, err := s.Application.Clusters().Query(func(db *gorm.DB) *gorm.DB {
 		return db.Where("type = ?", cluster.OSD)
 	})
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), osdClusters, 1)
-
-	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters())
+	// verify all records
+	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters(), true)
 }
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
@@ -399,26 +400,66 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 func (s *ClusterServiceTestSuite) TestLoad() {
 
 	s.T().Run("ok", func(t *testing.T) {
-		// given
-		c := newTestCluster()
-		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
-		require.NoError(t, err)
-		// when
-		result, err := s.Application.ClusterService().Load(context.Background(), c.ClusterID)
-		// then
-		require.NoError(t, err)
-		require.NotNil(t, result)
-		test.AssertEqualClusters(t, c, result)
+
+		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+				require.NoError(t, err)
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+				require.NoError(t, err)
+				// when
+				result, err := s.Application.ClusterService().Load(ctx, c.ClusterID)
+				// then
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				test.AssertEqualClusters(t, c, result, false)
+			})
+		}
 	})
 
-	s.T().Run("not found", func(t *testing.T) {
-		// given
-		id := uuid.NewV4()
-		// when
-		_, err := s.Application.ClusterService().Load(context.Background(), id)
-		// then
-		require.Error(t, err)
-		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", id.String()).Error())
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "foo",
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().Load(ctx, c.ClusterID)
+			// then
+			testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to cluster info")
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			id := uuid.NewV4()
+			// when
+			_, err = s.Application.ClusterService().Load(ctx, id)
+			// then
+			require.Error(t, err)
+			testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", id.String()).Error())
+		})
 	})
 }
 
@@ -518,14 +559,13 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster, true)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
-
 			assert.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualClusters(t, c1, &clusters[0], true)
 		})
 
 		t.Run("do not ignore if exists", func(t *testing.T) {
@@ -542,14 +582,14 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster, true)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 
 			assert.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualClusters(t, c1, &clusters[0], true)
 		})
 
 		t.Run("link multiple clusters to single identity", func(t *testing.T) {
@@ -572,12 +612,12 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster, true)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			loaded2, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c2, &loaded2.Cluster)
+			test.AssertEqualClusters(t, c2, &loaded2.Cluster, true)
 			test.AssertEqualIdentityClusters(t, identityCluster2, loaded2)
 		})
 	})
@@ -635,11 +675,11 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 			require.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualClusters(t, c1, &clusters[0], true)
 
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualClusters(t, c1, &loaded1.Cluster, true)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
@@ -662,26 +702,58 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 }
 
 func (s *ClusterServiceTestSuite) TestList() {
-	// given
-	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
-	require.NoError(s.T(), err)
-	// when
-	clusters, err := s.Application.ClusterService().List(context.Background())
-	// then
-	require.NoError(s.T(), err)
-	require.Len(s.T(), clusters, 4)
-	// collect cluster URLs and compare with expectations
-	clusterURLs := make([]string, len(clusters))
-	for i, c := range clusters {
-		clusterURLs[i] = c.URL
-	}
-	// see configuration/conf-files/oso-clusters.conf
-	assert.ElementsMatch(s.T(), []string{
-		"https://api.starter-us-east-3a.openshift.com/",
-		"https://api.starter-us-east-2.openshift.com/",
-		"https://api.starter-us-east-2a.openshift.com/",
-		"https://api.starter-us-east-1a.openshift.com/"},
-		clusterURLs)
+
+	s.T().Run("ok", func(t *testing.T) {
+		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// given
+				err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
+				require.NoError(t, err)
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+				require.NoError(t, err)
+				// when
+				clusters, err := s.Application.ClusterService().List(ctx)
+				// then
+				require.NoError(t, err)
+				require.Len(t, clusters, 4)
+				// collect cluster URLs and compare with expectations
+				clusterURLs := make([]string, len(clusters))
+				for i, c := range clusters {
+					clusterURLs[i] = c.URL
+				}
+				// see configuration/conf-files/oso-clusters.conf
+				assert.ElementsMatch(s.T(), []string{
+					"https://api.starter-us-east-3a.openshift.com/",
+					"https://api.starter-us-east-2.openshift.com/",
+					"https://api.starter-us-east-2a.openshift.com/",
+					"https://api.starter-us-east-1a.openshift.com/"},
+					clusterURLs)
+			})
+		}
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "foo",
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().List(ctx)
+			// then
+			require.Error(t, err)
+			testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to clusters info")
+		})
+	})
 }
 
 func createTempClusterConfigFile(t *testing.T) string {
@@ -726,13 +798,13 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, actualClusters []repository.Cluster, expectedClusters map[string]configuration.Cluster) {
+func verifyClusters(t *testing.T, actualClusters []repository.Cluster, expectedClusters map[string]configuration.Cluster, compareSensitiveInfo bool) {
 	for _, expectedCluster := range expectedClusters {
-		verifyCluster(t, actualClusters, test.ClusterFromConfigurationCluster(expectedCluster))
+		verifyCluster(t, actualClusters, test.ClusterFromConfigurationCluster(expectedCluster), compareSensitiveInfo)
 	}
 }
 
-func verifyCluster(t *testing.T, actualClusters []repository.Cluster, expectedCluster *repository.Cluster) {
+func verifyCluster(t *testing.T, actualClusters []repository.Cluster, expectedCluster *repository.Cluster, compareSensitiveInfo bool) {
 	actualCluster := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
-	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster)
+	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster, compareSensitiveInfo)
 }
