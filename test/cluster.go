@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
@@ -31,21 +32,23 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 }
 
 func NewCluster() *repository.Cluster {
+	random := uuid.NewV4()
 	return &repository.Cluster{
-		AppDNS:            uuid.NewV4().String(),
-		AuthClientID:      uuid.NewV4().String(),
-		AuthClientSecret:  uuid.NewV4().String(),
-		AuthDefaultScope:  uuid.NewV4().String(),
-		ConsoleURL:        uuid.NewV4().String(),
-		LoggingURL:        uuid.NewV4().String(),
-		MetricsURL:        uuid.NewV4().String(),
-		Name:              uuid.NewV4().String(),
-		SAToken:           uuid.NewV4().String(),
-		SAUsername:        uuid.NewV4().String(),
+		ClusterID:         random,
+		AppDNS:            random.String(),
+		AuthClientID:      random.String(),
+		AuthClientSecret:  random.String(),
+		AuthDefaultScope:  random.String(),
+		ConsoleURL:        random.String(),
+		LoggingURL:        random.String(),
+		MetricsURL:        random.String(),
+		Name:              random.String(),
+		SAToken:           random.String(),
+		SAUsername:        random.String(),
 		SATokenEncrypted:  true,
-		TokenProviderID:   uuid.NewV4().String(),
-		Type:              uuid.NewV4().String(),
-		URL:               "http://" + uuid.NewV4().String() + "/",
+		TokenProviderID:   random.String(),
+		Type:              random.String(),
+		URL:               fmt.Sprintf("http://%s/", random.String()),
 		CapacityExhausted: false,
 	}
 }
@@ -58,8 +61,8 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
-	t.Logf("verifying cluster %+v", actual)
-	t.Logf("expected cluster %+v", expected)
+	// t.Logf("verifying cluster %+v", actual)
+	// t.Logf("expected cluster %+v", expected)
 	assert.Equal(t, expected.URL, actual.URL)
 	assert.Equal(t, expected.Type, actual.Type)
 	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)

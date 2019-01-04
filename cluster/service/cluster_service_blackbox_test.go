@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
@@ -31,10 +32,6 @@ func TestClusterService(t *testing.T) {
 
 type ClusterServiceTestSuite struct {
 	gormtestsupport.DBTestSuite
-}
-
-func (s *ClusterServiceTestSuite) SetupTest() {
-	s.DBTestSuite.SetupTest()
 }
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
@@ -462,9 +459,12 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// initialize application with new config
 	application := gormapplication.NewGormDB(s.DB, config)
 	// Start watching
-	haltWatcher, err := application.ClusterService().InitializeClusterWatcher()
+	haltWatcher, done, err := application.ClusterService().InitializeClusterWatcher()
 	require.NoError(t, err)
-	defer haltWatcher()
+	defer func() {
+		haltWatcher()
+		<-done // make sure we block until the watcher routine is stopped, so it won't mess up with subsequent tests...
+	}()
 
 	// Update the config file
 	updateClusterConfigFile(t, tmpFileName, "./configuration/conf-files/tests/oso-clusters-capacity-updated.conf")
@@ -492,9 +492,12 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefaultConfig() {
 	s.Application = gormapplication.NewGormDB(s.DB, s.Configuration)
-	haltWatcher, err := s.Application.ClusterService().InitializeClusterWatcher()
+	haltWatcher, done, err := s.Application.ClusterService().InitializeClusterWatcher()
 	require.NoError(s.T(), err)
-	defer haltWatcher()
+	defer func() {
+		haltWatcher()
+		<-done // make sure we block until the watcher routine is stopped, so it won't mess up with subsequent tests...
+	}()
 }
 
 func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
@@ -601,7 +604,6 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// given
 			c1 := test.CreateCluster(s.T(), s.DB)
 			identityID := uuid.NewV4()
-
 			test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
 
 			// when
@@ -611,11 +613,9 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// then
 			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c1.ClusterID))
-
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
-
-			assert.Len(t, clusters, 0)
+			assert.Empty(t, clusters)
 		})
 
 		t.Run("unlink single cluster", func(t *testing.T) {
@@ -659,6 +659,29 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
 		})
 	})
+}
+
+func (s *ClusterServiceTestSuite) TestList() {
+	// given
+	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
+	require.NoError(s.T(), err)
+	// when
+	clusters, err := s.Application.ClusterService().List(context.Background())
+	// then
+	require.NoError(s.T(), err)
+	require.Len(s.T(), clusters, 4)
+	// collect cluster URLs and compare with expectations
+	clusterURLs := make([]string, len(clusters))
+	for i, c := range clusters {
+		clusterURLs[i] = c.URL
+	}
+	// see configuration/conf-files/oso-clusters.conf
+	assert.ElementsMatch(s.T(), []string{
+		"https://api.starter-us-east-3a.openshift.com/",
+		"https://api.starter-us-east-2.openshift.com/",
+		"https://api.starter-us-east-2a.openshift.com/",
+		"https://api.starter-us-east-1a.openshift.com/"},
+		clusterURLs)
 }
 
 func createTempClusterConfigFile(t *testing.T) string {

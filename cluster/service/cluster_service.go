@@ -44,6 +44,7 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 
 // CreateOrSaveClusterFromConfig creates clusters or save updated cluster info from config
 func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error {
+	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file")
 	for _, configCluster := range c.loader.GetClusters() {
 		rc := &repository.Cluster{
 			Name:              configCluster.Name,
@@ -62,15 +63,14 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			AuthClientSecret:  configCluster.AuthClientSecret,
 			AuthDefaultScope:  configCluster.AuthClientDefaultScope,
 		}
-
 		err := c.ExecuteInTransaction(func() error {
 			return c.Repositories().Clusters().CreateOrSave(ctx, rc)
 		})
-
 		if err != nil {
 			return err
 		}
 	}
+	log.Warn(ctx, map[string]interface{}{}, "done creating/updating clusters from config file")
 	return nil
 }
 
@@ -217,13 +217,20 @@ func ValidateURL(urlStr *string) error {
 
 // InitializeClusterWatcher initializes a file watcher for the cluster config file
 // When the file is updated the configuration synchronously reload the cluster configuration
-func (c clusterService) InitializeClusterWatcher() (func() error, error) {
+func (c clusterService) InitializeClusterWatcher() (func() error, chan bool, error) {
 	watcher, err := fsnotify.NewWatcher()
+	done := make(chan bool)
 	if err != nil {
-		return nil, err
+		return nil, done, err
 	}
 
 	go func() {
+		fmt.Println("config watcher started")
+		defer func() {
+			fmt.Println("config watcher stopped")
+			done <- true // notify external listener that this go routine is done
+			close(done)
+		}()
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -294,7 +301,7 @@ func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 		}, "cluster config file watcher not initialized for non-existent file")
 	}
 
-	return watcher.Close, err
+	return watcher.Close, done, err
 }
 
 // LinkIdentityToCluster links Identity to Cluster
@@ -354,9 +361,13 @@ func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string)
 		if notFound, _ := errors.IsNotFoundError(err); !notFound {
 			// oops, something wrong happened, not just the cluster not found in the db
 			return nil, errs.Wrapf(err, "unable to load cluster")
-		} else {
-			return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
 		}
+		return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
 	}
 	return rc, nil
+}
+
+// List lists ALL clusters
+func (c clusterService) List(ctx context.Context) ([]repository.Cluster, error) {
+	return c.Repositories().Clusters().List(ctx)
 }

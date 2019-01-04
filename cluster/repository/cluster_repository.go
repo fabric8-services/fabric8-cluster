@@ -70,10 +70,11 @@ type ClusterRepository interface {
 	Load(ctx context.Context, ID uuid.UUID) (*Cluster, error)
 	Create(ctx context.Context, u *Cluster) error
 	Save(ctx context.Context, u *Cluster) error
+	CreateOrSave(ctx context.Context, u *Cluster) error
 	Delete(ctx context.Context, ID uuid.UUID) error
 	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
 	LoadClusterByURL(ctx context.Context, url string) (*Cluster, error)
-	CreateOrSave(ctx context.Context, u *Cluster) error
+	List(ctx context.Context) ([]Cluster, error)
 }
 
 // TableName overrides the table name settings in Gorm to force a specific table name
@@ -188,8 +189,9 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 		return errs.WithStack(err)
 	}
 
-	log.Debug(ctx, map[string]interface{}{
-		"cluster_id": c.ClusterID.String(),
+	log.Warn(ctx, map[string]interface{}{
+		"cluster_id":   c.ClusterID.String(),
+		"cluster_name": c.Name,
 	}, "Cluster saved!")
 	return nil
 }
@@ -235,4 +237,10 @@ func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Clust
 	}, "cluster query done successfully!")
 
 	return objs, nil
+}
+
+// List list ALL clusters
+func (m *GormClusterRepository) List(ctx context.Context) ([]Cluster, error) {
+	return m.Query()
+
 }

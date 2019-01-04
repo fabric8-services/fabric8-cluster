@@ -22,27 +22,27 @@ const (
 	expectedDefaultConfProdModeErrorMessage = "Error: /etc/fabric8/oso-clusters.conf is not used; default DB password is used; environment is expected to be set to 'production' or 'prod-preview'; Auth service url is empty; Sentry DSN is empty"
 )
 
-type TestStatusREST struct {
+type StatusControllerTestSuite struct {
 	gormtestsupport.DBTestSuite
 }
 
-func TestRunStatusREST(t *testing.T) {
-	suite.Run(t, &TestStatusREST{DBTestSuite: gormtestsupport.NewDBTestSuite()})
+func TestStatusController(t *testing.T) {
+	suite.Run(t, &StatusControllerTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func (rest *TestStatusREST) UnSecuredController() (*goa.Service, *StatusController) {
+func (s *StatusControllerTestSuite) UnSecuredController() (*goa.Service, *StatusController) {
 	svc := goa.New("Status-Service")
-	return svc, NewStatusController(svc, NewGormDBChecker(rest.DB), rest.Configuration)
+	return svc, NewStatusController(svc, NewGormDBChecker(s.DB), s.Configuration)
 }
 
-func (rest *TestStatusREST) UnSecuredControllerWithUnreachableDB() (*goa.Service, *StatusController) {
+func (s *StatusControllerTestSuite) UnSecuredControllerWithUnreachableDB() (*goa.Service, *StatusController) {
 	svc := goa.New("Status-Service")
-	return svc, NewStatusController(svc, &dummyDBChecker{}, rest.Configuration)
+	return svc, NewStatusController(svc, &dummyDBChecker{}, s.Configuration)
 }
 
-func (rest *TestStatusREST) TestShowStatusInDevModeOK() {
-	t := rest.T()
-	svc, ctrl := rest.UnSecuredController()
+func (s *StatusControllerTestSuite) TestShowStatusInDevModeOK() {
+	t := s.T()
+	svc, ctrl := s.UnSecuredController()
 	_, res := test.ShowStatusOK(t, svc.Context, svc, ctrl)
 
 	assert.Equal(t, "0", res.Commit, "Commit not found")
@@ -57,39 +57,39 @@ func (rest *TestStatusREST) TestShowStatusInDevModeOK() {
 	assert.True(t, *res.DevMode)
 }
 
-func (rest *TestStatusREST) TestShowStatusWithoutDBFails() {
-	svc, ctrl := rest.UnSecuredControllerWithUnreachableDB()
-	_, res := test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)
+func (s *StatusControllerTestSuite) TestShowStatusWithoutDBFails() {
+	svc, ctrl := s.UnSecuredControllerWithUnreachableDB()
+	_, res := test.ShowStatusServiceUnavailable(s.T(), svc.Context, svc, ctrl)
 
-	assert.Equal(rest.T(), "Error: DB is unreachable", res.DatabaseStatus)
+	assert.Equal(s.T(), "Error: DB is unreachable", res.DatabaseStatus)
 }
 
-func (rest *TestStatusREST) TestShowStatusWithDefaultConfigInProdModeFails() {
+func (s *StatusControllerTestSuite) TestShowStatusWithDefaultConfigInProdModeFails() {
 	existingDevMode := os.Getenv("F8_DEVELOPER_MODE_ENABLED")
 	defer func() {
 		os.Setenv("F8_DEVELOPER_MODE_ENABLED", existingDevMode)
-		rest.resetConfiguration()
+		s.resetConfiguration()
 	}()
 
 	os.Setenv("F8_DEVELOPER_MODE_ENABLED", "false")
-	rest.resetConfiguration()
-	svc, ctrl := rest.UnSecuredController()
-	_, res := test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)
-	assert.Equal(rest.T(), expectedDefaultConfProdModeErrorMessage, res.ConfigurationStatus)
-	assert.Equal(rest.T(), "OK", res.DatabaseStatus)
+	s.resetConfiguration()
+	svc, ctrl := s.UnSecuredController()
+	_, res := test.ShowStatusServiceUnavailable(s.T(), svc.Context, svc, ctrl)
+	assert.Equal(s.T(), expectedDefaultConfProdModeErrorMessage, res.ConfigurationStatus)
+	assert.Equal(s.T(), "OK", res.DatabaseStatus)
 
 	// If the DB is not available then status should return the corresponding error
-	svc, ctrl = rest.UnSecuredControllerWithUnreachableDB()
-	_, res = test.ShowStatusServiceUnavailable(rest.T(), svc.Context, svc, ctrl)
+	svc, ctrl = s.UnSecuredControllerWithUnreachableDB()
+	_, res = test.ShowStatusServiceUnavailable(s.T(), svc.Context, svc, ctrl)
 
-	assert.Equal(rest.T(), expectedDefaultConfProdModeErrorMessage, res.ConfigurationStatus)
-	assert.Equal(rest.T(), "Error: DB is unreachable", res.DatabaseStatus)
+	assert.Equal(s.T(), expectedDefaultConfProdModeErrorMessage, res.ConfigurationStatus)
+	assert.Equal(s.T(), "Error: DB is unreachable", res.DatabaseStatus)
 }
 
-func (rest *TestStatusREST) resetConfiguration() {
+func (s *StatusControllerTestSuite) resetConfiguration() {
 	config, err := configuration.GetConfigurationData()
-	require.Nil(rest.T(), err)
-	rest.Configuration = config
+	require.Nil(s.T(), err)
+	s.Configuration = config
 }
 
 type dummyDBChecker struct {

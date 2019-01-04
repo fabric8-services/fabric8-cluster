@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/application/transaction"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
@@ -20,7 +21,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/goamiddleware"
 	"github.com/fabric8-services/fabric8-common/log"
 	"github.com/goadesign/goa"
-	"github.com/goadesign/goa/logging/logrus"
+	goalogrus "github.com/goadesign/goa/logging/logrus"
 	"github.com/goadesign/goa/middleware"
 	"github.com/goadesign/goa/middleware/gzip"
 	"github.com/goadesign/goa/middleware/security/jwt"
@@ -146,7 +147,7 @@ func main() {
 		}, "failed to create or save cluster")
 	}
 	// Initialize cluster config watcher
-	haltWatcher, err := appDB.ClusterService().InitializeClusterWatcher()
+	haltWatcher, _, err := appDB.ClusterService().InitializeClusterWatcher()
 	if err != nil {
 		log.Panic(context.TODO(), map[string]interface{}{
 			"err": err,
@@ -174,7 +175,7 @@ func main() {
 	app.MountStatusController(service, statusCtrl)
 
 	// Mount "clusters" controller
-	clustersCtrl := controller.NewClustersController(service, config, appDB)
+	clustersCtrl := controller.NewClustersController(service, appDB)
 	app.MountClustersController(service, clustersCtrl)
 
 	// Mount "user" controller
