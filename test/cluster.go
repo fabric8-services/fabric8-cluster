@@ -53,6 +53,18 @@ func NewCluster() *repository.Cluster {
 	}
 }
 
+// AssertClusters verifies that the `actual` cluster belongs to the `expected` (and compares all fields)
+func AssertClusters(t *testing.T, expected []repository.Cluster, actual *repository.Cluster) {
+	for _, e := range expected {
+		if e.ClusterID == actual.ClusterID {
+			AssertEqualClusters(t, &e, actual)
+			return
+		}
+	}
+	// no match found
+	assert.Fail(t, "cluster with ID '%s' couldn't be found in %v", actual.ClusterID, expected)
+}
+
 func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 	AssertEqualClusterDetails(t, expected, actual)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
@@ -61,8 +73,6 @@ func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
 func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
-	// t.Logf("verifying cluster %+v", actual)
-	// t.Logf("expected cluster %+v", expected)
 	assert.Equal(t, expected.URL, actual.URL)
 	assert.Equal(t, expected.Type, actual.Type)
 	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
@@ -80,24 +90,27 @@ func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluste
 	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
 }
 
-func AssertEqualClusterData(t *testing.T, clusters []repository.Cluster, clusterList []*app.ClusterData) {
-	require.Len(t, clusterList, len(clusters))
-
-	for _, c := range clusterList {
+// AssertEqualClustersData verifies that data for all actual clusters match the expected ones
+func AssertEqualClustersData(t *testing.T, expected []repository.Cluster, actual []*app.ClusterData) {
+	require.Len(t, actual, len(expected))
+	for _, c := range actual {
 		require.NotNil(t, c)
-		apiURL := c.APIURL
-		require.NotNil(t, apiURL)
-		cluster := FilterClusterByURL(apiURL, clusters)
-		require.NotNil(t, cluster, "cluster with url %s could not found", apiURL)
-		assert.Equal(t, cluster.Name, c.Name)
-		assert.Equal(t, cluster.URL, apiURL)
-		assert.Equal(t, cluster.ConsoleURL, c.ConsoleURL)
-		assert.Equal(t, cluster.MetricsURL, c.MetricsURL)
-		assert.Equal(t, cluster.LoggingURL, c.LoggingURL)
-		assert.Equal(t, cluster.AppDNS, c.AppDNS)
-		assert.Equal(t, cluster.Type, c.Type)
-		assert.Equal(t, cluster.CapacityExhausted, c.CapacityExhausted)
+		e := FilterClusterByURL(c.APIURL, expected)
+		require.NotNil(t, e, "cluster with url %s could not found", c.APIURL)
+		AssertEqualClusterData(t, e, c)
 	}
+}
+
+// AssertEqualClusterData verifies that data for actual cluster match the expected one
+func AssertEqualClusterData(t *testing.T, expected *repository.Cluster, actual *app.ClusterData) {
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.URL), actual.APIURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.ConsoleURL), actual.ConsoleURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.MetricsURL), actual.MetricsURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.LoggingURL), actual.LoggingURL)
+	assert.Equal(t, expected.AppDNS, actual.AppDNS)
+	assert.Equal(t, expected.Type, actual.Type)
+	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
 }
 
 func FilterClusterByURL(url string, clusters []repository.Cluster) *repository.Cluster {

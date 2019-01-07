@@ -186,7 +186,10 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 }
 
 func (s *ClustersControllerTestSuite) TestList() {
+
 	require.NotEmpty(s.T(), s.Configuration.GetClusters())
+	// also add an extra cluster in the DB, to be returned by the endpoint, along with clusters from config file
+	extra := testsupport.CreateCluster(s.T(), s.DB)
 
 	s.T().Run("ok", func(t *testing.T) {
 		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
@@ -202,19 +205,23 @@ func (s *ClustersControllerTestSuite) TestList() {
 				// then
 				require.NotNil(t, clusters)
 				require.NotNil(t, clusters.Data)
-				require.Len(t, clusters.Data, len(s.Configuration.GetClusters()))
-				for _, cluster := range clusters.Data {
-					t.Logf("checking cluster '%s' (%s)", cluster.Name, cluster.APIURL)
-					configCluster := s.Configuration.GetClusterByURL(cluster.APIURL)
+				require.Len(t, clusters.Data, len(s.Configuration.GetClusters())+1)
+
+				for _, c := range clusters.Data {
+					if c.Name == extra.Name {
+						testsupport.AssertEqualClusterData(t, extra, c)
+						continue
+					}
+					configCluster := s.Configuration.GetClusterByURL(c.APIURL)
 					require.NotNil(t, configCluster)
-					assert.Equal(t, configCluster.Name, cluster.Name)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
-					assert.Equal(t, configCluster.AppDNS, cluster.AppDNS)
-					assert.Equal(t, configCluster.Type, cluster.Type)
-					assert.Equal(t, configCluster.CapacityExhausted, cluster.CapacityExhausted)
+					assert.Equal(t, configCluster.Name, c.Name)
+					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.APIURL), c.APIURL)
+					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), c.ConsoleURL)
+					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), c.MetricsURL)
+					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), c.LoggingURL)
+					assert.Equal(t, configCluster.AppDNS, c.AppDNS)
+					assert.Equal(t, configCluster.Type, c.Type)
+					assert.Equal(t, configCluster.CapacityExhausted, c.CapacityExhausted)
 				}
 			})
 		}
@@ -232,7 +239,6 @@ func (s *ClustersControllerTestSuite) TestList() {
 			// when/then
 			test.ListClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
 		})
-
 	})
 }
 

@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-common/auth"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/goadesign/goa"
 
 	"github.com/fabric8-services/fabric8-cluster/application"
@@ -40,10 +41,10 @@ func (c *UserController) Clusters(ctx *app.ClustersUserContext) error {
 	for _, c := range clusters {
 		clusterData := &app.ClusterData{
 			Name:              c.Name,
-			APIURL:            c.URL,
-			ConsoleURL:        c.ConsoleURL,
-			MetricsURL:        c.MetricsURL,
-			LoggingURL:        c.LoggingURL,
+			APIURL:            httpsupport.AddTrailingSlashToURL(c.URL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
 			AppDNS:            c.AppDNS,
 			Type:              c.Type,
 			CapacityExhausted: c.CapacityExhausted,

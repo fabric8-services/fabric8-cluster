@@ -222,7 +222,7 @@ func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-// Query expose an open ended Query model
+// Query exposes an open ended Query model
 func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "query"}, time.Now())
 	var objs []Cluster
@@ -239,7 +239,7 @@ func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Clust
 	return objs, nil
 }
 
-// List list ALL clusters
+// List lists ALL clusters
 func (m *GormClusterRepository) List(ctx context.Context) ([]Cluster, error) {
 	return m.Query()
 

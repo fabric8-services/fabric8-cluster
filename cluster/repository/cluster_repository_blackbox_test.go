@@ -209,49 +209,13 @@ func (s *clusterTestSuite) TestQueryOK() {
 
 func (s *clusterTestSuite) TestList() {
 	// given
-	cluster1 := &repository.Cluster{
-		AppDNS:            uuid.NewV4().String(),
-		AuthClientID:      uuid.NewV4().String(),
-		AuthClientSecret:  uuid.NewV4().String(),
-		AuthDefaultScope:  uuid.NewV4().String(),
-		ConsoleURL:        uuid.NewV4().String(),
-		LoggingURL:        uuid.NewV4().String(),
-		MetricsURL:        uuid.NewV4().String(),
-		Name:              uuid.NewV4().String(),
-		SAToken:           uuid.NewV4().String(),
-		SAUsername:        uuid.NewV4().String(),
-		SATokenEncrypted:  true,
-		TokenProviderID:   uuid.NewV4().String(),
-		Type:              "bar",
-		URL:               "http://" + uuid.NewV4().String() + "/",
-		CapacityExhausted: false,
-	}
-	err := s.repo.Create(context.Background(), cluster1)
-	require.NoError(s.T(), err)
-	cluster2 := &repository.Cluster{
-		AppDNS:            uuid.NewV4().String(),
-		AuthClientID:      uuid.NewV4().String(),
-		AuthClientSecret:  uuid.NewV4().String(),
-		AuthDefaultScope:  uuid.NewV4().String(),
-		ConsoleURL:        uuid.NewV4().String(),
-		LoggingURL:        uuid.NewV4().String(),
-		MetricsURL:        uuid.NewV4().String(),
-		Name:              uuid.NewV4().String(),
-		SAToken:           uuid.NewV4().String(),
-		SAUsername:        uuid.NewV4().String(),
-		SATokenEncrypted:  true,
-		TokenProviderID:   uuid.NewV4().String(),
-		Type:              "bar",
-		URL:               "http://" + uuid.NewV4().String() + "/",
-		CapacityExhausted: false,
-	}
-	err = s.repo.Create(context.Background(), cluster2)
-	require.NoError(s.T(), err)
+	cluster1 := test.CreateCluster(s.T(), s.DB)
+	cluster2 := test.CreateCluster(s.T(), s.DB)
 	// when
 	clusters, err := s.repo.List(context.Background())
 	// then
 	require.NoError(s.T(), err)
 	require.Len(s.T(), clusters, 2)
-	test.AssertEqualClusters(s.T(), cluster1, &clusters[0])
-	test.AssertEqualClusters(s.T(), cluster2, &clusters[1])
+	test.AssertClusters(s.T(), clusters, cluster1)
+	test.AssertClusters(s.T(), clusters, cluster2)
 }
