@@ -147,7 +147,7 @@ func main() {
 		}, "failed to create or save cluster")
 	}
 	// Initialize cluster config watcher
-	haltWatcher, _, err := appDB.ClusterService().InitializeClusterWatcher()
+	haltWatcher, err := appDB.ClusterService().InitializeClusterWatcher()
 	if err != nil {
 		log.Panic(context.TODO(), map[string]interface{}{
 			"err": err,

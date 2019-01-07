@@ -459,11 +459,10 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// initialize application with new config
 	application := gormapplication.NewGormDB(s.DB, config)
 	// Start watching
-	haltWatcher, done, err := application.ClusterService().InitializeClusterWatcher()
+	haltWatcher, err := application.ClusterService().InitializeClusterWatcher()
 	require.NoError(t, err)
 	defer func() {
 		haltWatcher()
-		<-done // make sure we block until the watcher routine is stopped, so it won't mess up with subsequent tests...
 	}()
 
 	// Update the config file
@@ -492,11 +491,10 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefaultConfig() {
 	s.Application = gormapplication.NewGormDB(s.DB, s.Configuration)
-	haltWatcher, done, err := s.Application.ClusterService().InitializeClusterWatcher()
+	haltWatcher, err := s.Application.ClusterService().InitializeClusterWatcher()
 	require.NoError(s.T(), err)
 	defer func() {
 		haltWatcher()
-		<-done // make sure we block until the watcher routine is stopped, so it won't mess up with subsequent tests...
 	}()
 }
 

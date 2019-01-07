@@ -217,20 +217,13 @@ func ValidateURL(urlStr *string) error {
 
 // InitializeClusterWatcher initializes a file watcher for the cluster config file
 // When the file is updated the configuration synchronously reload the cluster configuration
-func (c clusterService) InitializeClusterWatcher() (func() error, chan bool, error) {
+func (c clusterService) InitializeClusterWatcher() (func() error, error) {
 	watcher, err := fsnotify.NewWatcher()
-	done := make(chan bool)
 	if err != nil {
-		return nil, done, err
+		return nil, err
 	}
 
 	go func() {
-		fmt.Println("config watcher started")
-		defer func() {
-			fmt.Println("config watcher stopped")
-			done <- true // notify external listener that this go routine is done
-			close(done)
-		}()
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -301,7 +294,7 @@ func (c clusterService) InitializeClusterWatcher() (func() error, chan bool, err
 		}, "cluster config file watcher not initialized for non-existent file")
 	}
 
-	return watcher.Close, done, err
+	return watcher.Close, err
 }
 
 // LinkIdentityToCluster links Identity to Cluster
