@@ -1,0 +1,24 @@
+@startuml
+title Add new cluster
+
+actor "OSIO user" as user
+box "OSIO"
+	participant "UI\nuser settings page" as usersettings
+	participant "Auth Service" as auth
+	participant "Cluster Service" as cs
+end box
+box "OSD Cluster" #LightBlue
+	participant "cluster API" as cluster
+end box
+
+user -> usersettings : Add cluster API URL
+group link OSIO - OSD accounts
+	usersettings -> auth : GET /token/link?for={clusterAPI}
+	auth --> cs : get cluster
+	auth <-- cs
+	auth --> cluster
+	cluster --> user : autenticate
+	cluster --> auth : {user_token}
+	auth -> cs : Create new identity_cluster\nPOST /clusters/identity
+end
+@enduml

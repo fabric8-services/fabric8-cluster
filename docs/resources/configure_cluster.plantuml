@@ -1,0 +1,25 @@
+@startuml
+title Configure OSD cluster to be used by OSIO
+
+actor "OSD admin" as admin
+box "OSD Cluster" #LightBlue
+	participant "OSD cluster console\nlocal marketplace" as marketplace
+	participant "OSIO operator" as operator
+	participant "cluster API" as cluster
+end box
+box "OSIO"
+	participant "Cluster Service" as cs
+	participant "Auth Service" as auth
+end box
+
+admin -> marketplace : install OSIO operator
+marketplace --> operator
+operator -> cluster : create OAuthClient
+operator <-- cluster : OAuthClient credentials
+operator <-- cluster : SA token
+|||
+operator -> auth : obtain OSIO operator Service Account token
+operator <-- auth : {operator_sa_token}
+operator -> cs : POST /cluster (adds new cluster)\nAuthorize: Bearer {operator_sa_token}\n(Cluster API URL, OAuthClient credentials, SA token)
+cs -> cs : create cluster entity\nif already exists\nthen update
+@enduml
