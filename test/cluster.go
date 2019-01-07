@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
@@ -31,24 +30,23 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 	return cluster
 }
 
+// NewCluster returns a new cluster with random values for all fields
 func NewCluster() *repository.Cluster {
-	random := uuid.NewV4()
 	return &repository.Cluster{
-		ClusterID:         random,
-		AppDNS:            random.String(),
-		AuthClientID:      random.String(),
-		AuthClientSecret:  random.String(),
-		AuthDefaultScope:  random.String(),
-		ConsoleURL:        random.String(),
-		LoggingURL:        random.String(),
-		MetricsURL:        random.String(),
-		Name:              random.String(),
-		SAToken:           random.String(),
-		SAUsername:        random.String(),
+		AppDNS:            uuid.NewV4().String(),
+		AuthClientID:      uuid.NewV4().String(),
+		AuthClientSecret:  uuid.NewV4().String(),
+		AuthDefaultScope:  uuid.NewV4().String(),
+		ConsoleURL:        uuid.NewV4().String(),
+		LoggingURL:        uuid.NewV4().String(),
+		MetricsURL:        uuid.NewV4().String(),
+		Name:              uuid.NewV4().String(),
+		SAToken:           uuid.NewV4().String(),
+		SAUsername:        uuid.NewV4().String(),
 		SATokenEncrypted:  true,
-		TokenProviderID:   random.String(),
-		Type:              random.String(),
-		URL:               fmt.Sprintf("http://%s/", random.String()),
+		TokenProviderID:   uuid.NewV4().String(),
+		Type:              uuid.NewV4().String(),
+		URL:               "http://" + uuid.NewV4().String() + "/",
 		CapacityExhausted: false,
 	}
 }
