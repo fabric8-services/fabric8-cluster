@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/fabric8-services/fabric8-cluster/app"
 
 	"github.com/stretchr/testify/assert"
@@ -122,14 +124,7 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 		Username: authsupport.ToolChainOperator,
 		ID:       uuid.NewV4(),
 	}
-	clusterPayload := newCreateClusterPayload()
-	svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-	resp := test.CreateClustersCreated(s.T(), svc.Context, svc, ctrl, &clusterPayload)
-	location := resp.Header().Get("location")
-	require.NotEmpty(s.T(), location)
-	splits := strings.Split(location, "/")
-	clusterID, err := uuid.FromString(splits[len(splits)-1])
-	require.NoError(s.T(), err)
+	c := testsupport.CreateCluster(s.T(), s.DB)
 
 	s.T().Run("ok", func(t *testing.T) {
 		// when accessing the created cluster with another identity
@@ -137,25 +132,12 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 			Username: authsupport.Auth,
 			ID:       uuid.NewV4(),
 		}
-		svc, ctrl = s.newSecuredControllerWithServiceAccount(sa)
-		_, result := test.ShowForAuthClientClustersOK(t, svc.Context, svc, ctrl, clusterID)
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		_, result := test.ShowForAuthClientClustersOK(t, svc.Context, svc, ctrl, c.ClusterID)
 		// then
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
-		assert.Equal(t, clusterPayload.Data.Name, result.Data.Name)
-		name := result.Data.Name
-		assert.Equal(t, httpsupport.AddTrailingSlashToURL(clusterPayload.Data.APIURL), result.Data.APIURL)
-		assert.Equal(t, httpsupport.AddTrailingSlashToURL(clusterPayload.Data.AppDNS), result.Data.AppDNS)
-		assert.Equal(t, false, result.Data.CapacityExhausted)
-		assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console/", name), result.Data.ConsoleURL)
-		assert.Equal(t, fmt.Sprintf("https://metrics.cluster.%s/", name), result.Data.MetricsURL)
-		assert.Equal(t, fmt.Sprintf("https://console.cluster.%s/console/", name), result.Data.LoggingURL)
-		assert.Equal(t, clusterPayload.Data.Type, result.Data.Type)
-		assert.Equal(t, clusterPayload.Data.AuthClientDefaultScope, result.Data.AuthClientDefaultScope)
-		assert.Equal(t, clusterPayload.Data.AuthClientID, result.Data.AuthClientID)
-		assert.Equal(t, clusterPayload.Data.AuthClientSecret, result.Data.AuthClientSecret)
-		assert.Equal(t, clusterPayload.Data.ServiceAccountToken, result.Data.ServiceAccountToken)
-		assert.Equal(t, clusterPayload.Data.ServiceAccountUsername, result.Data.ServiceAccountUsername)
+		testsupport.AssertEqualFullClusterData(t, c, result.Data)
 	})
 
 	s.T().Run("failure", func(t *testing.T) {
@@ -179,7 +161,7 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 			}
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 			// when/then
-			test.ShowForAuthClientClustersUnauthorized(t, svc.Context, svc, ctrl, clusterID)
+			test.ShowForAuthClientClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
 		})
 	})
 
@@ -189,7 +171,7 @@ func (s *ClustersControllerTestSuite) TestList() {
 
 	require.NotEmpty(s.T(), s.Configuration.GetClusters())
 	// also add an extra cluster in the DB, to be returned by the endpoint, along with clusters from config file
-	extra := testsupport.CreateCluster(s.T(), s.DB)
+	testsupport.CreateCluster(s.T(), s.DB)
 
 	s.T().Run("ok", func(t *testing.T) {
 		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
@@ -201,28 +183,13 @@ func (s *ClustersControllerTestSuite) TestList() {
 				}
 				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 				// when
-				_, clusters := test.ListClustersOK(t, svc.Context, svc, ctrl)
+				_, result := test.ListClustersOK(t, svc.Context, svc, ctrl)
 				// then
-				require.NotNil(t, clusters)
-				require.NotNil(t, clusters.Data)
-				require.Len(t, clusters.Data, len(s.Configuration.GetClusters())+1)
-
-				for _, c := range clusters.Data {
-					if c.Name == extra.Name {
-						testsupport.AssertEqualClusterData(t, extra, c)
-						continue
-					}
-					configCluster := s.Configuration.GetClusterByURL(c.APIURL)
-					require.NotNil(t, configCluster)
-					assert.Equal(t, configCluster.Name, c.Name)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.APIURL), c.APIURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), c.ConsoleURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), c.MetricsURL)
-					assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), c.LoggingURL)
-					assert.Equal(t, configCluster.AppDNS, c.AppDNS)
-					assert.Equal(t, configCluster.Type, c.Type)
-					assert.Equal(t, configCluster.CapacityExhausted, c.CapacityExhausted)
-				}
+				require.NotNil(t, result)
+				require.NotNil(t, result.Data)
+				expected, err := s.Application.ClusterService().List(svc.Context) // also needs SA in context to list the expected clusters
+				require.NoError(t, err)
+				testsupport.AssertEqualClustersData(t, expected, result.Data)
 			})
 		}
 	})
@@ -245,38 +212,26 @@ func (s *ClustersControllerTestSuite) TestList() {
 func (s *ClustersControllerTestSuite) TestListForAuth() {
 	// given
 	require.NotEmpty(s.T(), s.Configuration.GetClusters())
+	// also add an extra cluster in the DB, to be returned by the endpoint, along with clusters from config file
+	testsupport.CreateCluster(s.T(), s.DB)
 
 	s.T().Run("authorized", func(t *testing.T) {
-
 		t.Run("fabric8-auth", func(t *testing.T) {
+			// given
 			sa := &authtestsupport.Identity{
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-			_, clusters := test.ListForAuthClientClustersOK(t, svc.Context, svc, ctrl)
-			require.NotNil(t, clusters)
-			require.NotNil(t, clusters.Data)
-			require.Equal(t, len(s.Configuration.GetClusters()), len(clusters.Data))
-			for _, cluster := range clusters.Data {
-				t.Logf("checking cluster '%s' (%s)", cluster.Name, cluster.APIURL)
-				configCluster := s.Configuration.GetClusterByURL(cluster.APIURL)
-				require.NotNil(t, configCluster)
-				assert.Equal(t, configCluster.Name, cluster.Name)
-				assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.APIURL), cluster.APIURL)
-				assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL), cluster.ConsoleURL)
-				assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL), cluster.MetricsURL)
-				assert.Equal(t, httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL), cluster.LoggingURL)
-				assert.Equal(t, configCluster.AppDNS, cluster.AppDNS)
-				assert.Equal(t, configCluster.Type, cluster.Type)
-				assert.Equal(t, configCluster.CapacityExhausted, cluster.CapacityExhausted)
-				assert.Equal(t, configCluster.AuthClientDefaultScope, cluster.AuthClientDefaultScope)
-				assert.Equal(t, configCluster.AuthClientID, cluster.AuthClientID)
-				assert.Equal(t, configCluster.AuthClientSecret, cluster.AuthClientSecret)
-				assert.Equal(t, configCluster.ServiceAccountToken, cluster.ServiceAccountToken)
-				assert.Equal(t, configCluster.ServiceAccountUsername, cluster.ServiceAccountUsername)
-				assert.Equal(t, configCluster.TokenProviderID, cluster.TokenProviderID)
-			}
+			// when
+			_, result := test.ListForAuthClientClustersOK(t, svc.Context, svc, ctrl)
+			// then
+			require.NotNil(t, result)
+			require.NotNil(t, result.Data)
+			t.Logf("clusters returned from endpoint: %v", spew.Sdump(result))
+			expected, err := s.Application.ClusterService().List(context.Background())
+			require.NoError(t, err)
+			testsupport.AssertEqualFullClustersData(t, expected, result.Data)
 		})
 	})
 

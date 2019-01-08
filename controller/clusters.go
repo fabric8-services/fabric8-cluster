@@ -41,16 +41,16 @@ func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 		return app.JSONErrorResponse(ctx, err)
 	}
 	var data []*app.ClusterData
-	for _, configCluster := range clusters {
+	for _, c := range clusters {
 		clusterData := &app.ClusterData{
-			Name:              configCluster.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(configCluster.URL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-			AppDNS:            configCluster.AppDNS,
-			Type:              configCluster.Type,
-			CapacityExhausted: configCluster.CapacityExhausted,
+			Name:              c.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(c.URL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
+			AppDNS:            c.AppDNS,
+			Type:              c.Type,
+			CapacityExhausted: c.CapacityExhausted,
 		}
 		data = append(data, clusterData)
 	}
@@ -71,24 +71,26 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 		return app.JSONErrorResponse(ctx, err)
 	}
 	var data []*app.FullClusterData
-	for _, configCluster := range clusters {
-		cluster := &app.FullClusterData{
-			Name:                   configCluster.Name,
-			APIURL:                 httpsupport.AddTrailingSlashToURL(configCluster.URL),
-			ConsoleURL:             httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-			MetricsURL:             httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-			LoggingURL:             httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-			AppDNS:                 configCluster.AppDNS,
-			Type:                   configCluster.Type,
-			CapacityExhausted:      configCluster.CapacityExhausted,
-			AuthClientDefaultScope: configCluster.AuthDefaultScope,
-			AuthClientID:           configCluster.AuthClientID,
-			AuthClientSecret:       configCluster.AuthClientSecret,
-			ServiceAccountToken:    configCluster.SAToken,
-			ServiceAccountUsername: configCluster.SAUsername,
-			TokenProviderID:        configCluster.TokenProviderID,
+	for _, c := range clusters {
+		encrypted := c.SATokenEncrypted
+		clusterData := &app.FullClusterData{
+			Name:                   c.Name,
+			APIURL:                 httpsupport.AddTrailingSlashToURL(c.URL),
+			ConsoleURL:             httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+			MetricsURL:             httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+			LoggingURL:             httpsupport.AddTrailingSlashToURL(c.LoggingURL),
+			AppDNS:                 c.AppDNS,
+			Type:                   c.Type,
+			CapacityExhausted:      c.CapacityExhausted,
+			AuthClientDefaultScope: c.AuthDefaultScope,
+			AuthClientID:           c.AuthClientID,
+			AuthClientSecret:       c.AuthClientSecret,
+			SaTokenEncrypted:       &encrypted,
+			ServiceAccountToken:    c.SAToken,
+			ServiceAccountUsername: c.SAUsername,
+			TokenProviderID:        c.TokenProviderID,
 		}
-		data = append(data, cluster)
+		data = append(data, clusterData)
 	}
 	return ctx.OK(&app.FullClusterList{
 		Data: data,
@@ -145,6 +147,7 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 			AuthClientSecret:       clustr.AuthClientSecret,
 			ServiceAccountToken:    clustr.SAToken,
 			ServiceAccountUsername: clustr.SAUsername,
+			SaTokenEncrypted:       &clustr.SATokenEncrypted,
 			TokenProviderID:        clustr.TokenProviderID,
 		},
 	})

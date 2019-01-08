@@ -57,8 +57,8 @@ func (s *UserControllerTestSuite) TestShowClusterAvailableToUser() {
 		t.Run("list single cluster", func(t *testing.T) {
 			// given
 			identity := auth.NewIdentity()
-			cl := testsupport.CreateCluster(t, s.DB)
-			identityCluster := testsupport.CreateIdentityCluster(t, s.DB, cl, &identity.ID)
+			c := testsupport.CreateCluster(t, s.DB)
+			identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identity.ID)
 			require.NotNil(t, identityCluster)
 			// when
 			svc, userCtrl := s.SecuredController(identity)
@@ -66,10 +66,11 @@ func (s *UserControllerTestSuite) TestShowClusterAvailableToUser() {
 			// then
 			require.NotNil(t, clusters)
 			require.NotNil(t, clusters.Data)
-			testsupport.AssertEqualClustersData(t, []repository.Cluster{*cl}, clusters.Data)
+			expected := testsupport.Normalize(*c, testsupport.AddTrailingSlashes)
+			testsupport.AssertEqualClustersData(t, []repository.Cluster{expected}, clusters.Data)
 		})
 
-		t.Run("list multiple cluster", func(t *testing.T) {
+		t.Run("list multiple clusters", func(t *testing.T) {
 			// given
 			// create user identity
 			identity := auth.NewIdentity()
@@ -80,8 +81,7 @@ func (s *UserControllerTestSuite) TestShowClusterAvailableToUser() {
 				c := testsupport.CreateCluster(t, s.DB)
 				identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
 				require.NotNil(t, identityCluster)
-
-				expectedClusters[i] = *c
+				expectedClusters[i] = testsupport.Normalize(*c, testsupport.AddTrailingSlashes)
 			}
 			// when
 			svc, userCtrl := s.SecuredController(identity)

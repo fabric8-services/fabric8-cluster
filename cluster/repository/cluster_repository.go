@@ -231,10 +231,7 @@ func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Clust
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, errs.WithStack(err)
 	}
-
-	log.Debug(nil, map[string]interface{}{
-		"cluster_list": objs,
-	}, "cluster query done successfully!")
+	log.Debug(nil, map[string]interface{}{}, "cluster query done successfully!")
 
 	return objs, nil
 }

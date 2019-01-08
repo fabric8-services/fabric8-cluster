@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
@@ -26,7 +28,7 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 	cls, err := repo.Load(context.Background(), cluster.ClusterID)
 	require.NoError(t, err)
 
-	AssertEqualClusters(t, cluster, cls)
+	AssertEqualCluster(t, cluster, cls)
 	return cluster
 }
 
@@ -51,11 +53,35 @@ func NewCluster() *repository.Cluster {
 	}
 }
 
-// AssertClusters verifies that the `actual` cluster belongs to the `expected` (and compares all fields)
+// NormalizeCluster a function to normalize one or more field in a given cluster
+type NormalizeCluster func(repository.Cluster) repository.Cluster
+
+// AddTrailingSlashes a normalize function which converts all URL by adding a trailing
+// slash if neede
+var AddTrailingSlashes = func(source repository.Cluster) repository.Cluster {
+	source.URL = httpsupport.AddTrailingSlashToURL(source.URL)
+	source.ConsoleURL = httpsupport.AddTrailingSlashToURL(source.ConsoleURL)
+	source.LoggingURL = httpsupport.AddTrailingSlashToURL(source.LoggingURL)
+	source.MetricsURL = httpsupport.AddTrailingSlashToURL(source.MetricsURL)
+	return source
+}
+
+// Normalize returns a new cluster based on the source option, with normalization functions
+// applied
+func Normalize(source repository.Cluster, changes ...NormalizeCluster) repository.Cluster {
+	result := source
+	for _, normalize := range changes {
+		result = normalize(result)
+	}
+	return result
+}
+
+// AssertClusters verifies that the `actual` cluster belongs to the `expected`,
+// and compares all fields including sensitive details if `expectSensitiveInfo` is `true`
 func AssertClusters(t *testing.T, expected []repository.Cluster, actual *repository.Cluster) {
 	for _, e := range expected {
 		if e.ClusterID == actual.ClusterID {
-			AssertEqualClusters(t, &e, actual)
+			AssertEqualCluster(t, &e, actual)
 			return
 		}
 	}
@@ -63,29 +89,43 @@ func AssertClusters(t *testing.T, expected []repository.Cluster, actual *reposit
 	assert.Fail(t, "cluster with ID '%s' couldn't be found in %v", actual.ClusterID, expected)
 }
 
-func AssertEqualClusters(t *testing.T, expected, actual *repository.Cluster) {
-	AssertEqualClusterDetails(t, expected, actual)
-	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+// AssertEqualClusters verifies that all the `actual` and `expected` clusters are have the same values
+// including sensitive details if `expectSensitiveInfo` is `true`
+func AssertEqualClusters(t *testing.T, expected, actual []repository.Cluster) {
+	require.Len(t, actual, len(expected))
+	for _, a := range actual {
+		e := FilterClusterByURL(a.URL, expected)
+		AssertEqualCluster(t, e, &a)
+	}
 }
 
+// AssertEqualCluster verifies that the `actual` and `expected` clusters are have the same values
+// including sensitive details if `expectSensitiveInfo` is `true`
+func AssertEqualCluster(t *testing.T, expected, actual *repository.Cluster) {
+	assert.Equal(t, expected.ClusterID, actual.ClusterID)
+	AssertEqualClusterDetails(t, expected, actual)
+}
+
+// AssertEqualClusterDetails verifies that the `actual` and `expected` clusters are have the same values
+// including sensitive details if `expectSensitiveInfo` is `true`
 func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.URL, actual.URL)
+	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.Type, actual.Type)
-	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
-	assert.Equal(t, expected.SAUsername, actual.SAUsername)
-	assert.Equal(t, expected.SAToken, actual.SAToken)
-	assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.MetricsURL, actual.MetricsURL)
 	assert.Equal(t, expected.LoggingURL, actual.LoggingURL)
 	assert.Equal(t, expected.ConsoleURL, actual.ConsoleURL)
+	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
 	assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
-	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
 	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
-	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
+	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
+	assert.Equal(t, expected.SAUsername, actual.SAUsername)
+	assert.Equal(t, expected.SAToken, actual.SAToken)
+	assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
 }
 
 // AssertEqualClustersData verifies that data for all actual clusters match the expected ones
@@ -109,6 +149,39 @@ func AssertEqualClusterData(t *testing.T, expected *repository.Cluster, actual *
 	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.Type, actual.Type)
 	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
+}
+
+// AssertEqualFullClustersData verifies that data for all actual clusters match the expected ones
+func AssertEqualFullClustersData(t *testing.T, expected []repository.Cluster, actual []*app.FullClusterData) {
+	require.Len(t, actual, len(expected))
+	for _, c := range actual {
+		require.NotNil(t, c)
+		e := FilterClusterByURL(c.APIURL, expected)
+		require.NotNil(t, e, "cluster with url %s could not found", c.APIURL)
+		AssertEqualFullClusterData(t, e, c)
+	}
+}
+
+// AssertEqualFullClusterData verifies that data for actual cluster match the expected one
+func AssertEqualFullClusterData(t *testing.T, expected *repository.Cluster, actual *app.FullClusterData) {
+	t.Logf("verifying cluster '%s': %v", actual.Name, spew.Sdump(actual))
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.URL), actual.APIURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.ConsoleURL), actual.ConsoleURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.MetricsURL), actual.MetricsURL)
+	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.LoggingURL), actual.LoggingURL)
+	assert.Equal(t, expected.AppDNS, actual.AppDNS)
+	assert.Equal(t, expected.Type, actual.Type)
+	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
+	// sensitive info
+	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
+	assert.Equal(t, expected.AuthDefaultScope, actual.AuthClientDefaultScope)
+	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
+	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
+	require.NotNil(t, actual.SaTokenEncrypted)
+	assert.Equal(t, expected.SATokenEncrypted, *actual.SaTokenEncrypted)
+	assert.Equal(t, expected.SAUsername, actual.ServiceAccountUsername)
+	assert.Equal(t, expected.SAToken, actual.ServiceAccountToken)
 }
 
 func FilterClusterByURL(url string, clusters []repository.Cluster) *repository.Cluster {
@@ -140,7 +213,7 @@ func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluste
 	loaded, err := repo.Load(context.Background(), idCluster.IdentityID, idCluster.ClusterID)
 	require.NoError(t, err)
 	require.NotNil(t, loaded)
-	AssertEqualClusters(t, cluster, &loaded.Cluster)
+	AssertEqualCluster(t, cluster, &loaded.Cluster)
 	AssertEqualIdentityClusters(t, idCluster, loaded)
 
 	return loaded
