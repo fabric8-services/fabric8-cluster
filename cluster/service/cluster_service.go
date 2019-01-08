@@ -70,7 +70,7 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			return err
 		}
 	}
-	log.Warn(ctx, map[string]interface{}{}, "done creating/updating clusters from config file")
+	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file has been completed/done")
 	return nil
 }
 
