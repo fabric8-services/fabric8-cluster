@@ -19,21 +19,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type clusterTestSuite struct {
+type clusterRepositoryTestSuite struct {
 	gormtestsupport.DBTestSuite
 	repo repository.ClusterRepository
 }
 
 func TestClusterRepository(t *testing.T) {
-	suite.Run(t, &clusterTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
+	suite.Run(t, &clusterRepositoryTestSuite{DBTestSuite: gormtestsupport.NewDBTestSuite()})
 }
 
-func (s *clusterTestSuite) SetupTest() {
+func (s *clusterRepositoryTestSuite) SetupTest() {
 	s.DBTestSuite.SetupTest()
 	s.repo = s.Application.Clusters()
 }
 
-func (s *clusterTestSuite) TestCreateAndLoadClusterOK() {
+func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterOK() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	test.CreateCluster(s.T(), s.DB) // noise
@@ -44,7 +44,7 @@ func (s *clusterTestSuite) TestCreateAndLoadClusterOK() {
 	test.AssertEqualCluster(s.T(), cluster1, loaded, true)
 }
 
-func (s *clusterTestSuite) TestCreateAndLoadClusterByURLOK() {
+func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	test.CreateCluster(s.T(), s.DB) // noise
@@ -55,7 +55,7 @@ func (s *clusterTestSuite) TestCreateAndLoadClusterByURLOK() {
 	test.AssertEqualCluster(s.T(), cluster1, loaded, true)
 }
 
-func (s *clusterTestSuite) TestCreateAndLoadClusterByURLFail() {
+func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {
 	// given
 	test.CreateCluster(s.T(), s.DB)
 	test.CreateCluster(s.T(), s.DB) // noise
@@ -67,7 +67,7 @@ func (s *clusterTestSuite) TestCreateAndLoadClusterByURLFail() {
 	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf("cluster with url %s not found", clusterURL))
 }
 
-func (s *clusterTestSuite) TestCreateOKInCreateOrSave() {
+func (s *clusterRepositoryTestSuite) TestCreateOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
 	s.repo.CreateOrSave(context.Background(), cluster)
@@ -79,7 +79,7 @@ func (s *clusterTestSuite) TestCreateOKInCreateOrSave() {
 	test.AssertEqualCluster(s.T(), cluster, loaded, true)
 }
 
-func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
+func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
 	test.CreateCluster(s.T(), s.DB) // noise
@@ -110,31 +110,36 @@ func (s *clusterTestSuite) TestSaveOKInCreateOrSave() {
 	test.AssertEqualCluster(s.T(), cluster, loaded, true)
 }
 
-func (s *clusterTestSuite) TestDeleteOK() {
-	// given
-	cluster1 := test.CreateCluster(s.T(), s.DB)
-	cluster2 := test.CreateCluster(s.T(), s.DB) // noise
-	// when
-	err := s.repo.Delete(context.Background(), cluster1.ClusterID)
-	// then
-	require.NoError(s.T(), err)
-	_, err = s.repo.Load(context.Background(), cluster1.ClusterID)
-	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", cluster1.ClusterID)
-	loaded, err := s.repo.Load(context.Background(), cluster2.ClusterID)
-	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster2, loaded, true)
+func (s *clusterRepositoryTestSuite) TestDelete() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		cluster1 := test.CreateCluster(t, s.DB)
+		cluster2 := test.CreateCluster(t, s.DB) // noise
+		// when
+		err := s.repo.Delete(context.Background(), cluster1.ClusterID)
+		// then
+		require.NoError(t, err)
+		_, err = s.repo.Load(context.Background(), cluster1.ClusterID)
+		test.AssertError(t, err, errors.NotFoundError{}, "cluster with id '%s' not found", cluster1.ClusterID)
+		loaded, err := s.repo.Load(context.Background(), cluster2.ClusterID)
+		require.NoError(t, err)
+		test.AssertEqualCluster(t, cluster2, loaded, true)
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+		t.Run("unknown cluster", func(t *testing.T) {
+			// given
+			id := uuid.NewV4()
+			// when
+			err := s.repo.Delete(context.Background(), id)
+			// then
+			test.AssertError(t, err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
+		})
+	})
 }
 
-func (s *clusterTestSuite) TestDeleteUnknownFails() {
-	// given
-	id := uuid.NewV4()
-	// when
-	err := s.repo.Delete(context.Background(), id)
-	// then
-	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
-}
-
-func (s *clusterTestSuite) TestLoadUnknownFails() {
+func (s *clusterRepositoryTestSuite) TestLoadUnknownFails() {
 	// given
 	id := uuid.NewV4()
 	// when
@@ -143,7 +148,7 @@ func (s *clusterTestSuite) TestLoadUnknownFails() {
 	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
 }
 
-func (s *clusterTestSuite) TestSaveOK() {
+func (s *clusterRepositoryTestSuite) TestSaveOK() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	cluster2 := test.CreateCluster(s.T(), s.DB) // noise
@@ -173,7 +178,7 @@ func (s *clusterTestSuite) TestSaveOK() {
 	test.AssertEqualCluster(s.T(), cluster2, loaded2, true)
 }
 
-func (s *clusterTestSuite) TestSaveUnknownFails() {
+func (s *clusterRepositoryTestSuite) TestSaveUnknownFails() {
 	// given
 	id := uuid.NewV4()
 	// when
@@ -182,7 +187,7 @@ func (s *clusterTestSuite) TestSaveUnknownFails() {
 	test.AssertError(s.T(), err, errors.NotFoundError{}, "cluster with id '%s' not found", id)
 }
 
-func (s *clusterTestSuite) TestExists() {
+func (s *clusterRepositoryTestSuite) TestExists() {
 	// given
 	id := uuid.NewV4()
 	err := s.repo.CheckExists(context.Background(), id.String())
@@ -194,7 +199,7 @@ func (s *clusterTestSuite) TestExists() {
 	require.NoError(s.T(), err)
 }
 
-func (s *clusterTestSuite) TestQueryOK() {
+func (s *clusterRepositoryTestSuite) TestQueryOK() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	// when
@@ -207,7 +212,7 @@ func (s *clusterTestSuite) TestQueryOK() {
 	test.AssertEqualCluster(s.T(), cluster1, &clusters[0], true)
 }
 
-func (s *clusterTestSuite) TestList() {
+func (s *clusterRepositoryTestSuite) TestList() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	cluster2 := test.CreateCluster(s.T(), s.DB)

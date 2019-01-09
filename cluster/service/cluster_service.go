@@ -248,6 +248,15 @@ func ValidateURL(urlStr *string) error {
 	return nil
 }
 
+// Delete deletes the cluster identified by the given `clusterID`
+func (c clusterService) Delete(ctx context.Context, clusterID uuid.UUID) error {
+	// check that the token belongs to a user
+	if !auth.IsSpecificServiceAccount(ctx, auth.ToolChainOperator) {
+		return errors.NewUnauthorizedError("unauthorized access to delete a cluster configuration")
+	}
+	return c.Repositories().Clusters().Delete(ctx, clusterID)
+}
+
 // InitializeClusterWatcher initializes a file watcher for the cluster config file
 // When the file is updated the configuration synchronously reload the cluster configuration
 func (c clusterService) InitializeClusterWatcher() (func() error, error) {

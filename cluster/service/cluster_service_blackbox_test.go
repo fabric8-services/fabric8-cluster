@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fabric8-services/fabric8-common/auth"
+
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster"
@@ -16,7 +18,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
-	clustertestsupport "github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
 	testsupport "github.com/fabric8-services/fabric8-common/test"
 	authtestsupport "github.com/fabric8-services/fabric8-common/test/auth"
@@ -535,7 +536,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 
 func (s *ClusterServiceTestSuite) TestList() {
 	// given
-	clustertestsupport.CreateCluster(s.T(), s.DB) // add extra cluster
+	test.CreateCluster(s.T(), s.DB) // add extra cluster
 	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
 	require.NoError(s.T(), err)
 
@@ -555,7 +556,7 @@ func (s *ClusterServiceTestSuite) TestList() {
 				require.NoError(t, err)
 				expected, err := repository.NewClusterRepository(s.DB).List(context.Background())
 				require.NoError(t, err)
-				clustertestsupport.AssertEqualClusters(t, expected, result, false)
+				test.AssertEqualClusters(t, expected, result, false)
 			})
 		}
 	})
@@ -581,7 +582,7 @@ func (s *ClusterServiceTestSuite) TestList() {
 }
 func (s *ClusterServiceTestSuite) TestListForAuth() {
 	// given
-	clustertestsupport.CreateCluster(s.T(), s.DB) // add extra cluster
+	test.CreateCluster(s.T(), s.DB) // add extra cluster
 	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
 	require.NoError(s.T(), err)
 
@@ -601,7 +602,7 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 				require.NoError(t, err)
 				expected, err := repository.NewClusterRepository(s.DB).List(context.Background())
 				require.NoError(t, err)
-				clustertestsupport.AssertEqualClusters(t, expected, result, true)
+				test.AssertEqualClusters(t, expected, result, true)
 			})
 		}
 	})
@@ -628,6 +629,54 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 			}
 		})
 	})
+}
+
+func (s *ClusterServiceTestSuite) TestDelete() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		c := test.CreateCluster(t, s.DB)
+		sa := &authtestsupport.Identity{
+			Username: auth.ToolChainOperator,
+			ID:       uuid.NewV4(),
+		}
+		ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+		require.NoError(t, err)
+		// when
+		err = s.Application.ClusterService().Delete(ctx, c.ClusterID)
+		// then
+		require.NoError(t, err)
+		// check that
+		c, err = repository.NewClusterRepository(s.DB).Load(ctx, c.ClusterID)
+		require.Error(t, err)
+		assert.IsType(t, errors.NotFoundError{}, err)
+		require.Nil(t, c)
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			c := test.CreateCluster(t, s.DB)
+
+			for _, saName := range []string{"fabric8-auth", "fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "other"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					sa := &authtestsupport.Identity{
+						Username: saName,
+						ID:       uuid.NewV4(),
+					}
+					ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+					require.NoError(t, err)
+					// when
+					err = s.Application.ClusterService().Delete(ctx, c.ClusterID)
+					// then
+					require.Error(t, err)
+					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to delete a cluster configuration")
+				})
+			}
+		})
+	})
+
 }
 
 func newTestCluster() *repository.Cluster {

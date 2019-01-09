@@ -300,6 +300,41 @@ func (s *ClustersControllerTestSuite) TestCreate() {
 	})
 }
 
+func (s *ClustersControllerTestSuite) TestDelete() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		sa := &authtestsupport.Identity{
+			Username: authsupport.ToolChainOperator,
+			ID:       uuid.NewV4(),
+		}
+		c := testsupport.CreateCluster(t, s.DB)
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		// when/then
+		test.DeleteClustersNoContent(t, svc.Context, svc, ctrl, c.ClusterID)
+	})
+
+	s.T().Run("failure", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			c := testsupport.CreateCluster(t, s.DB)
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					sa := &authtestsupport.Identity{
+						Username: saName,
+						ID:       uuid.NewV4(),
+					}
+					svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+					// when/then
+					test.DeleteClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
+				})
+			}
+		})
+	})
+}
+
 func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 
 	s.T().Run("ok", func(t *testing.T) {

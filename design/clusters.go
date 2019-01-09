@@ -168,6 +168,22 @@ var _ = a.Resource("clusters", func() {
 		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
+	a.Action("delete", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.DELETE("/:clusterID"),
+		)
+		a.Params(func() {
+			a.Param("clusterID", d.UUID, "the ID of the cluster to delete")
+			a.Required("clusterID")
+		})
+		a.Description("Delete a cluster configuration")
+		a.Response(d.NoContent)
+		a.Response(d.BadRequest, JSONAPIErrors)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+	})
+
 	a.Action("linkIdentityToCluster", func() {
 		a.Security("jwt")
 		a.Routing(
