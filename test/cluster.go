@@ -57,7 +57,7 @@ func NewCluster() *repository.Cluster {
 type NormalizeCluster func(repository.Cluster) repository.Cluster
 
 // AddTrailingSlashes a normalize function which converts all URL by adding a trailing
-// slash if neede
+// slash if needed
 var AddTrailingSlashes = func(source repository.Cluster) repository.Cluster {
 	source.URL = httpsupport.AddTrailingSlashToURL(source.URL)
 	source.ConsoleURL = httpsupport.AddTrailingSlashToURL(source.ConsoleURL)
@@ -76,8 +76,7 @@ func Normalize(source repository.Cluster, changes ...NormalizeCluster) repositor
 	return result
 }
 
-// AssertClusters verifies that the `actual` cluster belongs to the `expected`,
-// and compares all fields including sensitive details if `expectSensitiveInfo` is `true`
+// AssertClusters verifies that the `actual` cluster belongs to the `expected`
 func AssertClusters(t *testing.T, expected []repository.Cluster, actual *repository.Cluster) {
 	for _, e := range expected {
 		if e.ClusterID == actual.ClusterID {
