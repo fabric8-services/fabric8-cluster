@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/fabric8-services/fabric8-cluster/app"
 
 	"github.com/stretchr/testify/assert"
@@ -153,15 +151,19 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 			test.ShowForAuthClientClustersNotFound(t, svc.Context, svc, ctrl, uuid.NewV4())
 		})
 
-		t.Run("not allowed", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: auth.Tenant,
-				ID:       uuid.NewV4(),
+		t.Run("unauthorized", func(t *testing.T) {
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					sa := &authtestsupport.Identity{
+						Username: auth.Tenant,
+						ID:       uuid.NewV4(),
+					}
+					svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+					// when/then
+					test.ShowForAuthClientClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
+				})
 			}
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-			// when/then
-			test.ShowForAuthClientClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
 		})
 	})
 
@@ -228,22 +230,23 @@ func (s *ClustersControllerTestSuite) TestListForAuth() {
 			// then
 			require.NotNil(t, result)
 			require.NotNil(t, result.Data)
-			t.Logf("clusters returned from endpoint: %v", spew.Sdump(result))
-			expected, err := s.Application.ClusterService().List(context.Background())
+			expected, err := s.Application.ClusterService().ListForAuth(svc.Context) // also needs SA in context to list the expected clusters
 			require.NoError(t, err)
 			testsupport.AssertEqualFullClustersData(t, expected, result.Data)
 		})
 	})
 
 	s.T().Run("unauthorized", func(t *testing.T) {
-		t.Run("fabric8-tenant", func(t *testing.T) {
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-tenant",
-				ID:       uuid.NewV4(),
-			}
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-			test.ListForAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
-		})
+		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy"} {
+			t.Run(saName, func(t *testing.T) {
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+				test.ListForAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
+			})
+		}
 	})
 }
 
@@ -306,13 +309,9 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			c := testsupport.CreateCluster(t, s.DB)
-
 			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), nil)
-
 			// when/then
 			test.LinkIdentityToClusterClustersNoContent(t, svc.Context, svc, ctrl, payload)
 		})
@@ -323,13 +322,10 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			c := testsupport.CreateCluster(t, s.DB)
 			ignore := true
 			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), &ignore)
-
 			// when/then
 			test.LinkIdentityToClusterClustersNoContent(t, svc.Context, svc, ctrl, payload)
 		})
@@ -344,12 +340,9 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			c := testsupport.CreateCluster(t, s.DB)
 			payload := createLinkIdentityClusterPayload(c.URL, "foo", nil)
-
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
 		})
@@ -360,12 +353,9 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			c := testsupport.CreateCluster(t, s.DB)
 			payload := createLinkIdentityClusterPayload(c.URL, "  ", nil)
-
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
 		})
@@ -376,11 +366,8 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			payload := createLinkIdentityClusterPayload("http://foo.com", uuid.NewV4().String(), nil)
-
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
 		})
@@ -391,11 +378,8 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 				Username: "fabric8-auth",
 				ID:       uuid.NewV4(),
 			}
-
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			payload := createLinkIdentityClusterPayload("foo.com", uuid.NewV4().String(), nil)
-
 			// when/then
 			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
 		})
@@ -411,7 +395,6 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 			c := testsupport.CreateCluster(t, s.DB)
 			payload := createLinkIdentityClusterPayload(c.URL, uuid.NewV4().String(), nil)
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 			// when/then
 			test.LinkIdentityToClusterClustersUnauthorized(t, svc.Context, svc, ctrl, payload)
 		})
@@ -421,18 +404,14 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 		// given
 		c := testsupport.CreateCluster(s.T(), s.DB)
 		identityID := uuid.NewV4()
-
 		testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
-
 		sa := &authtestsupport.Identity{
 			Username: "fabric8-auth",
 			ID:       uuid.NewV4(),
 		}
-
 		ignore := false
 		payload := createLinkIdentityClusterPayload(c.URL, identityID.String(), &ignore)
 		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
 		// when/then
 		test.LinkIdentityToClusterClustersInternalServerError(t, svc.Context, svc, ctrl, payload)
 	})

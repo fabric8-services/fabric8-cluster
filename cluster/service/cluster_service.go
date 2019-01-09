@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fabric8-services/fabric8-common/auth"
+
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/base"
 	servicectx "github.com/fabric8-services/fabric8-cluster/application/service/context"
@@ -85,9 +87,39 @@ func (c clusterService) CreateOrSaveCluster(ctx context.Context, clustr *reposit
 	})
 }
 
-// Load loads the cluster given its ID.
+// Load loads the cluster given its ID, but without the sentitive info (token, etc.)
+// This method is allowed for the following service accounts:
+// - Auth
+// - OSO Proxy
+// - Tenant
+// - Jenkins Idler
+// - Jenkins Proxy
 // returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (c clusterService) Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
+		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
+	result, err := c.Repositories().Clusters().Load(ctx, clusterID)
+	if err != nil {
+		return nil, err
+	}
+	// hide all sensitive info from the cluster record to return
+	result.AuthDefaultScope = ""
+	result.AuthClientID = ""
+	result.AuthClientSecret = ""
+	result.SAToken = ""
+	result.SAUsername = ""
+	result.TokenProviderID = ""
+	return result, nil
+}
+
+// LoadForAuth loads the cluster given its ID, including the sentitive info (token, etc)
+// This method is allowed for the 'Auth' service account only
+// returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
+func (c clusterService) LoadForAuth(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
 	return c.Repositories().Clusters().Load(ctx, clusterID)
 }
 
@@ -361,6 +393,44 @@ func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string)
 }
 
 // List lists ALL clusters
+// This method is allowed for the following service accounts:
+// - Auth
+// - OSO Proxy
+// - Tenant
+// - Jenkins Idler
+// - Jenkins Proxy
 func (c clusterService) List(ctx context.Context) ([]repository.Cluster, error) {
-	return c.Repositories().Clusters().List(ctx)
+	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
+		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
+	}
+	clusters, err := c.Repositories().Clusters().List(ctx)
+	if err != nil {
+		return []repository.Cluster{}, err
+	}
+	// hide all sensitive info in the cluster records to return
+	for i, c := range clusters {
+		c.AuthDefaultScope = ""
+		c.AuthClientID = ""
+		c.AuthClientSecret = ""
+		c.SAToken = ""
+		c.SAUsername = ""
+		c.SATokenEncrypted = false
+		c.TokenProviderID = ""
+		// need to replace entry in slice since it's not a slice of pointers
+		clusters[i] = c
+	}
+	return clusters, nil
+}
+
+// List lists ALL clusters, including sensitive informatio
+// This method is allowed for the `Auth` service account only
+func (c clusterService) ListForAuth(ctx context.Context) ([]repository.Cluster, error) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
+	}
+	clusters, err := c.Repositories().Clusters().List(ctx)
+	if err != nil {
+		return []repository.Cluster{}, err
+	}
+	return clusters, nil
 }
