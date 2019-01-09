@@ -70,10 +70,11 @@ type ClusterRepository interface {
 	Load(ctx context.Context, ID uuid.UUID) (*Cluster, error)
 	Create(ctx context.Context, u *Cluster) error
 	Save(ctx context.Context, u *Cluster) error
+	CreateOrSave(ctx context.Context, u *Cluster) error
 	Delete(ctx context.Context, ID uuid.UUID) error
 	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
 	LoadClusterByURL(ctx context.Context, url string) (*Cluster, error)
-	CreateOrSave(ctx context.Context, u *Cluster) error
+	List(ctx context.Context) ([]Cluster, error)
 }
 
 // TableName overrides the table name settings in Gorm to force a specific table name
@@ -188,8 +189,9 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 		return errs.WithStack(err)
 	}
 
-	log.Debug(ctx, map[string]interface{}{
-		"cluster_id": c.ClusterID.String(),
+	log.Warn(ctx, map[string]interface{}{
+		"cluster_id":   c.ClusterID.String(),
+		"cluster_name": c.Name,
 	}, "Cluster saved!")
 	return nil
 }
@@ -220,7 +222,7 @@ func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-// Query expose an open ended Query model
+// Query exposes an open ended Query model
 func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "query"}, time.Now())
 	var objs []Cluster
@@ -229,10 +231,13 @@ func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Clust
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, errs.WithStack(err)
 	}
-
-	log.Debug(nil, map[string]interface{}{
-		"cluster_list": objs,
-	}, "cluster query done successfully!")
+	log.Debug(nil, map[string]interface{}{}, "cluster query done successfully!")
 
 	return objs, nil
+}
+
+// List lists ALL clusters
+func (m *GormClusterRepository) List(ctx context.Context) ([]Cluster, error) {
+	return m.Query()
+
 }

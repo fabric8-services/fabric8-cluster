@@ -10,6 +10,7 @@ import (
 	"github.com/fabric8-services/fabric8-common/test/auth"
 
 	"context"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/goadesign/goa"
@@ -45,61 +46,50 @@ func (s *UserControllerTestSuite) TestShowClusterAvailableToUser() {
 		t.Run("empty", func(t *testing.T) {
 			// given
 			identity := auth.NewIdentity()
-
 			// when
 			svc, userCtrl := s.SecuredController(identity)
 			_, clusters := test.ClustersUserOK(t, svc.Context, svc, userCtrl)
-
 			// then
 			require.NotNil(t, clusters)
 			assert.Empty(t, clusters.Data)
-
 		})
 
 		t.Run("list single cluster", func(t *testing.T) {
 			// given
 			identity := auth.NewIdentity()
-
-			cl := testsupport.CreateCluster(t, s.DB)
-			identityCluster := testsupport.CreateIdentityCluster(t, s.DB, cl, &identity.ID)
+			c := testsupport.CreateCluster(t, s.DB)
+			identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identity.ID)
 			require.NotNil(t, identityCluster)
-
 			// when
 			svc, userCtrl := s.SecuredController(identity)
 			_, clusters := test.ClustersUserOK(t, svc.Context, svc, userCtrl)
-
 			// then
 			require.NotNil(t, clusters)
 			require.NotNil(t, clusters.Data)
-
-			testsupport.AssertEqualClusterData(t, []repository.Cluster{*cl}, clusters.Data)
+			expected := testsupport.Normalize(*c, testsupport.AddTrailingSlashes)
+			testsupport.AssertEqualClustersData(t, []repository.Cluster{expected}, clusters.Data)
 		})
 
-		t.Run("list multiple cluster", func(t *testing.T) {
+		t.Run("list multiple clusters", func(t *testing.T) {
 			// given
 			// create user identity
 			identity := auth.NewIdentity()
 			identityID := identity.ID
-
 			expectedClusters := make([]repository.Cluster, 3)
 			// create random cluster and cluster identity for user
 			for i := range expectedClusters {
 				c := testsupport.CreateCluster(t, s.DB)
 				identityCluster := testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
 				require.NotNil(t, identityCluster)
-
-				expectedClusters[i] = *c
+				expectedClusters[i] = testsupport.Normalize(*c, testsupport.AddTrailingSlashes)
 			}
-
 			// when
 			svc, userCtrl := s.SecuredController(identity)
 			_, clusters := test.ClustersUserOK(t, svc.Context, svc, userCtrl)
-
 			// then
 			require.NotNil(t, clusters)
 			require.NotNil(t, clusters.Data)
-
-			testsupport.AssertEqualClusterData(t, expectedClusters, clusters.Data)
+			testsupport.AssertEqualClustersData(t, expectedClusters, clusters.Data)
 		})
 	})
 

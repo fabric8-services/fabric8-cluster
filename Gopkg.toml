@@ -96,4 +96,4 @@ required = [
 
 [[constraint]]
   name = "github.com/fabric8-services/fabric8-common"
-  revision = "2efd83d29b1e5c657728e83fe03878569c0f122f"
+  revision = "f06e14243602e383835a8f8cbf3675e24a738322"

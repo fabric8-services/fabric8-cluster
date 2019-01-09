@@ -44,6 +44,7 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 
 // CreateOrSaveClusterFromConfig creates clusters or save updated cluster info from config
 func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error {
+	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file")
 	for _, configCluster := range c.loader.GetClusters() {
 		rc := &repository.Cluster{
 			Name:              configCluster.Name,
@@ -62,15 +63,14 @@ func (c clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			AuthClientSecret:  configCluster.AuthClientSecret,
 			AuthDefaultScope:  configCluster.AuthClientDefaultScope,
 		}
-
 		err := c.ExecuteInTransaction(func() error {
 			return c.Repositories().Clusters().CreateOrSave(ctx, rc)
 		})
-
 		if err != nil {
 			return err
 		}
 	}
+	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file has been completed/done")
 	return nil
 }
 
@@ -354,9 +354,13 @@ func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string)
 		if notFound, _ := errors.IsNotFoundError(err); !notFound {
 			// oops, something wrong happened, not just the cluster not found in the db
 			return nil, errs.Wrapf(err, "unable to load cluster")
-		} else {
-			return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
 		}
+		return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
 	}
 	return rc, nil
+}
+
+// List lists ALL clusters
+func (c clusterService) List(ctx context.Context) ([]repository.Cluster, error) {
+	return c.Repositories().Clusters().List(ctx)
 }

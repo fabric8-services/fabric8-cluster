@@ -4,7 +4,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/application"
 	cluster "github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
@@ -17,22 +16,16 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type clusterConfiguration interface {
-	GetClusters() map[string]configuration.Cluster
-}
-
 // ClustersController implements the clusters resource.
 type ClustersController struct {
 	*goa.Controller
-	config clusterConfiguration
-	app    application.Application
+	app application.Application
 }
 
 // NewClustersController creates a clusters controller.
-func NewClustersController(service *goa.Service, config clusterConfiguration, app application.Application) *ClustersController {
+func NewClustersController(service *goa.Service, app application.Application) *ClustersController {
 	return &ClustersController{
 		Controller: service.NewController("ClustersController"),
-		config:     config,
 		app:        app,
 	}
 }
@@ -43,24 +36,27 @@ func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
+	clusters, err := c.app.ClusterService().List(ctx)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
 	var data []*app.ClusterData
-	for _, configCluster := range c.config.GetClusters() {
+	for _, c := range clusters {
 		clusterData := &app.ClusterData{
-			Name:              configCluster.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-			AppDNS:            configCluster.AppDNS,
-			Type:              configCluster.Type,
-			CapacityExhausted: configCluster.CapacityExhausted,
+			Name:              c.Name,
+			APIURL:            httpsupport.AddTrailingSlashToURL(c.URL),
+			ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+			MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+			LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
+			AppDNS:            c.AppDNS,
+			Type:              c.Type,
+			CapacityExhausted: c.CapacityExhausted,
 		}
 		data = append(data, clusterData)
 	}
-	clusters := app.ClusterList{
+	return ctx.OK(&app.ClusterList{
 		Data: data,
-	}
-	return ctx.OK(&clusters)
+	})
 }
 
 // ListForAuthClient returns the list of available clusters with full configuration including Auth client data.
@@ -70,30 +66,35 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 		log.Error(ctx, nil, "unauthorized access to cluster info")
 		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
 	}
+	clusters, err := c.app.ClusterService().List(ctx)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
 	var data []*app.FullClusterData
-	for _, configCluster := range c.config.GetClusters() {
-		cluster := &app.FullClusterData{
-			Name:                   configCluster.Name,
-			APIURL:                 httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
-			ConsoleURL:             httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-			MetricsURL:             httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-			LoggingURL:             httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-			AppDNS:                 configCluster.AppDNS,
-			Type:                   configCluster.Type,
-			CapacityExhausted:      configCluster.CapacityExhausted,
-			AuthClientDefaultScope: configCluster.AuthClientDefaultScope,
-			AuthClientID:           configCluster.AuthClientID,
-			AuthClientSecret:       configCluster.AuthClientSecret,
-			ServiceAccountToken:    configCluster.ServiceAccountToken,
-			ServiceAccountUsername: configCluster.ServiceAccountUsername,
-			TokenProviderID:        configCluster.TokenProviderID,
+	for _, c := range clusters {
+		encrypted := c.SATokenEncrypted
+		clusterData := &app.FullClusterData{
+			Name:                   c.Name,
+			APIURL:                 httpsupport.AddTrailingSlashToURL(c.URL),
+			ConsoleURL:             httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+			MetricsURL:             httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+			LoggingURL:             httpsupport.AddTrailingSlashToURL(c.LoggingURL),
+			AppDNS:                 c.AppDNS,
+			Type:                   c.Type,
+			CapacityExhausted:      c.CapacityExhausted,
+			AuthClientDefaultScope: c.AuthDefaultScope,
+			AuthClientID:           c.AuthClientID,
+			AuthClientSecret:       c.AuthClientSecret,
+			SaTokenEncrypted:       &encrypted,
+			ServiceAccountToken:    c.SAToken,
+			ServiceAccountUsername: c.SAUsername,
+			TokenProviderID:        c.TokenProviderID,
 		}
-		data = append(data, cluster)
+		data = append(data, clusterData)
 	}
-	clusters := app.FullClusterList{
+	return ctx.OK(&app.FullClusterList{
 		Data: data,
-	}
-	return ctx.OK(&clusters)
+	})
 }
 
 // Show returns the single clusters.
@@ -146,6 +147,7 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 			AuthClientSecret:       clustr.AuthClientSecret,
 			ServiceAccountToken:    clustr.SAToken,
 			ServiceAccountUsername: clustr.SAUsername,
+			SaTokenEncrypted:       &clustr.SATokenEncrypted,
 			TokenProviderID:        clustr.TokenProviderID,
 		},
 	})

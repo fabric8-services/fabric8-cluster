@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
+
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
@@ -31,10 +32,6 @@ func TestClusterService(t *testing.T) {
 
 type ClusterServiceTestSuite struct {
 	gormtestsupport.DBTestSuite
-}
-
-func (s *ClusterServiceTestSuite) SetupTest() {
-	s.DBTestSuite.SetupTest()
 }
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
@@ -411,7 +408,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		test.AssertEqualClusters(t, c, result)
+		test.AssertEqualCluster(t, c, result)
 	})
 
 	s.T().Run("not found", func(t *testing.T) {
@@ -464,7 +461,9 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	// Start watching
 	haltWatcher, err := application.ClusterService().InitializeClusterWatcher()
 	require.NoError(t, err)
-	defer haltWatcher()
+	defer func() {
+		haltWatcher()
+	}()
 
 	// Update the config file
 	updateClusterConfigFile(t, tmpFileName, "./configuration/conf-files/tests/oso-clusters-capacity-updated.conf")
@@ -494,7 +493,9 @@ func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcherNoErrorForDefau
 	s.Application = gormapplication.NewGormDB(s.DB, s.Configuration)
 	haltWatcher, err := s.Application.ClusterService().InitializeClusterWatcher()
 	require.NoError(s.T(), err)
-	defer haltWatcher()
+	defer func() {
+		haltWatcher()
+	}()
 }
 
 func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
@@ -515,14 +516,14 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualCluster(t, c1, &loaded1.Cluster)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 
 			assert.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualCluster(t, c1, &clusters[0])
 		})
 
 		t.Run("do not ignore if exists", func(t *testing.T) {
@@ -539,14 +540,14 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualCluster(t, c1, &loaded1.Cluster)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 
 			assert.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualCluster(t, c1, &clusters[0])
 		})
 
 		t.Run("link multiple clusters to single identity", func(t *testing.T) {
@@ -569,12 +570,12 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualCluster(t, c1, &loaded1.Cluster)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			loaded2, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c2, &loaded2.Cluster)
+			test.AssertEqualCluster(t, c2, &loaded2.Cluster)
 			test.AssertEqualIdentityClusters(t, identityCluster2, loaded2)
 		})
 	})
@@ -601,7 +602,6 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// given
 			c1 := test.CreateCluster(s.T(), s.DB)
 			identityID := uuid.NewV4()
-
 			test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
 
 			// when
@@ -611,11 +611,9 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// then
 			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c1.ClusterID))
-
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
-
-			assert.Len(t, clusters, 0)
+			assert.Empty(t, clusters)
 		})
 
 		t.Run("unlink single cluster", func(t *testing.T) {
@@ -635,11 +633,11 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 			require.Len(t, clusters, 1)
-			test.AssertEqualClusters(t, c1, &clusters[0])
+			test.AssertEqualCluster(t, c1, &clusters[0])
 
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualClusters(t, c1, &loaded1.Cluster)
+			test.AssertEqualCluster(t, c1, &loaded1.Cluster)
 			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
 
 			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
@@ -659,6 +657,19 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
 		})
 	})
+}
+
+func (s *ClusterServiceTestSuite) TestList() {
+	// given
+	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
+	require.NoError(s.T(), err)
+	// when
+	result, err := s.Application.ClusterService().List(context.Background())
+	// then
+	require.NoError(s.T(), err)
+	expected, err := repository.NewClusterRepository(s.DB).List(context.Background())
+	require.NoError(s.T(), err)
+	test.AssertEqualClusters(s.T(), expected, result)
 }
 
 func createTempClusterConfigFile(t *testing.T) string {

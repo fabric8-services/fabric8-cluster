@@ -27,6 +27,7 @@ type ClusterService interface {
 	Load(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
 	LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreError bool) error
 	RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error
+	List(ctx context.Context) ([]repository.Cluster, error)
 }
 
 //Services creates instances of service layer objects
