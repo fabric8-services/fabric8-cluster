@@ -28,7 +28,7 @@ func CreateCluster(t *testing.T, db *gorm.DB) *repository.Cluster {
 	cls, err := repo.Load(context.Background(), cluster.ClusterID)
 	require.NoError(t, err)
 
-	AssertEqualCluster(t, cluster, cls)
+	AssertEqualCluster(t, cluster, cls, true)
 	return cluster
 }
 
@@ -76,11 +76,12 @@ func Normalize(source repository.Cluster, changes ...NormalizeCluster) repositor
 	return result
 }
 
-// AssertClusters verifies that the `actual` cluster belongs to the `expected`
-func AssertClusters(t *testing.T, expected []repository.Cluster, actual *repository.Cluster) {
+// AssertClusters verifies that the `actual` cluster belongs to the `expected`,
+// and compares all fields including sensitive details if `expectSensitiveInfo` is `true`
+func AssertClusters(t *testing.T, expected []repository.Cluster, actual *repository.Cluster, expectSensitiveInfo bool) {
 	for _, e := range expected {
 		if e.ClusterID == actual.ClusterID {
-			AssertEqualCluster(t, &e, actual)
+			AssertEqualCluster(t, &e, actual, expectSensitiveInfo)
 			return
 		}
 	}
@@ -90,24 +91,24 @@ func AssertClusters(t *testing.T, expected []repository.Cluster, actual *reposit
 
 // AssertEqualClusters verifies that all the `actual` and `expected` clusters are have the same values
 // including sensitive details if `expectSensitiveInfo` is `true`
-func AssertEqualClusters(t *testing.T, expected, actual []repository.Cluster) {
+func AssertEqualClusters(t *testing.T, expected, actual []repository.Cluster, expectSensitiveInfo bool) {
 	require.Len(t, actual, len(expected))
 	for _, a := range actual {
 		e := FilterClusterByURL(a.URL, expected)
-		AssertEqualCluster(t, e, &a)
+		AssertEqualCluster(t, e, &a, expectSensitiveInfo)
 	}
 }
 
 // AssertEqualCluster verifies that the `actual` and `expected` clusters are have the same values
 // including sensitive details if `expectSensitiveInfo` is `true`
-func AssertEqualCluster(t *testing.T, expected, actual *repository.Cluster) {
+func AssertEqualCluster(t *testing.T, expected, actual *repository.Cluster, expectSensitiveInfo bool) {
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
-	AssertEqualClusterDetails(t, expected, actual)
+	AssertEqualClusterDetails(t, expected, actual, expectSensitiveInfo)
 }
 
 // AssertEqualClusterDetails verifies that the `actual` and `expected` clusters are have the same values
 // including sensitive details if `expectSensitiveInfo` is `true`
-func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster) {
+func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluster, expectSensitiveInfo bool) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
 	assert.Equal(t, expected.URL, actual.URL)
@@ -118,13 +119,23 @@ func AssertEqualClusterDetails(t *testing.T, expected, actual *repository.Cluste
 	assert.Equal(t, expected.LoggingURL, actual.LoggingURL)
 	assert.Equal(t, expected.ConsoleURL, actual.ConsoleURL)
 	assert.Equal(t, expected.CapacityExhausted, actual.CapacityExhausted)
-	assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
-	assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
-	assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
-	assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
-	assert.Equal(t, expected.SAUsername, actual.SAUsername)
-	assert.Equal(t, expected.SAToken, actual.SAToken)
-	assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
+	if expectSensitiveInfo {
+		assert.Equal(t, expected.AuthDefaultScope, actual.AuthDefaultScope)
+		assert.Equal(t, expected.AuthClientID, actual.AuthClientID)
+		assert.Equal(t, expected.AuthClientSecret, actual.AuthClientSecret)
+		assert.Equal(t, expected.TokenProviderID, actual.TokenProviderID)
+		assert.Equal(t, expected.SAUsername, actual.SAUsername)
+		assert.Equal(t, expected.SAToken, actual.SAToken)
+		assert.Equal(t, expected.SATokenEncrypted, actual.SATokenEncrypted)
+	} else {
+		assert.Equal(t, "", actual.AuthDefaultScope)
+		assert.Equal(t, "", actual.AuthClientID)
+		assert.Equal(t, "", actual.AuthClientSecret)
+		assert.Equal(t, "", actual.TokenProviderID)
+		assert.Equal(t, "", actual.SAUsername)
+		assert.Equal(t, "", actual.SAToken)
+		assert.Equal(t, false, actual.SATokenEncrypted)
+	}
 }
 
 // AssertEqualClustersData verifies that data for all actual clusters match the expected ones
@@ -212,7 +223,7 @@ func CreateIdentityCluster(t *testing.T, db *gorm.DB, cluster *repository.Cluste
 	loaded, err := repo.Load(context.Background(), idCluster.IdentityID, idCluster.ClusterID)
 	require.NoError(t, err)
 	require.NotNil(t, loaded)
-	AssertEqualCluster(t, cluster, &loaded.Cluster)
+	AssertEqualCluster(t, cluster, &loaded.Cluster, true)
 	AssertEqualIdentityClusters(t, idCluster, loaded)
 
 	return loaded

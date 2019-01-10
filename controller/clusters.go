@@ -32,10 +32,6 @@ func NewClustersController(service *goa.Service, app application.Application) *C
 
 // List returns the list of available clusters.
 func (c *ClustersController) List(ctx *app.ListClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
-		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
-	}
 	clusters, err := c.app.ClusterService().List(ctx)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
@@ -62,11 +58,7 @@ func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 // ListForAuthClient returns the list of available clusters with full configuration including Auth client data.
 // To be used by Auth service only
 func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
-		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
-	}
-	clusters, err := c.app.ClusterService().List(ctx)
+	clusters, err := c.app.ClusterService().ListForAuth(ctx)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
@@ -99,10 +91,7 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 
 // Show returns the single clusters.
 func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
-		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
-	}
+	// authorization is checked at the service level for more consistency accross the codebase.
 	clustr, err := c.app.ClusterService().Load(ctx, ctx.ClusterID)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
@@ -124,14 +113,12 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 // ShowForAuthClient returns the cluster with full configuration including Auth client data.
 // To be used by Auth service only
 func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
-		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
-	}
-	clustr, err := c.app.ClusterService().Load(ctx, ctx.ClusterID)
+	// authorization is checked at the service level for more consistency accross the codebase.
+	clustr, err := c.app.ClusterService().LoadForAuth(ctx, ctx.ClusterID)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
+	encrypted := clustr.SATokenEncrypted
 	return ctx.OK(&app.FullClusterSingle{
 		Data: &app.FullClusterData{
 			Name:                   clustr.Name,
@@ -145,9 +132,9 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 			AuthClientDefaultScope: clustr.AuthDefaultScope,
 			AuthClientID:           clustr.AuthClientID,
 			AuthClientSecret:       clustr.AuthClientSecret,
+			SaTokenEncrypted:       &encrypted,
 			ServiceAccountToken:    clustr.SAToken,
 			ServiceAccountUsername: clustr.SAUsername,
-			SaTokenEncrypted:       &clustr.SATokenEncrypted,
 			TokenProviderID:        clustr.TokenProviderID,
 		},
 	})
