@@ -110,6 +110,7 @@ func (c clusterService) Load(ctx context.Context, clusterID uuid.UUID) (*reposit
 	result.SAToken = ""
 	result.SAUsername = ""
 	result.TokenProviderID = ""
+	result.SATokenEncrypted = false
 	return result, nil
 }
 
@@ -422,7 +423,7 @@ func (c clusterService) List(ctx context.Context) ([]repository.Cluster, error) 
 	return clusters, nil
 }
 
-// List lists ALL clusters, including sensitive informatio
+// List lists ALL clusters, including sensitive information
 // This method is allowed for the `Auth` service account only
 func (c clusterService) ListForAuth(ctx context.Context) ([]repository.Cluster, error) {
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {

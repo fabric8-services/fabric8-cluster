@@ -78,7 +78,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			assert.Equal(t, cluster.OCP, c.Type)
 			assert.Equal(t, fmt.Sprintf("https://cluster.%s/", name), c.AppDNS)
 			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", name), c.URL)
-			assert.Equal(t, false, c.CapacityExhausted)
+			assert.Equal(t, true, c.CapacityExhausted)
 			assert.Equal(t, "ServiceAccountToken", c.SAToken)
 			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
 			assert.Equal(t, "AuthClientID", c.AuthClientID)
@@ -104,7 +104,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			assert.Equal(t, cluster.OCP, c.Type)
 			assert.Equal(t, fmt.Sprintf("https://cluster.%s/", name), c.AppDNS)
 			assert.Equal(t, fmt.Sprintf("https://api.cluster.%s/", name), c.URL)
-			assert.Equal(t, false, c.CapacityExhausted)
+			assert.Equal(t, true, c.CapacityExhausted)
 			assert.Equal(t, "ServiceAccountToken", c.SAToken)
 			assert.Equal(t, "ServiceAccountUsername", c.SAUsername)
 			assert.Equal(t, "AuthClientID", c.AuthClientID)
@@ -640,9 +640,10 @@ func newTestCluster() *repository.Cluster {
 		ConsoleURL:        fmt.Sprintf("https://console.cluster.%s", name),
 		LoggingURL:        fmt.Sprintf("https://logging.cluster.%s", name),
 		MetricsURL:        fmt.Sprintf("https://metrics.cluster.%s", name),
-		CapacityExhausted: false,
+		CapacityExhausted: true,
 		SAToken:           "ServiceAccountToken",
 		SAUsername:        "ServiceAccountUsername",
+		SATokenEncrypted:  true,
 		TokenProviderID:   "TokenProviderID",
 		AuthClientID:      "AuthClientID",
 		AuthClientSecret:  "AuthClientSecret",
