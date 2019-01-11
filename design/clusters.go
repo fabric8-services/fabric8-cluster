@@ -179,8 +179,8 @@ var _ = a.Resource("clusters", func() {
 		})
 		a.Description("Delete a cluster configuration")
 		a.Response(d.NoContent)
-		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
 		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fabric8-services/fabric8-common/errors"
+
 	"github.com/fabric8-services/fabric8-cluster/app"
 
 	"github.com/stretchr/testify/assert"
@@ -312,6 +314,14 @@ func (s *ClustersControllerTestSuite) TestDelete() {
 		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 		// when/then
 		test.DeleteClustersNoContent(t, svc.Context, svc, ctrl, c.ClusterID)
+		sa = &authtestsupport.Identity{
+			Username: "fabric8-auth", // need another SA to load the data
+			ID:       uuid.NewV4(),
+		}
+		ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+		require.NoError(t, err)
+		_, err = s.Application.ClusterService().Load(ctx, c.ClusterID)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", c.ClusterID.String()).Error())
 	})
 
 	s.T().Run("failure", func(t *testing.T) {
@@ -331,6 +341,17 @@ func (s *ClustersControllerTestSuite) TestDelete() {
 					test.DeleteClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
 				})
 			}
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.ToolChainOperator,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.DeleteClustersNotFound(t, svc.Context, svc, ctrl, uuid.NewV4())
 		})
 	})
 }

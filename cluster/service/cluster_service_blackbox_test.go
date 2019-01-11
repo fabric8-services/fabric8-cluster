@@ -636,6 +636,12 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 	s.T().Run("ok", func(t *testing.T) {
 		// given
 		c := test.CreateCluster(t, s.DB)
+		idCuster1 := test.CreateIdentityCluster(t, s.DB, c, nil)
+		idCuster2 := test.CreateIdentityCluster(t, s.DB, c, nil)
+		// noise
+		noiseIdCuster1 := test.CreateIdentityCluster(t, s.DB, nil, nil)
+		noiseIdCuster2 := test.CreateIdentityCluster(t, s.DB, nil, nil)
+		// auth
 		sa := &authtestsupport.Identity{
 			Username: auth.ToolChainOperator,
 			ID:       uuid.NewV4(),
@@ -646,14 +652,23 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 		err = s.Application.ClusterService().Delete(ctx, c.ClusterID)
 		// then
 		require.NoError(t, err)
-		// check that
-		c, err = repository.NewClusterRepository(s.DB).Load(ctx, c.ClusterID)
-		require.Error(t, err)
-		assert.IsType(t, errors.NotFoundError{}, err)
-		require.Nil(t, c)
+		// check that cluster and links to identities were removed
+		r, err := repository.NewClusterRepository(s.DB).Load(ctx, c.ClusterID)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", c.ClusterID.String()).Error())
+		require.Nil(t, r)
+		_, err = repository.NewIdentityClusterRepository(s.DB).Load(ctx, idCuster1.IdentityID, idCuster1.ClusterID)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", idCuster1.IdentityID, idCuster1.ClusterID.String()))
+		_, err = repository.NewIdentityClusterRepository(s.DB).Load(ctx, idCuster2.IdentityID, idCuster2.ClusterID)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", idCuster2.IdentityID, idCuster2.ClusterID.String()))
+		// also check that other cluster/identities (noise) still exist
+		_, err = repository.NewIdentityClusterRepository(s.DB).Load(ctx, noiseIdCuster1.IdentityID, noiseIdCuster1.ClusterID)
+		require.NoError(t, err)
+		_, err = repository.NewIdentityClusterRepository(s.DB).Load(ctx, noiseIdCuster2.IdentityID, noiseIdCuster2.ClusterID)
+		require.NoError(t, err)
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
+
 		t.Run("unauthorized", func(t *testing.T) {
 			// given
 			c := test.CreateCluster(t, s.DB)
@@ -670,11 +685,26 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 					// when
 					err = s.Application.ClusterService().Delete(ctx, c.ClusterID)
 					// then
-					require.Error(t, err)
 					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to delete a cluster configuration")
 				})
 			}
 		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: auth.ToolChainOperator,
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			clusterID := uuid.NewV4()
+			err = s.Application.ClusterService().Delete(ctx, clusterID)
+			// then
+			testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", clusterID.String()).Error())
+		})
+
 	})
 
 }

@@ -250,7 +250,7 @@ func ValidateURL(urlStr *string) error {
 
 // Delete deletes the cluster identified by the given `clusterID`
 func (c clusterService) Delete(ctx context.Context, clusterID uuid.UUID) error {
-	// check that the token belongs to a user
+	// check that the token belongs to a the `toolchain operator` SA
 	if !auth.IsSpecificServiceAccount(ctx, auth.ToolChainOperator) {
 		return errors.NewUnauthorizedError("unauthorized access to delete a cluster configuration")
 	}
