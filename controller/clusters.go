@@ -185,6 +185,18 @@ func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
 	return ctx.Created()
 }
 
+// Delete deletes the cluster identified by the `clusterID` param
+func (c *ClustersController) Delete(ctx *app.DeleteClustersContext) error {
+	err := c.app.ClusterService().Delete(ctx, ctx.ClusterID)
+	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"error": err,
+		}, "error while deleting a cluster configuration")
+		return app.JSONErrorResponse(ctx, err)
+	}
+	return ctx.NoContent()
+}
+
 // LinkIdentityToCluster populates Identity Cluster relationship
 func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToClusterClustersContext) error {
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {

@@ -197,13 +197,11 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 }
 
 // Delete removes a single record. This is a hard delete!
+// Also, remove all identity/cluster relationship associated with this cluster to remove.
 func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "delete"}, time.Now())
-
 	obj := Cluster{ClusterID: id}
-
 	result := m.db.Delete(&obj)
-
 	if result.Error != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_id": id.String(),

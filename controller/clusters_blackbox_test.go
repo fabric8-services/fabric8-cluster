@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fabric8-services/fabric8-common/errors"
+
 	"github.com/fabric8-services/fabric8-cluster/app"
 
 	"github.com/stretchr/testify/assert"
@@ -296,6 +298,60 @@ func (s *ClustersControllerTestSuite) TestCreate() {
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 			// when/then
 			test.CreateClustersBadRequest(t, svc.Context, svc, ctrl, &clusterPayload)
+		})
+	})
+}
+
+func (s *ClustersControllerTestSuite) TestDelete() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		// given
+		sa := &authtestsupport.Identity{
+			Username: authsupport.ToolChainOperator,
+			ID:       uuid.NewV4(),
+		}
+		c := testsupport.CreateCluster(t, s.DB)
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		// when/then
+		test.DeleteClustersNoContent(t, svc.Context, svc, ctrl, c.ClusterID)
+		sa = &authtestsupport.Identity{
+			Username: "fabric8-auth", // need another SA to load the data
+			ID:       uuid.NewV4(),
+		}
+		ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+		require.NoError(t, err)
+		_, err = s.Application.ClusterService().Load(ctx, c.ClusterID)
+		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", c.ClusterID.String()).Error())
+	})
+
+	s.T().Run("failure", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			c := testsupport.CreateCluster(t, s.DB)
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					sa := &authtestsupport.Identity{
+						Username: saName,
+						ID:       uuid.NewV4(),
+					}
+					svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+					// when/then
+					test.DeleteClustersUnauthorized(t, svc.Context, svc, ctrl, c.ClusterID)
+				})
+			}
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.ToolChainOperator,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.DeleteClustersNotFound(t, svc.Context, svc, ctrl, uuid.NewV4())
 		})
 	})
 }

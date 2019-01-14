@@ -103,7 +103,7 @@ func (m *GormIdentityClusterRepository) Create(ctx context.Context, c *IdentityC
 	return nil
 }
 
-// Delete removes a single record.
+// Delete removes the identity/cluster relationship identified by the given `identityID` and `clusterID`
 func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID, clusterID uuid.UUID) error {
 	defer goa.MeasureSince([]string{"goa", "db", "identity_cluster", "delete"}, time.Now())
 
