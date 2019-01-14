@@ -41,7 +41,8 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterOK() {
 	loaded, err := s.repo.Load(context.Background(), cluster1.ClusterID)
 	// then
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster1, loaded, true)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster1, *loaded, true)
 }
 
 func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
@@ -52,7 +53,8 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
 	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster1.URL)
 	// then
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster1, loaded, true)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster1, *loaded, true)
 }
 
 func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {
@@ -70,23 +72,25 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {
 func (s *clusterRepositoryTestSuite) TestCreateOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
-	s.repo.CreateOrSave(context.Background(), cluster)
+	s.repo.CreateOrSave(context.Background(), &cluster)
 	test.CreateCluster(s.T(), s.DB) // noise
 	// when
 	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
 	// then
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster, loaded, true)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
 }
 
 func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
 	test.CreateCluster(s.T(), s.DB) // noise
-	s.repo.CreateOrSave(context.Background(), cluster)
+	s.repo.CreateOrSave(context.Background(), &cluster)
 	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster, loaded, true)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
 	// update cluster details
 	cluster.AppDNS = uuid.NewV4().String()
 	cluster.AuthClientID = uuid.NewV4().String()
@@ -101,13 +105,14 @@ func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	cluster.TokenProviderID = uuid.NewV4().String()
 	cluster.Type = uuid.NewV4().String()
 	cluster.CapacityExhausted = true
-	err = s.repo.CreateOrSave(context.Background(), cluster)
+	err = s.repo.CreateOrSave(context.Background(), &cluster)
 	require.NoError(s.T(), err)
 	// when
 	loaded, err = s.repo.LoadClusterByURL(context.Background(), cluster.URL)
 	// then
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster, loaded, true)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
 }
 
 func (s *clusterRepositoryTestSuite) TestDelete() {
@@ -124,7 +129,8 @@ func (s *clusterRepositoryTestSuite) TestDelete() {
 		test.AssertError(t, err, errors.NotFoundError{}, "cluster with id '%s' not found", cluster1.ClusterID)
 		loaded, err := s.repo.Load(context.Background(), cluster2.ClusterID)
 		require.NoError(t, err)
-		test.AssertEqualCluster(t, cluster2, loaded, true)
+		require.NotNil(s.T(), loaded)
+		test.AssertEqualCluster(t, cluster2, *loaded, true)
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
@@ -167,15 +173,17 @@ func (s *clusterRepositoryTestSuite) TestSaveOK() {
 	cluster1.URL = uuid.NewV4().String()
 	cluster1.CapacityExhausted = true
 	// when
-	err := s.repo.Save(context.Background(), cluster1)
+	err := s.repo.Save(context.Background(), &cluster1)
 	// then
 	require.NoError(s.T(), err)
 	loaded1, err := s.repo.Load(context.Background(), cluster1.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster1, loaded1, true)
+	require.NotNil(s.T(), loaded1)
+	test.AssertEqualCluster(s.T(), cluster1, *loaded1, true)
 	loaded2, err := s.repo.Load(context.Background(), cluster2.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualCluster(s.T(), cluster2, loaded2, true)
+	require.NotNil(s.T(), loaded2)
+	test.AssertEqualCluster(s.T(), cluster2, *loaded2, true)
 }
 
 func (s *clusterRepositoryTestSuite) TestSaveUnknownFails() {
@@ -209,7 +217,7 @@ func (s *clusterRepositoryTestSuite) TestQueryOK() {
 	// then
 	require.NoError(s.T(), err)
 	require.Len(s.T(), clusters, 1)
-	test.AssertEqualCluster(s.T(), cluster1, &clusters[0], true)
+	test.AssertEqualCluster(s.T(), cluster1, clusters[0], true)
 }
 
 func (s *clusterRepositoryTestSuite) TestList() {

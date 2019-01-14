@@ -32,12 +32,12 @@ func (s *identityClusterTestSuite) SetupTest() {
 
 func (s *identityClusterTestSuite) TestCreateAndListIdentityClusterOK() {
 	// Create two identities for the same cluster
-	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
-	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, nil, &idCluster1.IdentityID)
+	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB)
+	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(idCluster1.IdentityID))
 
 	// Noise
-	test.CreateIdentityCluster(s.T(), s.DB, &idCluster1.Cluster, nil)
-	test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
+	test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(idCluster1.Cluster))
+	test.CreateIdentityCluster(s.T(), s.DB)
 
 	clusters, err := s.repo.ListClustersForIdentity(context.Background(), idCluster1.IdentityID)
 	require.NoError(s.T(), err)
@@ -63,12 +63,12 @@ func assertContainsCluster(t *testing.T, clusters []repository.Cluster, cluster 
 }
 
 func (s *identityClusterTestSuite) TestDeleteOK() {
-	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
+	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB)
 
 	// Noise
-	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, nil, &idCluster1.IdentityID)
-	idCluster3 := test.CreateIdentityCluster(s.T(), s.DB, &idCluster1.Cluster, nil)
-	idCluster4 := test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
+	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(idCluster1.IdentityID))
+	idCluster3 := test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(idCluster1.Cluster))
+	idCluster4 := test.CreateIdentityCluster(s.T(), s.DB)
 
 	err := s.repo.Delete(context.Background(), idCluster1.IdentityID, idCluster1.ClusterID)
 	require.NoError(s.T(), err)
@@ -79,13 +79,16 @@ func (s *identityClusterTestSuite) TestDeleteOK() {
 	// Noise is still here
 	loaded, err := s.repo.Load(context.Background(), idCluster2.IdentityID, idCluster2.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualIdentityClusters(s.T(), idCluster2, loaded)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualIdentityClusters(s.T(), idCluster2, *loaded)
 	loaded, err = s.repo.Load(context.Background(), idCluster3.IdentityID, idCluster3.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualIdentityClusters(s.T(), idCluster3, loaded)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualIdentityClusters(s.T(), idCluster3, *loaded)
 	loaded, err = s.repo.Load(context.Background(), idCluster4.IdentityID, idCluster4.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualIdentityClusters(s.T(), idCluster4, loaded)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualIdentityClusters(s.T(), idCluster4, *loaded)
 }
 
 func (s *identityClusterTestSuite) TestDeleteUnknownFails() {
@@ -96,12 +99,12 @@ func (s *identityClusterTestSuite) TestDeleteUnknownFails() {
 }
 
 func (s *identityClusterTestSuite) TestOnDeleteCascade() {
-	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
-	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, &idCluster1.Cluster, nil)
+	idCluster1 := test.CreateIdentityCluster(s.T(), s.DB)
+	idCluster2 := test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(idCluster1.Cluster))
 
 	// Noise
-	idCluster3 := test.CreateIdentityCluster(s.T(), s.DB, nil, &idCluster1.IdentityID)
-	idCluster4 := test.CreateIdentityCluster(s.T(), s.DB, nil, nil)
+	idCluster3 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(idCluster1.IdentityID))
+	idCluster4 := test.CreateIdentityCluster(s.T(), s.DB)
 
 	// Hard delete cluster
 	repo := repository.NewClusterRepository(s.DB)
@@ -116,15 +119,20 @@ func (s *identityClusterTestSuite) TestOnDeleteCascade() {
 	// Noise is still here
 	loaded, err := s.repo.Load(context.Background(), idCluster3.IdentityID, idCluster3.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualIdentityClusters(s.T(), idCluster3, loaded)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualIdentityClusters(s.T(), idCluster3, *loaded)
 	loaded, err = s.repo.Load(context.Background(), idCluster4.IdentityID, idCluster4.ClusterID)
 	require.NoError(s.T(), err)
-	test.AssertEqualIdentityClusters(s.T(), idCluster4, loaded)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualIdentityClusters(s.T(), idCluster4, *loaded)
 }
 
 func (s *identityClusterTestSuite) TestLoadUnknownFails() {
+	// given
 	id := uuid.NewV4()
 	cluster := uuid.NewV4()
+	// when
 	_, err := s.repo.Load(context.Background(), id, cluster)
+	// then
 	test.AssertError(s.T(), err, errors.NotFoundError{}, "identity_cluster with identity ID %s and cluster ID %s not found", id, cluster)
 }

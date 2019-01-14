@@ -97,6 +97,7 @@ func NewGormDBChecker(db *gorm.DB) DBChecker {
 	}
 }
 
+//Ping pings the database to verify the connection
 func (c *GormDBChecker) Ping() error {
 	_, err := c.db.DB().Exec("select 1")
 	return err

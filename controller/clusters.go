@@ -37,18 +37,8 @@ func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 		return app.JSONErrorResponse(ctx, err)
 	}
 	var data []*app.ClusterData
-	for _, c := range clusters {
-		clusterData := &app.ClusterData{
-			Name:              c.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(c.URL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
-			AppDNS:            c.AppDNS,
-			Type:              c.Type,
-			CapacityExhausted: c.CapacityExhausted,
-		}
-		data = append(data, clusterData)
+	for _, clustr := range clusters {
+		data = append(data, convertToClusterData(clustr))
 	}
 	return ctx.OK(&app.ClusterList{
 		Data: data,
@@ -63,26 +53,8 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 		return app.JSONErrorResponse(ctx, err)
 	}
 	var data []*app.FullClusterData
-	for _, c := range clusters {
-		encrypted := c.SATokenEncrypted
-		clusterData := &app.FullClusterData{
-			Name:                   c.Name,
-			APIURL:                 httpsupport.AddTrailingSlashToURL(c.URL),
-			ConsoleURL:             httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
-			MetricsURL:             httpsupport.AddTrailingSlashToURL(c.MetricsURL),
-			LoggingURL:             httpsupport.AddTrailingSlashToURL(c.LoggingURL),
-			AppDNS:                 c.AppDNS,
-			Type:                   c.Type,
-			CapacityExhausted:      c.CapacityExhausted,
-			AuthClientDefaultScope: c.AuthDefaultScope,
-			AuthClientID:           c.AuthClientID,
-			AuthClientSecret:       c.AuthClientSecret,
-			SaTokenEncrypted:       &encrypted,
-			ServiceAccountToken:    c.SAToken,
-			ServiceAccountUsername: c.SAUsername,
-			TokenProviderID:        c.TokenProviderID,
-		}
-		data = append(data, clusterData)
+	for _, clustr := range clusters {
+		data = append(data, convertToFullClusterData(clustr))
 	}
 	return ctx.OK(&app.FullClusterList{
 		Data: data,
@@ -97,16 +69,7 @@ func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 		return app.JSONErrorResponse(ctx, err)
 	}
 	return ctx.OK(&app.ClusterSingle{
-		Data: &app.ClusterData{
-			Name:              clustr.Name,
-			APIURL:            httpsupport.AddTrailingSlashToURL(clustr.URL),
-			ConsoleURL:        httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
-			MetricsURL:        httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
-			LoggingURL:        httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
-			AppDNS:            clustr.AppDNS,
-			Type:              clustr.Type,
-			CapacityExhausted: clustr.CapacityExhausted,
-		},
+		Data: convertToClusterData(*clustr),
 	})
 }
 
@@ -118,25 +81,8 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
-	encrypted := clustr.SATokenEncrypted
 	return ctx.OK(&app.FullClusterSingle{
-		Data: &app.FullClusterData{
-			Name:                   clustr.Name,
-			APIURL:                 httpsupport.AddTrailingSlashToURL(clustr.URL),
-			ConsoleURL:             httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
-			MetricsURL:             httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
-			LoggingURL:             httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
-			AppDNS:                 clustr.AppDNS,
-			Type:                   clustr.Type,
-			CapacityExhausted:      clustr.CapacityExhausted,
-			AuthClientDefaultScope: clustr.AuthDefaultScope,
-			AuthClientID:           clustr.AuthClientID,
-			AuthClientSecret:       clustr.AuthClientSecret,
-			SaTokenEncrypted:       &encrypted,
-			ServiceAccountToken:    clustr.SAToken,
-			ServiceAccountUsername: clustr.SAUsername,
-			TokenProviderID:        clustr.TokenProviderID,
-		},
+		Data: convertToFullClusterData(*clustr),
 	})
 }
 
@@ -254,4 +200,38 @@ func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentity
 	}
 
 	return ctx.NoContent()
+}
+
+func convertToClusterData(clustr cluster.Cluster) *app.ClusterData {
+	return &app.ClusterData{
+		Name:              clustr.Name,
+		APIURL:            httpsupport.AddTrailingSlashToURL(clustr.URL),
+		ConsoleURL:        httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
+		MetricsURL:        httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
+		LoggingURL:        httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
+		AppDNS:            clustr.AppDNS,
+		Type:              clustr.Type,
+		CapacityExhausted: clustr.CapacityExhausted,
+	}
+}
+
+func convertToFullClusterData(clustr cluster.Cluster) *app.FullClusterData {
+	encrypted := clustr.SATokenEncrypted
+	return &app.FullClusterData{
+		Name:                   clustr.Name,
+		APIURL:                 httpsupport.AddTrailingSlashToURL(clustr.URL),
+		ConsoleURL:             httpsupport.AddTrailingSlashToURL(clustr.ConsoleURL),
+		MetricsURL:             httpsupport.AddTrailingSlashToURL(clustr.MetricsURL),
+		LoggingURL:             httpsupport.AddTrailingSlashToURL(clustr.LoggingURL),
+		AppDNS:                 clustr.AppDNS,
+		Type:                   clustr.Type,
+		CapacityExhausted:      clustr.CapacityExhausted,
+		AuthClientDefaultScope: clustr.AuthDefaultScope,
+		AuthClientID:           clustr.AuthClientID,
+		AuthClientSecret:       clustr.AuthClientSecret,
+		SaTokenEncrypted:       &encrypted,
+		ServiceAccountToken:    clustr.SAToken,
+		ServiceAccountUsername: clustr.SAUsername,
+		TokenProviderID:        clustr.TokenProviderID,
+	}
 }
