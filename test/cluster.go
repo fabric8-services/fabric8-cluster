@@ -110,7 +110,6 @@ func AssertEqualCluster(t *testing.T, expected, actual repository.Cluster, expec
 func AssertEqualClusterDetails(t *testing.T, expected, actual repository.Cluster, expectSensitiveInfo bool) {
 	require.NotNil(t, expected)
 	require.NotNil(t, actual)
-	// t.Logf("checking actual=%s\nvs\nexpected=%s", spew.Sdump(actual), spew.Sdump(expected))
 	assert.Equal(t, expected.URL, actual.URL)
 	assert.Equal(t, expected.AppDNS, actual.AppDNS)
 	assert.Equal(t, expected.Type, actual.Type)
@@ -174,7 +173,6 @@ func AssertEqualFullClustersData(t *testing.T, expected []repository.Cluster, ac
 
 // AssertEqualFullClusterData verifies that data for actual cluster match the expected one
 func AssertEqualFullClusterData(t *testing.T, expected repository.Cluster, actual app.FullClusterData) {
-	// t.Logf("verifying cluster '%s': %v", actual.Name, spew.Sdump(actual))
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.URL), actual.APIURL)
 	assert.Equal(t, httpsupport.AddTrailingSlashToURL(expected.ConsoleURL), actual.ConsoleURL)
