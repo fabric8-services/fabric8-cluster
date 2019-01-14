@@ -143,9 +143,9 @@ func AssertEqualClustersData(t *testing.T, expected []repository.Cluster, actual
 	require.Len(t, actual, len(expected))
 	for _, a := range actual {
 		require.NotNil(t, a)
-		e, err := FilterClusterByURL(a.APIURL, expected)
+		expected, err := FilterClusterByURL(a.APIURL, expected)
 		require.NoError(t, err)
-		AssertEqualClusterData(t, e, *a)
+		AssertEqualClusterData(t, expected, *a)
 	}
 }
 
@@ -166,9 +166,9 @@ func AssertEqualFullClustersData(t *testing.T, expected []repository.Cluster, ac
 	require.Len(t, actual, len(expected))
 	for _, a := range actual {
 		require.NotNil(t, a)
-		e, err := FilterClusterByURL(a.APIURL, expected)
+		expected, err := FilterClusterByURL(a.APIURL, expected)
 		require.NoError(t, err)
-		AssertEqualFullClusterData(t, e, *a)
+		AssertEqualFullClusterData(t, expected, *a)
 	}
 }
 

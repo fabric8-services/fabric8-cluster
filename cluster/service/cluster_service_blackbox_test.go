@@ -71,7 +71,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c.MetricsURL = " "
 			c.TokenProviderID = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			require.NoError(t, err)
 			assert.NotNil(t, c.ClusterID)
@@ -97,7 +97,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			name := c.Name
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			require.NoError(t, err)
 			assert.NotNil(t, c.ClusterID)
@@ -125,7 +125,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// given an existing cluster
 			c := newTestCluster()
 			require.Equal(t, uuid.Nil, c.ClusterID)
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
@@ -147,7 +147,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// given an existing cluster
 			c := newTestCluster()
 			require.Equal(t, uuid.Nil, c.ClusterID)
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
@@ -170,7 +170,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// given an existing cluster
 			c := newTestCluster()
 			require.Equal(t, uuid.Nil, c.ClusterID)
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
@@ -196,7 +196,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// given an existing cluster
 			c := newTestCluster()
 			require.Equal(t, uuid.Nil, c.ClusterID)
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
@@ -227,7 +227,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.Name = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "name"))
 		})
@@ -237,7 +237,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.SAToken = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "service-account-token"))
 		})
@@ -247,7 +247,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.SAUsername = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "service-account-username"))
 		})
@@ -257,7 +257,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.AuthClientID = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "auth-client-id"))
 		})
@@ -267,7 +267,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.AuthClientSecret = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "auth-client-secret"))
 		})
@@ -277,7 +277,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.AuthDefaultScope = " "
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': empty field '%s' is not allowed", c.Name, "auth-client-default-scope"))
 		})
@@ -289,7 +289,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.URL = " "
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "API", c.URL))
 			})
@@ -299,7 +299,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.URL = "api.cluster.com"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "API", c.URL))
 			})
@@ -309,7 +309,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.URL = "https://"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "API", c.URL))
 			})
@@ -322,7 +322,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.ConsoleURL = "console.cluster-foo.com"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "console", c.ConsoleURL))
 			})
@@ -332,7 +332,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.ConsoleURL = "https://"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "console", c.ConsoleURL))
 			})
@@ -346,7 +346,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.LoggingURL = "logging.cluster-foo.com"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "logging", c.LoggingURL))
 			})
@@ -356,7 +356,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.LoggingURL = "https://"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "logging", c.LoggingURL))
 			})
@@ -370,7 +370,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.MetricsURL = "metrics.cluster-foo.com"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "metrics", c.MetricsURL))
 			})
@@ -380,7 +380,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 				c := newTestCluster()
 				c.MetricsURL = "https://"
 				// when
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				// then
 				testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': '%s' URL '%s' is invalid: missing scheme or host", c.Name, "metrics", c.MetricsURL))
 			})
@@ -392,7 +392,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			c := newTestCluster()
 			c.Type = "FOO"
 			// when
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			// then
 			testsupport.AssertError(t, err, errors.BadParameterError{}, fmt.Sprintf("failed to create or save cluster named '%s': invalid type of cluster: '%s' (expected 'OSO', 'OCP' or 'OSD')", c.Name, c.Type))
 		})
@@ -407,7 +407,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 			t.Run(saName, func(t *testing.T) {
 				// given
 				c := newTestCluster()
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				require.NoError(t, err)
 				sa := &authtestsupport.Identity{
 					Username: saName,
@@ -420,7 +420,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 				// then
 				require.NoError(t, err)
 				require.NotNil(t, result)
-				test.AssertEqualCluster(t, c, *result, false)
+				test.AssertEqualCluster(t, *c, *result, false)
 			})
 		}
 	})
@@ -430,7 +430,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 		t.Run("unauthorized", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			sa := &authtestsupport.Identity{
 				Username: "foo",
@@ -447,7 +447,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 		t.Run("not found", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			sa := &authtestsupport.Identity{
 				Username: "fabric8-auth",
@@ -472,7 +472,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 			t.Run(saName, func(t *testing.T) {
 				// given
 				c := newTestCluster()
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 				require.NoError(t, err)
 				sa := &authtestsupport.Identity{
 					Username: saName,
@@ -485,7 +485,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 				// then
 				require.NoError(t, err)
 				require.NotNil(t, result)
-				test.AssertEqualCluster(t, c, *result, true)
+				test.AssertEqualCluster(t, *c, *result, true)
 			})
 		}
 	})
@@ -497,7 +497,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 				t.Run(saName, func(t *testing.T) {
 					// given
 					c := newTestCluster()
-					err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+					err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 					require.NoError(t, err)
 					sa := &authtestsupport.Identity{
 						Username: "foo",
@@ -516,7 +516,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 		t.Run("not found", func(t *testing.T) {
 			// given
 			c := newTestCluster()
-			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), &c)
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
 			require.NoError(t, err)
 			sa := &authtestsupport.Identity{
 				Username: "fabric8-auth", // use a SA that is not unauthorized
@@ -709,9 +709,9 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 
 }
 
-func newTestCluster() repository.Cluster {
+func newTestCluster() *repository.Cluster {
 	name := uuid.NewV4().String()
-	return repository.Cluster{
+	return &repository.Cluster{
 		Name:              name,
 		Type:              cluster.OCP,
 		URL:               fmt.Sprintf("https://api.cluster.%s", name),
