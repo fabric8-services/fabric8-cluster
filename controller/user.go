@@ -21,7 +21,7 @@ func NewUserController(service *goa.Service, app application.Application) *UserC
 	return &UserController{Controller: service.NewController("UserController"), app: app}
 }
 
-// Clusters runs the clusters action.
+// Clusters runs the clusters action - DEPRECATED
 func (c *UserController) Clusters(ctx *app.ClustersUserContext) error {
 	identityID, err := auth.LocateIdentity(ctx)
 	if err != nil {

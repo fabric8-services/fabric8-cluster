@@ -137,7 +137,7 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 		// then
 		require.NotNil(t, result)
 		require.NotNil(t, result.Data)
-		testsupport.AssertEqualFullClusterData(t, c, result.Data)
+		testsupport.AssertEqualFullClusterData(t, c, *result.Data)
 	})
 
 	s.T().Run("failure", func(t *testing.T) {
@@ -458,15 +458,13 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 
 	s.T().Run("internal error - ignore false", func(t *testing.T) {
 		// given
-		c := testsupport.CreateCluster(s.T(), s.DB)
-		identityID := uuid.NewV4()
-		testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
+		ic := testsupport.CreateIdentityCluster(t, s.DB)
 		sa := &authtestsupport.Identity{
 			Username: "fabric8-auth",
 			ID:       uuid.NewV4(),
 		}
 		ignore := false
-		payload := createLinkIdentityClusterPayload(c.URL, identityID.String(), &ignore)
+		payload := createLinkIdentityClusterPayload(ic.Cluster.URL, ic.IdentityID.String(), &ignore)
 		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 		// when/then
 		test.LinkIdentityToClusterClustersInternalServerError(t, svc.Context, svc, ctrl, payload)
@@ -476,110 +474,76 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 func (s *ClustersControllerTestSuite) TestRemoveIdentityToClustersLink() {
 
 	s.T().Run("ok", func(t *testing.T) {
-		t.Run("unlink", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
-
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
-			c := testsupport.CreateCluster(t, s.DB)
-			identityID := uuid.NewV4()
-
-			testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
-
-			payload := createUnLinkIdentityToClusterData(c.URL, identityID.String())
-
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersNoContent(t, svc.Context, svc, ctrl, payload)
-		})
+		// given
+		sa := &authtestsupport.Identity{
+			Username: "fabric8-auth",
+			ID:       uuid.NewV4(),
+		}
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		ic := testsupport.CreateIdentityCluster(t, s.DB)
+		payload := createUnLinkIdentityToClusterData(ic.Cluster.URL, ic.IdentityID.String())
+		// when/then
+		test.RemoveIdentityToClusterLinkClustersNoContent(t, svc.Context, svc, ctrl, payload)
 	})
 
-	s.T().Run("not found", func(t *testing.T) {
-		t.Run("different identity", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
+	s.T().Run("failures", func(t *testing.T) {
 
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+		// given
+		ic := testsupport.CreateIdentityCluster(t, s.DB)
+		sa := &authtestsupport.Identity{
+			Username: "fabric8-auth",
+			ID:       uuid.NewV4(),
+		}
+		svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 
-			c := testsupport.CreateCluster(t, s.DB)
-			identityID := uuid.NewV4()
+		t.Run("not found", func(t *testing.T) {
 
-			testsupport.CreateIdentityCluster(t, s.DB, c, &identityID)
-			payload := createUnLinkIdentityToClusterData(c.URL, uuid.NewV4().String())
-
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersNotFound(t, svc.Context, svc, ctrl, payload)
-		})
-	})
-
-	s.T().Run("bad", func(t *testing.T) {
-
-		t.Run("empty space uuid", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
-
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
-			c := testsupport.CreateCluster(t, s.DB)
-			payload := createUnLinkIdentityToClusterData(c.URL, "  ")
-
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			t.Run("different identity", func(t *testing.T) {
+				// given
+				payload := createUnLinkIdentityToClusterData(ic.Cluster.URL, uuid.NewV4().String())
+				// when/then
+				test.RemoveIdentityToClusterLinkClustersNotFound(t, svc.Context, svc, ctrl, payload)
+			})
 		})
 
-		t.Run("unknown cluster", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
+		t.Run("bad request", func(t *testing.T) {
 
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			t.Run("empty space uuid", func(t *testing.T) {
+				// given
+				payload := createUnLinkIdentityToClusterData(ic.Cluster.URL, "  ")
+				// when/then
+				test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			})
 
-			payload := createUnLinkIdentityToClusterData("http://foo.com", uuid.NewV4().String())
+			t.Run("unknown cluster", func(t *testing.T) {
+				// given
+				payload := createUnLinkIdentityToClusterData("http://foo.com", ic.IdentityID.String())
+				// when/then
+				test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			})
 
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			t.Run("invalid cluster url", func(t *testing.T) {
+				// given
+				payload := createUnLinkIdentityToClusterData("foo.com", ic.IdentityID.String())
+
+				// when/then
+				test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			})
 		})
 
-		t.Run("invalid cluster url", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "fabric8-auth",
-				ID:       uuid.NewV4(),
-			}
+		t.Run("unauthorized", func(t *testing.T) {
 
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
-			payload := createUnLinkIdentityToClusterData("foo.com", uuid.NewV4().String())
-
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
-		})
-	})
-
-	s.T().Run("unauthorized", func(t *testing.T) {
-		t.Run("unknown token", func(t *testing.T) {
-			// given
-			sa := &authtestsupport.Identity{
-				Username: "unknown",
-				ID:       uuid.NewV4(),
-			}
-			c := testsupport.CreateCluster(t, s.DB)
-			payload := createUnLinkIdentityToClusterData(c.URL, uuid.NewV4().String())
-			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-
-			// when/then
-			test.RemoveIdentityToClusterLinkClustersUnauthorized(t, svc.Context, svc, ctrl, payload)
+			t.Run("unknown token", func(t *testing.T) {
+				// given
+				sa := &authtestsupport.Identity{
+					Username: "unknown",
+					ID:       uuid.NewV4(),
+				}
+				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+				payload := createUnLinkIdentityToClusterData(ic.Cluster.URL, ic.IdentityID.String())
+				// when/then
+				test.RemoveIdentityToClusterLinkClustersUnauthorized(t, svc.Context, svc, ctrl, payload)
+			})
 		})
 	})
 }

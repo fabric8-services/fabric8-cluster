@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// AssertError verifies that the given error has the expected type and message
 func AssertError(t require.TestingT, actualError error, expectedType interface{}, expectedMsgAndArgs ...interface{}) {
 	require.Error(t, actualError)
 	assert.IsType(t, expectedType, errors.Cause(actualError))

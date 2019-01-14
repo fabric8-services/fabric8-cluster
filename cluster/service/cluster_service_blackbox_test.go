@@ -55,7 +55,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	require.NoError(s.T(), err)
 	assert.Len(s.T(), osdClusters, 1)
 	// verify all records
-	verifyClusters(s.T(), append(osoClusters, osdClusters...), s.Configuration.GetClusters(), true)
+	verifyClusters(s.T(), s.Configuration.GetClusters(), append(osoClusters, osdClusters...), true)
 }
 
 func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
@@ -420,7 +420,7 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 				// then
 				require.NoError(t, err)
 				require.NotNil(t, result)
-				test.AssertEqualCluster(t, c, result, false)
+				test.AssertEqualCluster(t, *c, *result, false)
 			})
 		}
 	})
@@ -485,7 +485,7 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 				// then
 				require.NoError(t, err)
 				require.NotNil(t, result)
-				test.AssertEqualCluster(t, c, result, true)
+				test.AssertEqualCluster(t, *c, *result, true)
 			})
 		}
 	})
@@ -636,11 +636,11 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 	s.T().Run("ok", func(t *testing.T) {
 		// given
 		c := test.CreateCluster(t, s.DB)
-		idCuster1 := test.CreateIdentityCluster(t, s.DB, c, nil)
-		idCuster2 := test.CreateIdentityCluster(t, s.DB, c, nil)
+		idCuster1 := test.CreateIdentityCluster(t, s.DB, test.WithCluster(c))
+		idCuster2 := test.CreateIdentityCluster(t, s.DB, test.WithCluster(c))
 		// noise
-		noiseIdCuster1 := test.CreateIdentityCluster(t, s.DB, nil, nil)
-		noiseIdCuster2 := test.CreateIdentityCluster(t, s.DB, nil, nil)
+		noiseIdCuster1 := test.CreateIdentityCluster(t, s.DB)
+		noiseIdCuster2 := test.CreateIdentityCluster(t, s.DB)
 		// auth
 		sa := &authtestsupport.Identity{
 			Username: auth.ToolChainOperator,
@@ -792,78 +792,67 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 
 		t.Run("ignore if exists", func(t *testing.T) {
 			// given
-			c1 := test.CreateCluster(s.T(), s.DB)
-			identityID := uuid.NewV4()
-
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, true)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL, true)
 			require.NoError(t, err)
 
 			// then
-			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualCluster(t, c1, &loaded1.Cluster, true)
-			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+			test.AssertEqualCluster(t, identityCluster.Cluster, loaded1.Cluster, true)
+			test.AssertEqualIdentityClusters(t, identityCluster, *loaded1)
 
-			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityCluster.IdentityID)
 			require.NoError(t, err)
 			assert.Len(t, clusters, 1)
-			test.AssertEqualCluster(t, c1, &clusters[0], true)
+			test.AssertEqualCluster(t, identityCluster.Cluster, clusters[0], true)
 		})
 
 		t.Run("do not ignore if exists", func(t *testing.T) {
 			// given
-			c1 := test.CreateCluster(s.T(), s.DB)
-			identityID := uuid.NewV4()
-
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
+			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
 
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c1.URL, false)
-			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity %s with cluster %s: pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityID, c1.ClusterID)
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL, false)
+			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity %s with cluster %s: pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
 
 			// then
-			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualCluster(t, c1, &loaded1.Cluster, true)
-			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+			test.AssertEqualCluster(t, identityCluster.Cluster, loaded1.Cluster, true)
+			test.AssertEqualIdentityClusters(t, identityCluster, *loaded1)
 
-			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityCluster.IdentityID)
 			require.NoError(t, err)
 
 			assert.Len(t, clusters, 1)
-			test.AssertEqualCluster(t, c1, &clusters[0], true)
+			test.AssertEqualCluster(t, identityCluster.Cluster, clusters[0], true)
 		})
 
 		t.Run("link multiple clusters to single identity", func(t *testing.T) {
 			// given
-			c1 := test.CreateCluster(s.T(), s.DB)
-			c2 := test.CreateCluster(s.T(), s.DB)
 			identityID := uuid.NewV4()
-
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
-
-			identityCluster2 := &repository.IdentityCluster{
-				ClusterID:  c2.ClusterID,
+			c1 := test.CreateCluster(s.T(), s.DB)
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(c1), test.WithIdentityID(identityID))
+			c2 := test.CreateCluster(s.T(), s.DB)
+			identityCluster2 := repository.IdentityCluster{
 				IdentityID: identityID,
+				ClusterID:  c2.ClusterID,
 			}
-
 			// when
 			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityID, c2.URL, true)
 			require.NoError(t, err)
-
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualCluster(t, c1, &loaded1.Cluster, true)
-			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
-
+			test.AssertEqualCluster(t, c1, loaded1.Cluster, true)
+			test.AssertEqualIdentityClusters(t, identityCluster1, *loaded1)
 			loaded2, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualCluster(t, c2, &loaded2.Cluster, true)
-			test.AssertEqualIdentityClusters(t, identityCluster2, loaded2)
+			test.AssertEqualCluster(t, c2, loaded2.Cluster, true)
+			test.AssertEqualIdentityClusters(t, identityCluster2, *loaded2)
 		})
 	})
 
@@ -887,48 +876,41 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 
 		t.Run("unlink completely", func(t *testing.T) {
 			// given
-			c1 := test.CreateCluster(s.T(), s.DB)
-			identityID := uuid.NewV4()
-			test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
-
+			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
 			// when
-			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, c1.URL)
-			require.NoError(t, err)
-
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL)
 			// then
-			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
-			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c1.ClusterID))
-			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
+			require.NoError(t, err)
+			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityCluster.IdentityID, identityCluster.Cluster.ClusterID))
+			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityCluster.IdentityID)
 			require.NoError(t, err)
 			assert.Empty(t, clusters)
 		})
 
 		t.Run("unlink single cluster", func(t *testing.T) {
 			// given
-			c1 := test.CreateCluster(s.T(), s.DB)
-			c2 := test.CreateCluster(s.T(), s.DB)
 			identityID := uuid.NewV4()
-
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, c1, &identityID)
-			test.CreateIdentityCluster(s.T(), s.DB, c2, &identityID)
+			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(identityID))
+			identityCluster2 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(identityID))
 
 			// when
-			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, c2.URL)
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, identityCluster2.Cluster.URL)
 			require.NoError(t, err)
 
 			// then
 			clusters, err := s.Application.IdentityClusters().ListClustersForIdentity(s.Ctx, identityID)
 			require.NoError(t, err)
 			require.Len(t, clusters, 1)
-			test.AssertEqualCluster(t, c1, &clusters[0], true)
+			test.AssertEqualCluster(t, identityCluster1.Cluster, clusters[0], true)
 
-			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, c1.ClusterID)
+			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityID, identityCluster1.Cluster.ClusterID)
 			require.NoError(t, err)
-			test.AssertEqualCluster(t, c1, &loaded1.Cluster, true)
-			test.AssertEqualIdentityClusters(t, identityCluster1, loaded1)
+			test.AssertEqualCluster(t, identityCluster1.Cluster, loaded1.Cluster, true)
+			test.AssertEqualIdentityClusters(t, identityCluster1, *loaded1)
 
-			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, c2.ClusterID)
-			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, c2.ClusterID))
+			_, err = s.Application.IdentityClusters().Load(s.Ctx, identityID, identityCluster2.Cluster.ClusterID)
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("identity_cluster with identity ID %s and cluster ID %s not found", identityID, identityCluster2.Cluster.ClusterID))
 		})
 	})
 
@@ -988,13 +970,14 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, actualClusters []repository.Cluster, expectedClusters map[string]configuration.Cluster, compareSensitiveInfo bool) {
+func verifyClusters(t *testing.T, expectedClusters map[string]configuration.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
 	for _, expectedCluster := range expectedClusters {
-		verifyCluster(t, actualClusters, test.ClusterFromConfigurationCluster(expectedCluster), compareSensitiveInfo)
+		verifyCluster(t, test.ClusterFromConfigurationCluster(expectedCluster), actualClusters, compareSensitiveInfo)
 	}
 }
 
-func verifyCluster(t *testing.T, actualClusters []repository.Cluster, expectedCluster *repository.Cluster, compareSensitiveInfo bool) {
-	actualCluster := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
+func verifyCluster(t *testing.T, expectedCluster repository.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
+	actualCluster, err := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
+	require.NoError(t, err)
 	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster, compareSensitiveInfo)
 }
