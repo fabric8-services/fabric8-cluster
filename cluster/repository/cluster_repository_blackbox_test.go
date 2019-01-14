@@ -72,7 +72,8 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {
 func (s *clusterRepositoryTestSuite) TestCreateOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
-	s.repo.CreateOrSave(context.Background(), &cluster)
+	err := s.repo.CreateOrSave(context.Background(), &cluster)
+	require.NoError(s.T(), err)
 	test.CreateCluster(s.T(), s.DB) // noise
 	// when
 	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
@@ -86,7 +87,8 @@ func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	// given
 	cluster := test.NewCluster()
 	test.CreateCluster(s.T(), s.DB) // noise
-	s.repo.CreateOrSave(context.Background(), &cluster)
+	err := s.repo.CreateOrSave(context.Background(), &cluster)
+	require.NoError(s.T(), err)
 	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded)
