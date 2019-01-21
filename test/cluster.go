@@ -19,15 +19,15 @@ import (
 
 // CreateCluster returns a new cluster after saves it in the DB
 func CreateCluster(t *testing.T, db *gorm.DB) repository.Cluster {
-	cluster := NewCluster()
+	c := NewCluster()
 	repo := repository.NewClusterRepository(db)
-	err := repo.Create(context.Background(), &cluster)
+	err := repo.Create(context.Background(), &c)
 	require.NoError(t, err)
 	// verify that the cluster exists in the DB
-	cls, err := repo.Load(context.Background(), cluster.ClusterID)
+	cls, err := repo.Load(context.Background(), c.ClusterID)
 	require.NoError(t, err)
-	AssertEqualCluster(t, cluster, *cls, true)
-	return cluster
+	AssertEqualCluster(t, c, *cls, true)
+	return c
 }
 
 // NewCluster returns a new cluster with random values for all fields
@@ -194,9 +194,9 @@ func AssertEqualFullClusterData(t *testing.T, expected repository.Cluster, actua
 
 // FilterClusterByURL returns the cluster that has the given URL or an error if none was found
 func FilterClusterByURL(url string, clusters []repository.Cluster) (repository.Cluster, error) {
-	for _, cluster := range clusters {
-		if cluster.URL == url {
-			return cluster, nil
+	for _, c := range clusters {
+		if c.URL == url {
+			return c, nil
 		}
 	}
 	return repository.Cluster{}, errors.Errorf("unable to find cluster with url '%s'", url)

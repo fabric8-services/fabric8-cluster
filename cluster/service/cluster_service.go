@@ -124,6 +124,47 @@ func (c clusterService) LoadForAuth(ctx context.Context, clusterID uuid.UUID) (*
 	return c.Repositories().Clusters().Load(ctx, clusterID)
 }
 
+// FindByURL loads the cluster given its URL, but without the sentitive info (token, etc.)
+// This method is allowed for the following service accounts:
+// - Auth
+// - OSO Proxy
+// - Tenant
+// - Jenkins Idler
+// - Jenkins Proxy
+// returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
+func (c clusterService) FindByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
+		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
+	result, err := c.Repositories().Clusters().FindByURL(ctx, clusterURL)
+	if err != nil {
+		return nil, err
+	}
+	// hide all sensitive info from the cluster record to return
+	result.AuthDefaultScope = ""
+	result.AuthClientID = ""
+	result.AuthClientSecret = ""
+	result.SAToken = ""
+	result.SAUsername = ""
+	result.TokenProviderID = ""
+	result.SATokenEncrypted = false
+	return result, nil
+}
+
+// FindByURLForAuth loads the cluster given its URL, including all sentitive info (token, etc.)
+// This method is allowed for the 'auth' service account only.
+// returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
+func (c clusterService) FindByURLForAuth(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
+	result, err := c.Repositories().Clusters().FindByURL(ctx, clusterURL)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 const (
 	// errEmptyFieldMsg the error template when a field is empty
 	errEmptyFieldMsg = "empty field '%s' is not allowed"
@@ -135,7 +176,7 @@ const (
 
 // validateAndNormalize checks if all data in the given cluster is valid, and fills the missing/optional URLs using the `APIURL`
 func (c clusterService) validateAndNormalize(ctx context.Context, clustr *repository.Cluster) error {
-	existingClustr, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clustr.URL)
+	existingClustr, err := c.Repositories().Clusters().FindByURL(ctx, clustr.URL)
 	if err != nil {
 		if notFound, _ := errors.IsNotFoundError(err); !notFound {
 			// oops, something wrong happened, not just the cluster not found in the db
@@ -387,7 +428,7 @@ func (c clusterService) RemoveIdentityToClusterLink(ctx context.Context, identit
 }
 
 func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
-	rc, err := c.Repositories().Clusters().LoadClusterByURL(ctx, clusterURL)
+	rc, err := c.Repositories().Clusters().FindByURL(ctx, clusterURL)
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_url": clusterURL,

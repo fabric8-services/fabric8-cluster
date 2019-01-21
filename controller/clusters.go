@@ -61,7 +61,7 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 	})
 }
 
-// Show returns the single clusters.
+// Show returns a single cluster.
 func (c *ClustersController) Show(ctx *app.ShowClustersContext) error {
 	// authorization is checked at the service level for more consistency accross the codebase.
 	clustr, err := c.app.ClusterService().Load(ctx, ctx.ClusterID)
@@ -83,6 +83,32 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 	}
 	return ctx.OK(&app.FullClusterSingle{
 		Data: convertToFullClusterData(*clustr),
+	})
+}
+
+// FindByURL returns a single cluster given its URL.
+// Response does NOT include the sensitive information about the cluster
+func (c *ClustersController) FindByURL(ctx *app.FindByURLClustersContext) error {
+	// authorization is checked at the service level for more consistency accross the codebase.
+	clustr, err := c.app.ClusterService().FindByURL(ctx, ctx.ClusterURL)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
+	return ctx.OK(&app.ClusterSingle{
+		Data: convertToClusterData(*clustr),
+	})
+}
+
+// FindByURLForAuth returns a single cluster given its URL. Restricted to `auth` SA.
+// Response DOES include the sensitive information about the cluster
+func (c *ClustersController) FindByURLForAuth(ctx *app.FindByURLForAuthClustersContext) error {
+	// authorization is checked at the service level for more consistency accross the codebase.
+	clustr, err := c.app.ClusterService().FindByURLForAuth(ctx, ctx.ClusterURL)
+	if err != nil {
+		return app.JSONErrorResponse(ctx, err)
+	}
+	return ctx.OK(&app.ClusterSingle{
+		Data: convertToClusterData(*clustr),
 	})
 }
 

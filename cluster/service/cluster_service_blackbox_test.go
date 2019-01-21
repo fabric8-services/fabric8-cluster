@@ -130,14 +130,14 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().FindByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.TokenProviderID = "UpdatedTokenProviderID"
 			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().FindByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			assert.Equal(t, "UpdatedTokenProviderID", updated.TokenProviderID)
@@ -152,14 +152,14 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating without any TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().FindByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.TokenProviderID = ""
 			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().FindByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			// expect TokenProviderID to be equal to old value
@@ -175,7 +175,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().FindByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.ConsoleURL = "https://console.cluster.com/console"
 			reloaded.MetricsURL = "https://metrics.cluster.com"
@@ -184,7 +184,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().FindByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			assert.Equal(t, "https://console.cluster.com/console/", updated.ConsoleURL)
@@ -201,7 +201,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().FindByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.ConsoleURL = ""
 			reloaded.MetricsURL = ""
@@ -210,7 +210,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().FindByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			assert.Equal(t, c.ConsoleURL, updated.ConsoleURL)
@@ -530,6 +530,138 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 			// then
 			require.Error(t, err)
 			testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", id.String()).Error())
+		})
+	})
+}
+func (s *ClusterServiceTestSuite) TestFindByURL() {
+
+	s.T().Run("ok", func(t *testing.T) {
+
+		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+				require.NoError(t, err)
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+				require.NoError(t, err)
+				// when
+				result, err := s.Application.ClusterService().FindByURL(ctx, c.URL)
+				// then
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				test.AssertEqualCluster(t, *c, *result, false)
+			})
+		}
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "foo",
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().FindByURL(ctx, c.URL)
+			// then
+			testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to cluster info")
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth",
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().FindByURL(ctx, "http://foo")
+			// then
+			require.Error(t, err)
+			testsupport.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("cluster with url '%s' not found", "http://foo"))
+		})
+	})
+}
+
+func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
+
+	s.T().Run("ok", func(t *testing.T) {
+		for _, saName := range []string{"fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// given
+				c := newTestCluster()
+				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+				require.NoError(t, err)
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+				require.NoError(t, err)
+				// when
+				result, err := s.Application.ClusterService().FindByURLForAuth(ctx, c.URL)
+				// then
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				test.AssertEqualCluster(t, *c, *result, true)
+			})
+		}
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "other"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					c := newTestCluster()
+					err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+					require.NoError(t, err)
+					sa := &authtestsupport.Identity{
+						Username: "foo",
+						ID:       uuid.NewV4(),
+					}
+					ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+					require.NoError(t, err)
+					// when
+					_, err = s.Application.ClusterService().FindByURLForAuth(ctx, c.URL)
+					// then
+					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to cluster info")
+				})
+			}
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			c := newTestCluster()
+			err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+			require.NoError(t, err)
+			sa := &authtestsupport.Identity{
+				Username: "fabric8-auth", // use a SA that is not unauthorized
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().FindByURLForAuth(ctx, "http://foo")
+			// then
+			require.Error(t, err)
+			testsupport.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("cluster with url '%s' not found", "http://foo"))
 		})
 	})
 }
