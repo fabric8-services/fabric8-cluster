@@ -865,7 +865,7 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), url, true)
 
 			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+			test.AssertError(t, err, errors.NotFoundError{}, "cluster with id '%s' not found", url)
 		})
 	})
 }
@@ -923,7 +923,7 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, uuid.NewV4(), url)
 
 			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+			test.AssertError(t, err, errors.NotFoundError{}, "cluster with id '%s' not found", url)
 		})
 	})
 }

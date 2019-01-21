@@ -359,6 +359,7 @@ func (s *ClustersControllerTestSuite) TestDelete() {
 func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 
 	s.T().Run("ok", func(t *testing.T) {
+
 		t.Run("ignore if exists - nil", func(t *testing.T) {
 			// given
 			sa := &authtestsupport.Identity{
@@ -388,7 +389,7 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 
 	})
 
-	s.T().Run("bad", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("invalid uuid", func(t *testing.T) {
 			// given
@@ -425,7 +426,7 @@ func (s *ClustersControllerTestSuite) TestLinkIdentityClusters() {
 			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
 			payload := createLinkIdentityClusterPayload("http://foo.com", uuid.NewV4().String(), nil)
 			// when/then
-			test.LinkIdentityToClusterClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+			test.LinkIdentityToClusterClustersNotFound(t, svc.Context, svc, ctrl, payload)
 		})
 
 		t.Run("invalid cluster url", func(t *testing.T) {
@@ -519,7 +520,7 @@ func (s *ClustersControllerTestSuite) TestRemoveIdentityToClustersLink() {
 				// given
 				payload := createUnLinkIdentityToClusterData("http://foo.com", ic.IdentityID.String())
 				// when/then
-				test.RemoveIdentityToClusterLinkClustersBadRequest(t, svc.Context, svc, ctrl, payload)
+				test.RemoveIdentityToClusterLinkClustersNotFound(t, svc.Context, svc, ctrl, payload)
 			})
 
 			t.Run("invalid cluster url", func(t *testing.T) {

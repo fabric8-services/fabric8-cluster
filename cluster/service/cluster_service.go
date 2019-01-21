@@ -397,7 +397,7 @@ func (c clusterService) loadClusterByURL(ctx context.Context, clusterURL string)
 			// oops, something wrong happened, not just the cluster not found in the db
 			return nil, errs.Wrapf(err, "unable to load cluster")
 		}
-		return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
+		return nil, errors.NewNotFoundError("cluster", clusterURL)
 	}
 	return rc, nil
 }
