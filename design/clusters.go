@@ -161,8 +161,8 @@ var _ = a.Resource("clusters", func() {
 			a.GET("/"),
 		)
 		a.Params(func() {
-			a.Param("cluster_url", d.String, "the URL of the cluster to show")
-			a.Required("cluster_url")
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
+			a.Required("cluster-url")
 		})
 		a.Description("Get single cluster configuration given its URL")
 		a.Response(d.OK, showSingleCluster)
@@ -177,8 +177,8 @@ var _ = a.Resource("clusters", func() {
 			a.GET("/auth"),
 		)
 		a.Params(func() {
-			a.Param("cluster_url", d.String, "the URL of the cluster to show")
-			a.Required("cluster_url")
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
+			a.Required("cluster-url")
 		})
 		a.Description("Get single cluster configuration given its URL, with full info")
 		a.Response(d.OK, showSingleCluster)
