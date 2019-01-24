@@ -615,7 +615,7 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
-		
+
 		t.Run("unauthorized", func(t *testing.T) {
 			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "other"} {
 				t.Run(saName, func(t *testing.T) {
