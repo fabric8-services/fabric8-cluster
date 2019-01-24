@@ -9,7 +9,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
@@ -254,24 +253,24 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual repository.Ident
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 }
 
-// ClusterFromConfigurationCluster converts a "configuration" cluster to a "model" cluster
-func ClusterFromConfigurationCluster(configCluster configuration.Cluster) repository.Cluster {
-	return repository.Cluster{
-		Name:              configCluster.Name,
-		URL:               httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
-		ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-		MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-		LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-		AppDNS:            configCluster.AppDNS,
-		CapacityExhausted: configCluster.CapacityExhausted,
-		Type:              configCluster.Type,
+// // ClusterFromConfigurationCluster converts a "configuration" cluster to a "model" cluster
+// func ClusterFromConfigurationCluster(c repository.Cluster) repository.Cluster {
+// 	return repository.Cluster{
+// 		Name:              c.Name,
+// 		URL:               httpsupport.AddTrailingSlashToURL(c.URL),
+// 		ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
+// 		MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
+// 		LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
+// 		AppDNS:            c.AppDNS,
+// 		CapacityExhausted: c.CapacityExhausted,
+// 		Type:              c.Type,
 
-		SAToken:          configCluster.ServiceAccountToken,
-		SAUsername:       configCluster.ServiceAccountUsername,
-		SATokenEncrypted: *configCluster.ServiceAccountTokenEncrypted,
-		TokenProviderID:  configCluster.TokenProviderID,
-		AuthClientID:     configCluster.AuthClientID,
-		AuthClientSecret: configCluster.AuthClientSecret,
-		AuthDefaultScope: configCluster.AuthClientDefaultScope,
-	}
-}
+// 		SAToken:          c.SAToken,
+// 		SAUsername:       c.SAUsername,
+// 		SATokenEncrypted: c.SATokenEncrypted,
+// 		TokenProviderID:  c.TokenProviderID,
+// 		AuthClientID:     c.AuthClientID,
+// 		AuthClientSecret: c.AuthClientSecret,
+// 		AuthDefaultScope: c.AuthDefaultScope,
+// 	}
+// }

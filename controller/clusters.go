@@ -11,7 +11,6 @@ import (
 
 	"fmt"
 
-	"github.com/fabric8-services/fabric8-cluster/cluster/service"
 	"github.com/goadesign/goa"
 	uuid "github.com/satori/go.uuid"
 )
@@ -155,23 +154,17 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
 	}
 
-	clusterURL := ctx.Payload.ClusterURL
-	if err := service.ValidateURL(&clusterURL); err != nil {
-		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL)))
-	}
-
 	// ignoreIfAlreadyExisted by default true
 	ignore := true
 	if ignoreIfExists := ctx.Payload.IgnoreIfAlreadyExists; ignoreIfExists != nil {
 		ignore = *ignoreIfExists
 	}
-	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, clusterURL, ignore); err != nil {
+	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, ctx.Payload.ClusterURL, ignore); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
-		}, "error while linking identity-id %s to cluster with url %s", identityID, clusterURL)
+		}, "error while linking identity-id %s to cluster with url %s", identityID, ctx.Payload.ClusterURL)
 		return app.JSONErrorResponse(ctx, err)
 	}
-
 	return ctx.NoContent()
 }
 
@@ -187,15 +180,10 @@ func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentity
 		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
 	}
 
-	clusterURL := ctx.Payload.ClusterURL
-	if err := service.ValidateURL(&clusterURL); err != nil {
-		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL)))
-	}
-
-	if err := c.app.ClusterService().RemoveIdentityToClusterLink(ctx, identityID, clusterURL); err != nil {
+	if err := c.app.ClusterService().RemoveIdentityToClusterLink(ctx, identityID, ctx.Payload.ClusterURL); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
-		}, "error while removing link of identity-id %s to cluster with url %s", identityID, clusterURL)
+		}, "error while removing link of identity-id %s to cluster with url %s", identityID, ctx.Payload.ClusterURL)
 		return app.JSONErrorResponse(ctx, err)
 	}
 
