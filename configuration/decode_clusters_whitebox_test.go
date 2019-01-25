@@ -55,7 +55,7 @@ func TestDecodeClusters(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.Len(t, result, 2)
-		// a cluster with all optional fields explicitely set
+		// a cluster with all optional fields explicitly set
 		assert.Equal(t, repository.Cluster{
 			ClusterID:         uuid.Nil,
 			Name:              "cluster1",
