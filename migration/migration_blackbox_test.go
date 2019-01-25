@@ -276,8 +276,6 @@ func testMigration007AddTrailingSlash(t *testing.T) {
 		assert.False(t, strings.HasSuffix(loggingURL, "//"))
 		assert.True(t, strings.HasSuffix(metricsURL, "/"))
 		assert.False(t, strings.HasSuffix(metricsURL, "//"))
-		assert.True(t, strings.HasSuffix(metricsURL, "/"))
-		assert.False(t, strings.HasSuffix(metricsURL, "//"))
 		assert.True(t, strings.HasSuffix(appDNS, "/"))
 		assert.False(t, strings.HasSuffix(appDNS, "//"))
 	}
