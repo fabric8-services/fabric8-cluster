@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"net/url"
 	"strings"
 	"time"
 
@@ -62,7 +61,7 @@ type Cluster struct {
 // Normalize fills the `console`, `metrics` and `logging` URL if there were missing,
 // and appends a trailing slash if needed.
 func (c *Cluster) Normalize() error {
-	// ensure that AppDNS URL ends with a slash
+	// ensure that cluster URL ends with a slash
 	c.URL = httpsupport.AddTrailingSlashToURL(c.URL)
 
 	var err error
@@ -95,27 +94,7 @@ func (c *Cluster) Normalize() error {
 	if c.Type == "" {
 		c.Type = cluster.OSO
 	}
-
-	// if c.SATokenEncrypted == nil {
-	// 	c.SATokenEncrypted = configuration.PointerToBool(true)
-	// }
 	return nil
-}
-
-// ConvertAPIURL converts the given `apiURL` by adding the new prefix (or subdomain) and a path
-// eg: ConvertAPIURL("https://foo.com", "api", "some/path") gives "https://api.foo.com/some/path"
-func ConvertAPIURL(apiURL, newPrefix, newPath string) (string, error) {
-	newURL, err := url.Parse(apiURL)
-	if err != nil {
-		return "", err
-	}
-	newHost, err := httpsupport.ReplaceDomainPrefix(newURL.Host, newPrefix)
-	if err != nil {
-		return "", err
-	}
-	newURL.Host = newHost
-	newURL.Path = newPath
-	return newURL.String(), nil
 }
 
 // GormClusterRepository is the implementation of the storage interface for Cluster.
@@ -149,7 +128,7 @@ func (m *GormClusterRepository) TableName() string {
 
 // TableName overrides the table name settings in Gorm to force a specific table name
 // in the database.
-func (c *Cluster) TableName() string {
+func (c Cluster) TableName() string {
 	return "cluster"
 }
 
@@ -187,7 +166,6 @@ func (m *GormClusterRepository) LoadClusterByURL(ctx context.Context, url string
 // Create creates a new record.
 func (m *GormClusterRepository) Create(ctx context.Context, c *Cluster) error {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "create"}, time.Now())
-	log.Debug(ctx, map[string]interface{}{"cluster": c}, "creating cluster record in db")
 	if c.ClusterID == uuid.Nil {
 		c.ClusterID = uuid.NewV4()
 	}

@@ -252,25 +252,3 @@ func AssertEqualIdentityClusters(t *testing.T, expected, actual repository.Ident
 	assert.Equal(t, expected.IdentityID, actual.IdentityID)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
 }
-
-// // ClusterFromConfigurationCluster converts a "configuration" cluster to a "model" cluster
-// func ClusterFromConfigurationCluster(c repository.Cluster) repository.Cluster {
-// 	return repository.Cluster{
-// 		Name:              c.Name,
-// 		URL:               httpsupport.AddTrailingSlashToURL(c.URL),
-// 		ConsoleURL:        httpsupport.AddTrailingSlashToURL(c.ConsoleURL),
-// 		MetricsURL:        httpsupport.AddTrailingSlashToURL(c.MetricsURL),
-// 		LoggingURL:        httpsupport.AddTrailingSlashToURL(c.LoggingURL),
-// 		AppDNS:            c.AppDNS,
-// 		CapacityExhausted: c.CapacityExhausted,
-// 		Type:              c.Type,
-
-// 		SAToken:          c.SAToken,
-// 		SAUsername:       c.SAUsername,
-// 		SATokenEncrypted: c.SATokenEncrypted,
-// 		TokenProviderID:  c.TokenProviderID,
-// 		AuthClientID:     c.AuthClientID,
-// 		AuthClientSecret: c.AuthClientSecret,
-// 		AuthDefaultScope: c.AuthDefaultScope,
-// 	}
-// }
