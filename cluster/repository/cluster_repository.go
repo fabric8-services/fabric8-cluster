@@ -66,6 +66,7 @@ func (c *Cluster) Normalize() error {
 
 	var err error
 	// fill missing values and ensures that all URLs have a trailing slash
+	// console URL
 	if strings.TrimSpace(c.ConsoleURL) == "" {
 		c.ConsoleURL, err = ConvertAPIURL(c.URL, "console", "console")
 		if err != nil {
@@ -73,6 +74,7 @@ func (c *Cluster) Normalize() error {
 		}
 	}
 	c.ConsoleURL = httpsupport.AddTrailingSlashToURL(c.ConsoleURL)
+	// metrics URL
 	if strings.TrimSpace(c.MetricsURL) == "" {
 		c.MetricsURL, err = ConvertAPIURL(c.URL, "metrics", "")
 		if err != nil {
@@ -80,6 +82,7 @@ func (c *Cluster) Normalize() error {
 		}
 	}
 	c.MetricsURL = httpsupport.AddTrailingSlashToURL(c.MetricsURL)
+	// logging URL
 	if strings.TrimSpace(c.LoggingURL) == "" {
 		// This is not a typo; the logging host is the same as the console host in current k8s
 		c.LoggingURL, err = ConvertAPIURL(c.URL, "console", "console")

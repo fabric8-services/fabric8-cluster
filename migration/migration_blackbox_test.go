@@ -252,7 +252,7 @@ func testMigration007AddTrailingSlash(t *testing.T) {
 	require.NoError(t, err)
 	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, name, url, console_url, metrics_url, logging_url , app_dns)
 		VALUES ('00000000-0000-0000-0007-000000000002', 'cluster2', 'https://cluster2.com/', 'https://console.cluster2.com/',
-	   'https://metrics.cluster2.com/', 'https://login.cluster2.com/', 'cluster2.com')`)
+	   'https://metrics.cluster2.com/', 'https://login.cluster2.com/', 'cluster2.com/')`)
 	require.NoError(t, err)
 
 	// then apply step 7 of migration
@@ -260,13 +260,13 @@ func testMigration007AddTrailingSlash(t *testing.T) {
 	require.NoError(t, err)
 
 	// and verify that all URLs have a single trailing slash
-	rows, err := sqlDB.Query("SELECT url, console_url, metrics_url, logging_url FROM cluster")
+	rows, err := sqlDB.Query("SELECT url, console_url, metrics_url, logging_url, app_dns FROM cluster")
 	require.NoError(t, err)
 
 	defer rows.Close()
 	for rows.Next() {
-		var url, consoleURL, metricsURL, loggingURL string
-		err = rows.Scan(&url, &consoleURL, &metricsURL, &loggingURL)
+		var url, consoleURL, metricsURL, loggingURL, appDNS string
+		err = rows.Scan(&url, &consoleURL, &metricsURL, &loggingURL, &appDNS)
 		require.NoError(t, err)
 		assert.True(t, strings.HasSuffix(url, "/"))
 		assert.False(t, strings.HasSuffix(url, "//")) // make sure there was no extra trailing slash appended if not needed
@@ -276,6 +276,10 @@ func testMigration007AddTrailingSlash(t *testing.T) {
 		assert.False(t, strings.HasSuffix(loggingURL, "//"))
 		assert.True(t, strings.HasSuffix(metricsURL, "/"))
 		assert.False(t, strings.HasSuffix(metricsURL, "//"))
+		assert.True(t, strings.HasSuffix(metricsURL, "/"))
+		assert.False(t, strings.HasSuffix(metricsURL, "//"))
+		assert.True(t, strings.HasSuffix(appDNS, "/"))
+		assert.False(t, strings.HasSuffix(appDNS, "//"))
 	}
 
 }
