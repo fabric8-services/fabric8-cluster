@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/fabric8-services/fabric8-cluster/migration"
@@ -85,6 +86,7 @@ func (s *MigrationTestSuite) TestMigrate() {
 	s.T().Run("testMigration004AddCapacityExhaustedToCluster", testMigration004AddCapacityExhaustedToCluster)
 	s.T().Run("testMigration005AlterClusterAPIURLIndexToUnique", testMigration005AlterClusterAPIURLIndexToUnique)
 	s.T().Run("testMigration006AddSaTokenEncryptedToCluster", testMigration006AddSaTokenEncryptedToCluster)
+	s.T().Run("testMigration007AddTrailingSlash", testMigration007AddTrailingSlash)
 }
 
 func testMigration001Cluster(t *testing.T) {
@@ -237,4 +239,43 @@ func testMigration006AddSaTokenEncryptedToCluster(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, sa_token_encrypted)
 	}
+}
+
+func testMigration007AddTrailingSlash(t *testing.T) {
+	// first, migrate to step 6
+	err := migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:7])
+	require.NoError(t, err)
+	// then insert some records with *some* url having no trailing slash
+	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, name, url, console_url, metrics_url, logging_url, app_dns)
+		VALUES ('00000000-0000-0000-0007-000000000001', 'cluster1', 'https://cluster1.com', 'https://console.cluster1.com',
+	   'https://metrics.cluster1.com', 'https://login.cluster1.com', 'cluster1.com')`)
+	require.NoError(t, err)
+	_, err = sqlDB.Exec(`INSERT INTO cluster (cluster_id, name, url, console_url, metrics_url, logging_url , app_dns)
+		VALUES ('00000000-0000-0000-0007-000000000002', 'cluster2', 'https://cluster2.com/', 'https://console.cluster2.com/',
+	   'https://metrics.cluster2.com/', 'https://login.cluster2.com/', 'cluster2.com')`)
+	require.NoError(t, err)
+
+	// then apply step 7 of migration
+	err = migrationsupport.Migrate(sqlDB, databaseName, migration.Steps()[:8])
+	require.NoError(t, err)
+
+	// and verify that all URLs have a single trailing slash
+	rows, err := sqlDB.Query("SELECT url, console_url, metrics_url, logging_url FROM cluster")
+	require.NoError(t, err)
+
+	defer rows.Close()
+	for rows.Next() {
+		var url, consoleURL, metricsURL, loggingURL string
+		err = rows.Scan(&url, &consoleURL, &metricsURL, &loggingURL)
+		require.NoError(t, err)
+		assert.True(t, strings.HasSuffix(url, "/"))
+		assert.False(t, strings.HasSuffix(url, "//")) // make sure there was no extra trailing slash appended if not needed
+		assert.True(t, strings.HasSuffix(consoleURL, "/"))
+		assert.False(t, strings.HasSuffix(consoleURL, "//"))
+		assert.True(t, strings.HasSuffix(loggingURL, "/"))
+		assert.False(t, strings.HasSuffix(loggingURL, "//"))
+		assert.True(t, strings.HasSuffix(metricsURL, "/"))
+		assert.False(t, strings.HasSuffix(metricsURL, "//"))
+	}
+
 }
