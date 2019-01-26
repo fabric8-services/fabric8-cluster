@@ -7,17 +7,18 @@ import (
 	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/sentry"
 
-	"github.com/getsentry/raven-go"
+	raven "github.com/getsentry/raven-go"
 	"github.com/goadesign/goa/middleware/security/jwt"
 )
 
-type configuration interface {
+// SentryConfiguration the configuration for Sentry
+type Configuration interface {
 	GetSentryDSN() string
 	GetEnvironment() string
 }
 
 // Initialize initializes sentry client
-func Initialize(config configuration, commit string) (func(), error) {
+func Initialize(config Configuration, commit string) (func(), error) {
 	sentryDSN := config.GetSentryDSN()
 
 	return sentry.InitializeSentryClient(

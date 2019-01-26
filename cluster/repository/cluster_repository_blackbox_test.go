@@ -2,18 +2,18 @@ package repository_test
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
-
-	uuid "github.com/satori/go.uuid"
 
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
 	"github.com/fabric8-services/fabric8-common/errors"
-
-	"fmt"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/jinzhu/gorm"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -49,12 +49,27 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	test.CreateCluster(s.T(), s.DB) // noise
-	// when
-	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster1.URL)
-	// then
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), loaded)
-	test.AssertEqualCluster(s.T(), cluster1, *loaded, true)
+	// make sure the URL has a trailing slash at this point
+	require.True(s.T(), strings.HasSuffix(cluster1.URL, "/"))
+
+	s.T().Run("search without trailing slash", func(t *testing.T) {
+		// when
+		loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster1.URL)
+		// then
+		require.NoError(t, err)
+		require.NotNil(t, loaded)
+		test.AssertEqualCluster(t, cluster1, *loaded, true)
+	})
+
+	s.T().Run("search with trailing slash", func(t *testing.T) {
+		// when
+		loaded, err := s.repo.LoadClusterByURL(context.Background(), httpsupport.AddTrailingSlashToURL(cluster1.URL))
+		// then
+		require.NoError(t, err)
+		require.NotNil(t, loaded)
+		test.AssertEqualCluster(t, cluster1, *loaded, true)
+	})
+
 }
 
 func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {

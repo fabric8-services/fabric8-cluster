@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"strings"
 	"time"
+
+	"github.com/fabric8-services/fabric8-cluster/cluster"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/fabric8-services/fabric8-cluster/application/repository/base"
 	"github.com/fabric8-services/fabric8-common/errors"
@@ -17,41 +21,83 @@ import (
 	"fmt"
 )
 
+// Cluster the struct that holds the cluster info
 type Cluster struct {
 	gormsupport.LifecycleHardDelete
-
 	// This is the primary key value
 	ClusterID uuid.UUID `sql:"type:uuid default uuid_generate_v4()" gorm:"primary_key;column:cluster_id"`
 	// The name of the cluster
-	Name string
+	Name string `mapstructure:"name"`
 	// API URL of the cluster
-	URL string `sql:"unique_index"`
+	URL string `sql:"unique_index" mapstructure:"api-url"`
 	// Console URL of the cluster
-	ConsoleURL string
+	ConsoleURL string `mapstructure:"console-url" optional:"true"` // Optional in config file
 	// Metrics URL of the cluster
-	MetricsURL string
+	MetricsURL string `mapstructure:"metrics-url" optional:"true"` // Optional in config file
 	// Logging URL of the cluster
-	LoggingURL string
+	LoggingURL string `mapstructure:"logging-url" optional:"true"` // Optional in config file
 	// Application host name used by the cluster
-	AppDNS string
+	AppDNS string `mapstructure:"app-dns"`
 	// Service Account token (encrypted or not, depending on the state of the sibling SATokenEncrypted field)
-	SAToken string
+	SAToken string `mapstructure:"service-account-token"`
 	// Service Account username
-	SAUsername string
+	SAUsername string `mapstructure:"service-account-username"`
 	// SA Token encrypted
-	SATokenEncrypted bool
+	SATokenEncrypted bool `mapstructure:"service-account-token-encrypted" optional:"true" default:"true"` // Optional in config file
 	// Token Provider ID
-	TokenProviderID string
+	TokenProviderID string `mapstructure:"token-provider-id"`
 	// OAuthClient ID used to link users account
-	AuthClientID string
+	AuthClientID string `mapstructure:"auth-client-id"`
 	// OAuthClient secret used to link users account
-	AuthClientSecret string
+	AuthClientSecret string `mapstructure:"auth-client-secret"`
 	// OAuthClient default scope used to link users account
-	AuthDefaultScope string
+	AuthDefaultScope string `mapstructure:"auth-client-default-scope"`
 	// Cluster type. Such as OSD, OSO, OCP, etc
-	Type string
+	Type string `mapstructure:"type" optional:"true" default:"OSO"` // Optional in config file
 	// cluster capacity exhausted by default false
-	CapacityExhausted bool
+	CapacityExhausted bool `mapstructure:"capacity-exhausted" optional:"true"` // Optional in config file
+}
+
+// Normalize fills the `console`, `metrics` and `logging` URL if there were missing,
+// and appends a trailing slash if needed.
+func (c *Cluster) Normalize() error {
+	// ensure that cluster URL ends with a slash
+	c.URL = httpsupport.AddTrailingSlashToURL(c.URL)
+
+	var err error
+	// fill missing values and ensures that all URLs have a trailing slash
+	// console URL
+	if strings.TrimSpace(c.ConsoleURL) == "" {
+		c.ConsoleURL, err = ConvertAPIURL(c.URL, "console", "console")
+		if err != nil {
+			return err
+		}
+	}
+	c.ConsoleURL = httpsupport.AddTrailingSlashToURL(c.ConsoleURL)
+	// metrics URL
+	if strings.TrimSpace(c.MetricsURL) == "" {
+		c.MetricsURL, err = ConvertAPIURL(c.URL, "metrics", "")
+		if err != nil {
+			return err
+		}
+	}
+	c.MetricsURL = httpsupport.AddTrailingSlashToURL(c.MetricsURL)
+	// logging URL
+	if strings.TrimSpace(c.LoggingURL) == "" {
+		// This is not a typo; the logging host is the same as the console host in current k8s
+		c.LoggingURL, err = ConvertAPIURL(c.URL, "console", "console")
+		if err != nil {
+			return err
+		}
+	}
+	c.LoggingURL = httpsupport.AddTrailingSlashToURL(c.LoggingURL)
+	// ensure that AppDNS URL ends with a slash
+	c.AppDNS = httpsupport.AddTrailingSlashToURL(c.AppDNS)
+	// apply default type of cluster
+	if c.Type == "" {
+		c.Type = cluster.OSO
+	}
+	return nil
 }
 
 // GormClusterRepository is the implementation of the storage interface for Cluster.
@@ -85,7 +131,7 @@ func (m *GormClusterRepository) TableName() string {
 
 // TableName overrides the table name settings in Gorm to force a specific table name
 // in the database.
-func (m Cluster) TableName() string {
+func (c Cluster) TableName() string {
 	return "cluster"
 }
 
@@ -112,7 +158,8 @@ func (m *GormClusterRepository) Load(ctx context.Context, id uuid.UUID) (*Cluste
 func (m *GormClusterRepository) LoadClusterByURL(ctx context.Context, url string) (*Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "loadClusterByURL"}, time.Now())
 	var native Cluster
-	err := m.db.Table(m.TableName()).Where("url = ?", url).Find(&native).Error
+	// make sure that the URL to use during the search also has a trailing slash (see the Cluster.Normalize() method)
+	err := m.db.Table(m.TableName()).Where("url = ?", httpsupport.AddTrailingSlashToURL(url)).Find(&native).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, errors.NewNotFoundErrorFromString(fmt.Sprintf("cluster with url %s not found", url))
 	}
@@ -125,7 +172,11 @@ func (m *GormClusterRepository) Create(ctx context.Context, c *Cluster) error {
 	if c.ClusterID == uuid.Nil {
 		c.ClusterID = uuid.NewV4()
 	}
-	err := m.db.Create(c).Error
+	err := c.Normalize()
+	if err != nil {
+		return errs.WithStack(err)
+	}
+	err = m.db.Create(c).Error
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_id": c.ClusterID.String(),
@@ -143,7 +194,7 @@ func (m *GormClusterRepository) Create(ctx context.Context, c *Cluster) error {
 func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "save"}, time.Now())
 
-	obj, err := m.Load(ctx, c.ClusterID)
+	existing, err := m.Load(ctx, c.ClusterID)
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_id": c.ClusterID.String(),
@@ -151,7 +202,16 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 		}, "unable to update cluster")
 		return errs.WithStack(err)
 	}
-	err = m.db.Model(obj).Updates(c).Error
+	return m.update(ctx, existing, c)
+}
+
+// update updates the existing cluster record with the given "new" one
+func (m *GormClusterRepository) update(ctx context.Context, existing, c *Cluster) error {
+	err := c.Normalize()
+	if err != nil {
+		return errs.WithStack(err)
+	}
+	err = m.db.Model(existing).Updates(c).Error
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_id": c.ClusterID.String(),
@@ -168,7 +228,7 @@ func (m *GormClusterRepository) Save(ctx context.Context, c *Cluster) error {
 
 // CreateOrSave creates cluster or saves cluster if any cluster found using url
 func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) error {
-	obj, err := m.LoadClusterByURL(ctx, c.URL)
+	existing, err := m.LoadClusterByURL(ctx, c.URL)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
 			return m.Create(ctx, c)
@@ -179,21 +239,7 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 		}, "unable to load cluster")
 		return errs.WithStack(err)
 	}
-	err = m.db.Model(obj).Updates(c).Error
-	if err != nil {
-		log.Error(ctx, map[string]interface{}{
-			"cluster_id":  c.ClusterID.String(),
-			"cluster_url": c.URL,
-			"err":         err,
-		}, "unable to update cluster")
-		return errs.WithStack(err)
-	}
-
-	log.Warn(ctx, map[string]interface{}{
-		"cluster_id":   c.ClusterID.String(),
-		"cluster_name": c.Name,
-	}, "Cluster saved!")
-	return nil
+	return m.update(ctx, existing, c)
 }
 
 // Delete removes a single record. This is a hard delete!

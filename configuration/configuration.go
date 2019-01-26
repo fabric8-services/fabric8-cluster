@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	commoncfg "github.com/fabric8-services/fabric8-common/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
-
-	"github.com/fabric8-services/fabric8-cluster/cluster"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -72,26 +72,7 @@ const (
 )
 
 type clusterConfig struct {
-	Clusters []Cluster
-}
-
-// Cluster represents a cluster from configuration
-type Cluster struct {
-	Name                         string `mapstructure:"name"`
-	APIURL                       string `mapstructure:"api-url"`
-	ConsoleURL                   string `mapstructure:"console-url"` // Optional in oso-clusters.conf
-	MetricsURL                   string `mapstructure:"metrics-url"` // Optional in oso-clusters.conf
-	LoggingURL                   string `mapstructure:"logging-url"` // Optional in oso-clusters.conf
-	AppDNS                       string `mapstructure:"app-dns"`
-	ServiceAccountToken          string `mapstructure:"service-account-token"`
-	ServiceAccountUsername       string `mapstructure:"service-account-username"`
-	ServiceAccountTokenEncrypted *bool  `mapstructure:"service-account-token-encrypted"` // Optional in oso-clusters.conf ('true' by default)
-	TokenProviderID              string `mapstructure:"token-provider-id"`
-	AuthClientID                 string `mapstructure:"auth-client-id"`
-	AuthClientSecret             string `mapstructure:"auth-client-secret"`
-	AuthClientDefaultScope       string `mapstructure:"auth-client-default-scope"`
-	Type                         string `mapstructure:"type"`               // Optional in oso-clusters.conf ('OSO' by default)
-	CapacityExhausted            bool   `mapstructure:"capacity-exhausted"` // Optional in oso-clusters.conf ('false' by default)
+	Clusters []repository.Cluster
 }
 
 // ConfigurationData encapsulates the Viper configuration object which stores the configuration data in-memory.
@@ -100,7 +81,7 @@ type ConfigurationData struct {
 	v *viper.Viper
 
 	// Cluster Configuration is a map of clusters where the key == the cluster API URL
-	clusters              map[string]Cluster
+	clusters              map[string]repository.Cluster
 	clusterConfigFilePath string
 
 	defaultConfigurationError error
@@ -180,52 +161,14 @@ func (c *ConfigurationData) initClusterConfig(clusterConfigFile, defaultClusterC
 	if defaultConfigErrorMsg != nil {
 		c.appendDefaultConfigErrorMessage(*defaultConfigErrorMsg)
 	}
-
-	var clusterConf clusterConfig
-	err = clusterViper.Unmarshal(&clusterConf)
+	clusters, err := decodeClusters(clusterViper.Get("clusters"))
 	if err != nil {
 		return usedClusterConfigFile, err
 	}
-	c.clusters = map[string]Cluster{}
-	for _, configCluster := range clusterConf.Clusters {
-		// ensure that API URL ends with a slash
-		configCluster.APIURL = httpsupport.AddTrailingSlashToURL(configCluster.APIURL)
-		if configCluster.ConsoleURL == "" {
-			configCluster.ConsoleURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "console", "console")
-			if err != nil {
-				return usedClusterConfigFile, err
-			}
-		} else {
-			configCluster.ConsoleURL = httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL)
-		}
-		if configCluster.MetricsURL == "" {
-			configCluster.MetricsURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "metrics", "")
-			if err != nil {
-				return usedClusterConfigFile, err
-			}
-		} else {
-			configCluster.MetricsURL = httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL)
-		}
-		if configCluster.LoggingURL == "" {
-			// This is not a typo; the logging host is the same as the console host in current k8s
-			configCluster.LoggingURL, err = cluster.ConvertAPIURL(configCluster.APIURL, "console", "console")
-			if err != nil {
-				return usedClusterConfigFile, err
-			}
-		} else {
-			configCluster.LoggingURL = httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL)
-		}
-		if configCluster.Type == "" {
-			configCluster.Type = cluster.OSO
-		}
-
-		if configCluster.ServiceAccountTokenEncrypted == nil {
-			configCluster.ServiceAccountTokenEncrypted = PointerToBool(true)
-		}
-
-		c.clusters[configCluster.APIURL] = configCluster
+	c.clusters = map[string]repository.Cluster{}
+	for _, configCluster := range clusters {
+		c.clusters[configCluster.URL] = configCluster
 	}
-
 	err = c.checkClusterConfig()
 	return usedClusterConfigFile, err
 }
@@ -235,7 +178,6 @@ func (c *ConfigurationData) checkClusterConfig() error {
 	if len(c.clusters) == 0 {
 		return errors.New("empty cluster config file")
 	}
-
 	err := errors.New("")
 	ok := true
 	for _, cluster := range c.clusters {
@@ -243,17 +185,22 @@ func (c *ConfigurationData) checkClusterConfig() error {
 		typ := iVal.Type()
 		for i := 0; i < iVal.NumField(); i++ {
 			f := iVal.Field(i)
-			tag := typ.Field(i).Tag.Get("mapstructure")
+			mapstructTag := typ.Field(i).Tag.Get("mapstructure")
+			optionalTag := typ.Field(i).Tag.Get("optional")
+			if mapstructTag == "" || optionalTag != "" {
+				// skip checking for the field if it is not mapped or if it is optional
+				continue
+			}
 			switch f.Interface().(type) {
 			case string:
 				if f.String() == "" {
-					err = errors.Errorf("%s; key %v is missing in cluster config", err.Error(), tag)
+					err = errors.Errorf("%s; key %v is missing in cluster config", err.Error(), mapstructTag)
 					ok = false
 				}
 			case bool, *bool:
 				// Ignore
 			default:
-				err = errors.Errorf("%s; wrong type of key %v", err.Error(), tag)
+				err = errors.Errorf("%s; wrong type of key for field '%v': '%T'", err.Error(), mapstructTag, f.Interface())
 				ok = false
 			}
 		}
@@ -342,6 +289,7 @@ func getOSOClusterConfigFile() string {
 	return envOSOClusterConfigFile
 }
 
+// ReloadClusterConfig reloads the cluster from the config file
 func (c *ConfigurationData) ReloadClusterConfig() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -362,7 +310,7 @@ func (c *ConfigurationData) DefaultConfigurationError() error {
 	return c.defaultConfigurationError
 }
 
-// GetClusterServiceUrl returns Cluster Service URL
+// GetClusterServiceURL returns Cluster Service URL
 func (c *ConfigurationData) GetClusterServiceURL() string {
 	if c.v.IsSet(varClusterServiceURL) {
 		return c.v.GetString(varClusterServiceURL)
@@ -377,7 +325,7 @@ func (c *ConfigurationData) GetClusterServiceURL() string {
 	}
 }
 
-// GetAuthServiceUrl returns Auth Service URL
+// GetAuthServiceURL returns Auth Service URL
 func (c *ConfigurationData) GetAuthServiceURL() string {
 	if c.v.IsSet(varAuthURL) {
 		return c.v.GetString(varAuthURL)
@@ -394,7 +342,7 @@ func (c *ConfigurationData) GetAuthKeysPath() string {
 }
 
 // GetClusters returns a map of cluster configurations by cluster API URL
-func (c *ConfigurationData) GetClusters() map[string]Cluster {
+func (c *ConfigurationData) GetClusters() map[string]repository.Cluster {
 	// Lock for reading because config file watcher can update cluster configuration
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -406,7 +354,7 @@ func (c *ConfigurationData) GetClusters() map[string]Cluster {
 // or "https://api.openshift.com/" it will match any "https://api.openshift.com*"
 // like "https://api.openshift.com", "https://api.openshift.com/", or "https://api.openshift.com/patch"
 // Returns nil if no matching API URL found
-func (c *ConfigurationData) GetClusterByURL(url string) *Cluster {
+func (c *ConfigurationData) GetClusterByURL(url string) *repository.Cluster {
 	// Lock for reading because config file watcher can update cluster configuration
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -626,9 +574,4 @@ func (c *ConfigurationData) GetDevModePrivateKey() []byte {
 		return []byte(commoncfg.DevModeRsaPrivateKey)
 	}
 	return nil
-}
-
-// PointerToBool return pointer to bool
-func PointerToBool(b bool) *bool {
-	return &b
 }
