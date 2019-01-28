@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fabric8-services/fabric8-common/httpsupport"
+
 	"github.com/fabric8-services/fabric8-common/auth"
 
 	"github.com/fabric8-services/fabric8-cluster/gormapplication"
@@ -544,24 +546,33 @@ func (s *ClusterServiceTestSuite) TestFindByURL() {
 
 	s.T().Run("ok", func(t *testing.T) {
 
-		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
-			t.Run(saName, func(t *testing.T) {
-				// given
-				c := newTestCluster()
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
-				require.NoError(t, err)
-				sa := &authtestsupport.Identity{
-					Username: saName,
-					ID:       uuid.NewV4(),
+		// given
+		c := newTestCluster()
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+		require.NoError(t, err)
+
+		for scenario, url := range map[string]string{
+			"using url with trailing slash":    httpsupport.AddTrailingSlashToURL(c.URL),
+			"using url without trailing slash": httpsupport.RemoveTrailingSlashFromURL(c.URL),
+		} {
+			t.Run(scenario, func(t *testing.T) {
+				for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+					t.Run(saName, func(t *testing.T) {
+						// given
+						sa := &authtestsupport.Identity{
+							Username: saName,
+							ID:       uuid.NewV4(),
+						}
+						ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+						require.NoError(t, err)
+						// when
+						result, err := s.Application.ClusterService().FindByURL(ctx, url)
+						// then
+						require.NoError(t, err)
+						require.NotNil(t, result)
+						test.AssertEqualCluster(t, *c, *result, false)
+					})
 				}
-				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
-				require.NoError(t, err)
-				// when
-				result, err := s.Application.ClusterService().FindByURL(ctx, c.URL)
-				// then
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				test.AssertEqualCluster(t, *c, *result, false)
 			})
 		}
 	})
@@ -608,24 +619,32 @@ func (s *ClusterServiceTestSuite) TestFindByURL() {
 func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 
 	s.T().Run("ok", func(t *testing.T) {
-		for _, saName := range []string{"fabric8-auth"} {
-			t.Run(saName, func(t *testing.T) {
-				// given
-				c := newTestCluster()
-				err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
-				require.NoError(t, err)
-				sa := &authtestsupport.Identity{
-					Username: saName,
-					ID:       uuid.NewV4(),
+		// given
+		c := newTestCluster()
+		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
+		require.NoError(t, err)
+
+		for scenario, url := range map[string]string{
+			"using url with trailing slash":    httpsupport.AddTrailingSlashToURL(c.URL),
+			"using url without trailing slash": httpsupport.RemoveTrailingSlashFromURL(c.URL),
+		} {
+			t.Run(scenario, func(t *testing.T) {
+				for _, saName := range []string{"fabric8-auth"} {
+					t.Run(saName, func(t *testing.T) {
+						sa := &authtestsupport.Identity{
+							Username: saName,
+							ID:       uuid.NewV4(),
+						}
+						ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+						require.NoError(t, err)
+						// when
+						result, err := s.Application.ClusterService().FindByURLForAuth(ctx, url)
+						// then
+						require.NoError(t, err)
+						require.NotNil(t, result)
+						test.AssertEqualCluster(t, *c, *result, true)
+					})
 				}
-				ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
-				require.NoError(t, err)
-				// when
-				result, err := s.Application.ClusterService().FindByURLForAuth(ctx, c.URL)
-				// then
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				test.AssertEqualCluster(t, *c, *result, true)
 			})
 		}
 	})
