@@ -28,7 +28,7 @@ var createClusterData = a.Type("createClusterData", func() {
 	a.Attribute("auth-client-secret", d.String, "OAuth client secret")
 	a.Attribute("auth-client-default-scope", d.String, "OAuth client default scope")
 
-	a.Required("name", "api-url", // other URLs are optional, they can be derived from the `api-url` if not explicitely provided
+	a.Required("name", "api-url", // other URLs are optional, they can be derived from the `api-url` if not explicitly provided
 		"app-dns", "type",
 		"service-account-token", "service-account-username", "auth-client-id", "auth-client-secret",
 		"auth-client-default-scope")

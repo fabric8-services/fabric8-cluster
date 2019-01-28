@@ -4,23 +4,33 @@ import (
 	"context"
 	"testing"
 
-	testsuite "github.com/fabric8-services/fabric8-cluster/test/suite"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/fabric8-services/fabric8-cluster/configuration"
+
 	"github.com/fabric8-services/fabric8-common/auth"
 	testauth "github.com/fabric8-services/fabric8-common/test/auth"
+	testsuite "github.com/fabric8-services/fabric8-common/test/suite"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/getsentry/raven-go"
+	jwt "github.com/dgrijalva/jwt-go"
+	raven "github.com/getsentry/raven-go"
 	goajwt "github.com/goadesign/goa/middleware/security/jwt"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 func TestSentry(t *testing.T) {
-	suite.Run(t, &TestWhiteboxSentry{})
+	suite.Run(t, &SentryWhiteboxTestSuite{})
 }
 
-type TestWhiteboxSentry struct {
+type SentryWhiteboxTestSuite struct {
 	testsuite.UnitTestSuite
+	config *configuration.ConfigurationData
+}
+
+func (s *SentryWhiteboxTestSuite) SetupSuite() {
+	config, err := configuration.GetConfigurationData()
+	require.NoError(s.T(), err)
+	s.config = config
 }
 
 func failOnNoToken(t *testing.T) context.Context {
@@ -35,7 +45,7 @@ func failOnParsingToken(t *testing.T) context.Context {
 	return ctx
 }
 
-func (s *TestWhiteboxSentry) TestExtractUserInfo() {
+func (s *SentryWhiteboxTestSuite) TestExtractUserInfo() {
 	f := extractUserInfo()
 	ctx, identity, err := testauth.EmbedUserTokenInContext(nil, nil)
 	require.NoError(s.T(), err)
@@ -85,8 +95,8 @@ func (s *TestWhiteboxSentry) TestExtractUserInfo() {
 	}
 }
 
-func (s *TestWhiteboxSentry) TestInitialize() {
-	haltSentry, err := Initialize(s.Config, "")
+func (s *SentryWhiteboxTestSuite) TestInitialize() {
+	haltSentry, err := Initialize(s.config, "")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), haltSentry)
 	require.NotPanics(s.T(), func() {

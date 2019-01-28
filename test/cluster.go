@@ -9,7 +9,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 
 	"github.com/fabric8-services/fabric8-cluster/app"
-	"github.com/fabric8-services/fabric8-cluster/configuration"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
@@ -252,26 +251,4 @@ func CreateIdentityCluster(t *testing.T, db *gorm.DB, options ...CreateIdentityC
 func AssertEqualIdentityClusters(t *testing.T, expected, actual repository.IdentityCluster) {
 	assert.Equal(t, expected.IdentityID, actual.IdentityID)
 	assert.Equal(t, expected.ClusterID, actual.ClusterID)
-}
-
-// ClusterFromConfigurationCluster converts a "configuration" cluster to a "model" cluster
-func ClusterFromConfigurationCluster(configCluster configuration.Cluster) repository.Cluster {
-	return repository.Cluster{
-		Name:              configCluster.Name,
-		URL:               httpsupport.AddTrailingSlashToURL(configCluster.APIURL),
-		ConsoleURL:        httpsupport.AddTrailingSlashToURL(configCluster.ConsoleURL),
-		MetricsURL:        httpsupport.AddTrailingSlashToURL(configCluster.MetricsURL),
-		LoggingURL:        httpsupport.AddTrailingSlashToURL(configCluster.LoggingURL),
-		AppDNS:            configCluster.AppDNS,
-		CapacityExhausted: configCluster.CapacityExhausted,
-		Type:              configCluster.Type,
-
-		SAToken:          configCluster.ServiceAccountToken,
-		SAUsername:       configCluster.ServiceAccountUsername,
-		SATokenEncrypted: *configCluster.ServiceAccountTokenEncrypted,
-		TokenProviderID:  configCluster.TokenProviderID,
-		AuthClientID:     configCluster.AuthClientID,
-		AuthClientSecret: configCluster.AuthClientSecret,
-		AuthDefaultScope: configCluster.AuthClientDefaultScope,
-	}
 }

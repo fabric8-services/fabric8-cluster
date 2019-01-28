@@ -1,78 +1,61 @@
 package configuration
 
 import (
-	"fmt"
-	"net/http"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/fabric8-services/fabric8-common/resource"
+	testsuite "github.com/fabric8-services/fabric8-common/test/suite"
 
-	"github.com/goadesign/goa"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-var reqLong *goa.RequestData
-var reqShort *goa.RequestData
-var config *ConfigurationData
-
-func init() {
-
-	// ensure that the content here is executed only once.
-	reqLong = &goa.RequestData{
-		Request: &http.Request{Host: "api.service.domain.org"},
-	}
-	reqShort = &goa.RequestData{
-		Request: &http.Request{Host: "api.domain.org"},
-	}
-	resetConfiguration()
+func TestConfiguration(t *testing.T) {
+	suite.Run(t, &ConfigurationWhiteboxTestSuite{})
 }
 
-func resetConfiguration() {
-	var err error
-	config, err = GetConfigurationData()
-	if err != nil {
-		panic(fmt.Errorf("Failed to setup the configuration: %s", err.Error()))
-	}
+type ConfigurationWhiteboxTestSuite struct {
+	testsuite.UnitTestSuite
+	config *ConfigurationData
 }
 
-func TestGetLogLevelOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
+func (s *ConfigurationWhiteboxTestSuite) SetupTest() {
+	resource.Require(s.T(), resource.UnitTest)
+	config, err := GetConfigurationData()
+	require.NoError(s.T(), err)
+	s.config = config
+}
 
+func (s *ConfigurationWhiteboxTestSuite) TestGetLogLevelOK() {
 	key := "F8_LOG_LEVEL"
 	realEnvValue := os.Getenv(key)
 
 	os.Unsetenv(key)
 	defer func() {
 		os.Setenv(key, realEnvValue)
-		resetConfiguration()
 	}()
 
-	assert.Equal(t, defaultLogLevel, config.GetLogLevel())
+	assert.Equal(s.T(), defaultLogLevel, s.config.GetLogLevel())
 
 	os.Setenv(key, "warning")
-	resetConfiguration()
-
-	assert.Equal(t, "warning", config.GetLogLevel())
+	assert.Equal(s.T(), "warning", s.config.GetLogLevel())
 }
 
-func TestGetTransactionTimeoutOK(t *testing.T) {
-	resource.Require(t, resource.UnitTest)
-
+func (s *ConfigurationWhiteboxTestSuite) TestGetTransactionTimeoutOK() {
 	key := "F8_POSTGRES_TRANSACTION_TIMEOUT"
 	realEnvValue := os.Getenv(key)
 
 	os.Unsetenv(key)
 	defer func() {
 		os.Setenv(key, realEnvValue)
-		resetConfiguration()
 	}()
 
-	assert.Equal(t, time.Duration(5*time.Minute), config.GetPostgresTransactionTimeout())
+	assert.Equal(s.T(), time.Duration(5*time.Minute), s.config.GetPostgresTransactionTimeout())
 
 	os.Setenv(key, "6m")
-	resetConfiguration()
 
-	assert.Equal(t, time.Duration(6*time.Minute), config.GetPostgresTransactionTimeout())
+	assert.Equal(s.T(), time.Duration(6*time.Minute), s.config.GetPostgresTransactionTimeout())
 }

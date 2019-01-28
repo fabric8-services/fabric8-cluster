@@ -212,10 +212,17 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// read again from DB
 			updated, err := s.Application.Clusters().FindByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
+			// console, metrics and logging URLs should be set based on the cluster URL itself (including a trailing slash)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
-			assert.Equal(t, c.ConsoleURL, updated.ConsoleURL)
-			assert.Equal(t, c.MetricsURL, updated.MetricsURL)
-			assert.Equal(t, c.LoggingURL, updated.LoggingURL)
+			consoleURL, err := repository.ConvertAPIURL(c.URL, "console", "console/")
+			require.NoError(t, err)
+			assert.Equal(t, consoleURL, updated.ConsoleURL)
+			metricsURL, err := repository.ConvertAPIURL(c.URL, "metrics", "/")
+			require.NoError(t, err)
+			assert.Equal(t, metricsURL, updated.MetricsURL)
+			loggingURL, err := repository.ConvertAPIURL(c.URL, "console", "console/")
+			require.NoError(t, err)
+			assert.Equal(t, loggingURL, updated.LoggingURL)
 		})
 
 	})
@@ -740,6 +747,7 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
+
 		t.Run("unauthorized", func(t *testing.T) {
 			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "other"} {
 				t.Run(saName, func(t *testing.T) {
@@ -1102,9 +1110,11 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 	require.Fail(t, "cluster config has not been reloaded within 3s")
 }
 
-func verifyClusters(t *testing.T, expectedClusters map[string]configuration.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
+func verifyClusters(t *testing.T, expectedClusters map[string]repository.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
 	for _, expectedCluster := range expectedClusters {
-		verifyCluster(t, test.ClusterFromConfigurationCluster(expectedCluster), actualClusters, compareSensitiveInfo)
+		err := expectedCluster.Normalize()
+		require.NoError(t, err)
+		verifyCluster(t, expectedCluster, actualClusters, compareSensitiveInfo)
 	}
 }
 
