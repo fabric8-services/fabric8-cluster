@@ -133,6 +133,12 @@ func (s clusterService) LoadForAuth(ctx context.Context, clusterID uuid.UUID) (*
 // - Jenkins Proxy
 // returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (s clusterService) FindByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
+	// check the `clusterURL` paraneter to make sure it's a valid URL
+	err := validateURL(clusterURL)
+	if err != nil {
+		return nil, errors.NewBadParameterError("cluster-url", clusterURL)
+	}
+	// check the user token
 	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
 	}
@@ -155,6 +161,11 @@ func (s clusterService) FindByURL(ctx context.Context, clusterURL string) (*repo
 // This method is allowed for the 'auth' service account only.
 // returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (s clusterService) FindByURLForAuth(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
+	// check the `clusterURL` paraneter to make sure it's a valid URL
+	err := validateURL(clusterURL)
+	if err != nil {
+		return nil, errors.NewBadParameterError("cluster-url", clusterURL)
+	}
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
 	}

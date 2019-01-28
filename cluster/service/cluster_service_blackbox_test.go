@@ -9,18 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fabric8-services/fabric8-common/httpsupport"
-
-	"github.com/fabric8-services/fabric8-common/auth"
-
-	"github.com/fabric8-services/fabric8-cluster/gormapplication"
-
 	"github.com/fabric8-services/fabric8-cluster/cluster"
 	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-cluster/configuration"
+	"github.com/fabric8-services/fabric8-cluster/gormapplication"
 	"github.com/fabric8-services/fabric8-cluster/gormtestsupport"
 	"github.com/fabric8-services/fabric8-cluster/test"
+	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/errors"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 	testsupport "github.com/fabric8-services/fabric8-common/test"
 	authtestsupport "github.com/fabric8-services/fabric8-common/test/auth"
 
@@ -544,12 +541,10 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 }
 func (s *ClusterServiceTestSuite) TestFindByURL() {
 
-	s.T().Run("ok", func(t *testing.T) {
+	// given
+	c := test.CreateCluster(s.T(), s.DB)
 
-		// given
-		c := newTestCluster()
-		err := s.Application.ClusterService().CreateOrSaveCluster(context.Background(), c)
-		require.NoError(t, err)
+	s.T().Run("ok", func(t *testing.T) {
 
 		for scenario, url := range map[string]string{
 			"using url with trailing slash":    httpsupport.AddTrailingSlashToURL(c.URL),
@@ -570,7 +565,7 @@ func (s *ClusterServiceTestSuite) TestFindByURL() {
 						// then
 						require.NoError(t, err)
 						require.NotNil(t, result)
-						test.AssertEqualCluster(t, *c, *result, false)
+						test.AssertEqualCluster(t, c, *result, false)
 					})
 				}
 			})
@@ -578,6 +573,20 @@ func (s *ClusterServiceTestSuite) TestFindByURL() {
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("bad request", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: auth.Auth,
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().FindByURL(ctx, "foo.com")
+			// then
+			testsupport.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'foo.com'")
+		})
 
 		t.Run("unauthorized", func(t *testing.T) {
 			// given
@@ -650,6 +659,20 @@ func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("bad request", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: auth.Auth,
+				ID:       uuid.NewV4(),
+			}
+			ctx, err := authtestsupport.EmbedServiceAccountTokenInContext(context.Background(), sa)
+			require.NoError(t, err)
+			// when
+			_, err = s.Application.ClusterService().FindByURLForAuth(ctx, "foo.com")
+			// then
+			testsupport.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'foo.com'")
+		})
 
 		t.Run("unauthorized", func(t *testing.T) {
 			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "other"} {
