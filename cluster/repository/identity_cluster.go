@@ -20,9 +20,10 @@ type IdentityClusterRepository interface {
 	Load(ctx context.Context, identityID, clusterID uuid.UUID) (*IdentityCluster, error)
 	ListClustersForIdentity(ctx context.Context, identityID uuid.UUID) ([]Cluster, error)
 	Create(ctx context.Context, u *IdentityCluster) error
-	Delete(ctx context.Context, identityID, clusterID uuid.UUID) error
+	Delete(ctx context.Context, identityID uuid.UUID, clusterURL string) error
 }
 
+// IdentityCluster a type that associates an Identity to a Cluster
 type IdentityCluster struct {
 	gormsupport.Lifecycle
 	// The associated Identity ID
@@ -102,29 +103,29 @@ func (m *GormIdentityClusterRepository) Create(ctx context.Context, c *IdentityC
 	return nil
 }
 
-// Delete removes the identity/cluster relationship identified by the given `identityID` and `clusterID`
-func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID, clusterID uuid.UUID) error {
+// Delete removes the identity/cluster relationship identified by the given `identityID` and `clusterURL`
+func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
 	defer goa.MeasureSince([]string{"goa", "db", "identity_cluster", "delete"}, time.Now())
 
-	c := IdentityCluster{IdentityID: identityID, ClusterID: clusterID}
-
-	result := m.db.Delete(&c)
+	result := m.db.Exec(fmt.Sprintf(`delete from %[1]s where identity_id = ? 
+		and cluster_id = (select cluster_id from %[2]s where url = ?)`,
+		IdentityCluster{}.TableName(), Cluster{}.TableName()), identityID.String(), clusterURL)
 
 	if result.Error != nil {
 		log.Error(ctx, map[string]interface{}{
-			"cluster_id":  c.ClusterID.String(),
-			"identity_id": c.IdentityID.String(),
+			"cluster_url": clusterURL,
+			"identity_id": identityID.String(),
 			"err":         result.Error,
 		}, "unable to delete the identity cluster")
 		return errs.WithStack(result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return errors.NewNotFoundErrorFromString(fmt.Sprintf("nothing to delete: identity cluster not found (identityID:\"%s\", clusterID:\"%s\")", identityID, clusterID))
+		return errors.NewNotFoundErrorFromString(fmt.Sprintf("nothing to delete: identity cluster not found (identityID:\"%s\", clusterURL:\"%s\")", identityID.String(), clusterURL))
 	}
 
 	log.Debug(ctx, map[string]interface{}{
-		"cluster_id":  c.ClusterID.String(),
-		"identity_id": c.IdentityID.String(),
+		"cluster_url": clusterURL,
+		"identity_id": identityID.String(),
 	}, "Identity cluster deleted!")
 
 	return nil

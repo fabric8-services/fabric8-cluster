@@ -192,9 +192,10 @@ var _ = a.Resource("clusters", func() {
 		a.Payload(linkIdentityToClusterData)
 		a.Description("create a identitycluster using a service account")
 		a.Response(d.NoContent)
-		a.Response(d.InternalServerError, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
 		a.Response(d.BadRequest, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
 	a.Action("removeIdentityToClusterLink", func() {
