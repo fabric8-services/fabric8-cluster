@@ -162,7 +162,7 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 	if err := c.app.ClusterService().LinkIdentityToCluster(ctx, identityID, ctx.Payload.ClusterURL, ignore); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
-		}, "error while linking identity-id %s to cluster with url %s", identityID, ctx.Payload.ClusterURL)
+		}, "error while linking identity-id %s to cluster with url '%s'", identityID, ctx.Payload.ClusterURL)
 		return app.JSONErrorResponse(ctx, err)
 	}
 	return ctx.NoContent()
@@ -183,7 +183,7 @@ func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentity
 	if err := c.app.ClusterService().RemoveIdentityToClusterLink(ctx, identityID, ctx.Payload.ClusterURL); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
-		}, "error while removing link of identity-id %s to cluster with url %s", identityID, ctx.Payload.ClusterURL)
+		}, "error while removing link of identity-id %s to cluster with url '%s'", identityID, ctx.Payload.ClusterURL)
 		return app.JSONErrorResponse(ctx, err)
 	}
 

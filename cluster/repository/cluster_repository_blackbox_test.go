@@ -54,7 +54,7 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
 
 	s.T().Run("search without trailing slash", func(t *testing.T) {
 		// when
-		loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster1.URL)
+		loaded, err := s.repo.LoadByURL(context.Background(), cluster1.URL)
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, loaded)
@@ -63,7 +63,7 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLOK() {
 
 	s.T().Run("search with trailing slash", func(t *testing.T) {
 		// when
-		loaded, err := s.repo.LoadClusterByURL(context.Background(), httpsupport.AddTrailingSlashToURL(cluster1.URL))
+		loaded, err := s.repo.LoadByURL(context.Background(), httpsupport.AddTrailingSlashToURL(cluster1.URL))
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, loaded)
@@ -78,10 +78,10 @@ func (s *clusterRepositoryTestSuite) TestCreateAndLoadClusterByURLFail() {
 	test.CreateCluster(s.T(), s.DB) // noise
 	// when
 	clusterURL := uuid.NewV4().String()
-	loaded, err := s.repo.LoadClusterByURL(context.Background(), clusterURL)
+	loaded, err := s.repo.LoadByURL(context.Background(), clusterURL)
 	// then
 	assert.Nil(s.T(), loaded)
-	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf("cluster with url %s not found", clusterURL))
+	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf("cluster with url '%s' not found", clusterURL))
 }
 
 func (s *clusterRepositoryTestSuite) TestCreateOKInCreateOrSave() {
@@ -91,7 +91,7 @@ func (s *clusterRepositoryTestSuite) TestCreateOKInCreateOrSave() {
 	require.NoError(s.T(), err)
 	test.CreateCluster(s.T(), s.DB) // noise
 	// when
-	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	loaded, err := s.repo.LoadByURL(context.Background(), cluster.URL)
 	// then
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded)
@@ -104,7 +104,7 @@ func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	test.CreateCluster(s.T(), s.DB) // noise
 	err := s.repo.CreateOrSave(context.Background(), &cluster)
 	require.NoError(s.T(), err)
-	loaded, err := s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	loaded, err := s.repo.LoadByURL(context.Background(), cluster.URL)
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded)
 	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
@@ -125,7 +125,7 @@ func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	err = s.repo.CreateOrSave(context.Background(), &cluster)
 	require.NoError(s.T(), err)
 	// when
-	loaded, err = s.repo.LoadClusterByURL(context.Background(), cluster.URL)
+	loaded, err = s.repo.LoadByURL(context.Background(), cluster.URL)
 	// then
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded)

@@ -130,14 +130,14 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.TokenProviderID = "UpdatedTokenProviderID"
 			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().LoadByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			assert.Equal(t, "UpdatedTokenProviderID", updated.TokenProviderID)
@@ -152,14 +152,14 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating without any TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.TokenProviderID = ""
 			err = s.Application.ClusterService().CreateOrSaveCluster(context.Background(), reloaded)
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().LoadByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			// expect TokenProviderID to be equal to old value
@@ -175,7 +175,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.ConsoleURL = "https://console.cluster.com/console"
 			reloaded.MetricsURL = "https://metrics.cluster.com"
@@ -184,7 +184,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().LoadByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
 			assert.Equal(t, "https://console.cluster.com/console/", updated.ConsoleURL)
@@ -201,7 +201,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			t.Logf("created cluster ID: %v", c.ClusterID)
 			require.NotEqual(t, uuid.Nil, c.ClusterID)
 			// when updating with an updated TokenProviderID value
-			reloaded, err := s.Application.Clusters().LoadClusterByURL(context.Background(), c.URL)
+			reloaded, err := s.Application.Clusters().LoadByURL(context.Background(), c.URL)
 			require.NoError(t, err)
 			reloaded.ConsoleURL = ""
 			reloaded.MetricsURL = ""
@@ -210,7 +210,7 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 			// then
 			require.NoError(t, err)
 			// read again from DB
-			updated, err := s.Application.Clusters().LoadClusterByURL(context.Background(), reloaded.URL)
+			updated, err := s.Application.Clusters().LoadByURL(context.Background(), reloaded.URL)
 			require.NoError(t, err)
 			// console, metrics and logging URLs should be set based on the cluster URL itself (including a trailing slash)
 			assert.Equal(t, c.ClusterID, updated.ClusterID)
@@ -800,7 +800,7 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 
 		t.Run("ignore if exists", func(t *testing.T) {
 			// given
-			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
+			identityCluster := test.CreateIdentityCluster(t, s.DB)
 
 			// when
 			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL, true)
@@ -820,11 +820,11 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 
 		t.Run("do not ignore if exists", func(t *testing.T) {
 			// given
-			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
+			identityCluster := test.CreateIdentityCluster(t, s.DB)
 
 			// when
 			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL, false)
-			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity %s with cluster %s: pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
+			testsupport.AssertError(t, err, errors.InternalError{}, "failed to link identity '%s' with cluster '%s': pq: duplicate key value violates unique constraint \"identity_cluster_pkey\"", identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
 
 			// then
 			loaded1, err := s.Application.IdentityClusters().Load(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.ClusterID)
@@ -842,9 +842,9 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 		t.Run("link multiple clusters to single identity", func(t *testing.T) {
 			// given
 			identityID := uuid.NewV4()
-			c1 := test.CreateCluster(s.T(), s.DB)
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(c1), test.WithIdentityID(identityID))
-			c2 := test.CreateCluster(s.T(), s.DB)
+			c1 := test.CreateCluster(t, s.DB)
+			identityCluster1 := test.CreateIdentityCluster(t, s.DB, test.WithCluster(c1), test.WithIdentityID(identityID))
+			c2 := test.CreateCluster(t, s.DB)
 			identityCluster2 := repository.IdentityCluster{
 				IdentityID: identityID,
 				ClusterID:  c2.ClusterID,
@@ -864,16 +864,15 @@ func (s *ClusterServiceTestSuite) TestLinkIdentityToCluster() {
 		})
 	})
 
-	s.T().Run("fail", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
+
 		t.Run("random cluster url", func(t *testing.T) {
 			// given
-			url := "http://random.url"
-
+			clusterURL := "http://random.url"
 			// when
-			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), url, true)
-
+			err := s.Application.ClusterService().LinkIdentityToCluster(s.Ctx, uuid.NewV4(), clusterURL, true)
 			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+			test.AssertError(t, err, errors.NotFoundError{}, "cluster with url '%s' not found", clusterURL)
 		})
 	})
 }
@@ -884,7 +883,7 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 
 		t.Run("unlink completely", func(t *testing.T) {
 			// given
-			identityCluster := test.CreateIdentityCluster(s.T(), s.DB)
+			identityCluster := test.CreateIdentityCluster(t, s.DB)
 			// when
 			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityCluster.IdentityID, identityCluster.Cluster.URL)
 			// then
@@ -899,8 +898,8 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 		t.Run("unlink single cluster", func(t *testing.T) {
 			// given
 			identityID := uuid.NewV4()
-			identityCluster1 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(identityID))
-			identityCluster2 := test.CreateIdentityCluster(s.T(), s.DB, test.WithIdentityID(identityID))
+			identityCluster1 := test.CreateIdentityCluster(t, s.DB, test.WithIdentityID(identityID))
+			identityCluster2 := test.CreateIdentityCluster(t, s.DB, test.WithIdentityID(identityID))
 
 			// when
 			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, identityCluster2.Cluster.URL)
@@ -922,16 +921,27 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 		})
 	})
 
-	s.T().Run("fail", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
+
+		// given
+		identityCluster := test.CreateIdentityCluster(t, s.DB)
+
 		t.Run("random cluster url", func(t *testing.T) {
 			// given
-			url := "http://random.url"
-
+			clusterURL := "http://random.url"
 			// when
-			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, uuid.NewV4(), url)
-
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityCluster.IdentityID, clusterURL)
 			// then
-			test.AssertError(t, err, errors.BadParameterError{}, "Bad value for parameter 'cluster-url': 'cluster with requested url %s doesn't exist'", url)
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (cluster with URL '%s' not found)`, clusterURL))
+		})
+
+		t.Run("random identity id", func(t *testing.T) {
+			// given
+			identityID := uuid.NewV4()
+			// when
+			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, identityCluster.Cluster.URL)
+			// then
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (identity-id:'%s', cluster-url:'%s')`, identityID.String(), identityCluster.Cluster.URL))
 		})
 	})
 }
