@@ -932,7 +932,7 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// when
 			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityCluster.IdentityID, clusterURL)
 			// then
-			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("nothing to delete: identity cluster not found (identityID:\"%s\", clusterURL:\"%s\")", identityCluster.IdentityID.String(), clusterURL))
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (cluster with URL '%s' not found)`, clusterURL))
 		})
 
 		t.Run("random identity id", func(t *testing.T) {
@@ -941,7 +941,7 @@ func (s *ClusterServiceTestSuite) TestRemoveIdentityToClusterLink() {
 			// when
 			err := s.Application.ClusterService().RemoveIdentityToClusterLink(s.Ctx, identityID, identityCluster.Cluster.URL)
 			// then
-			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf("nothing to delete: identity cluster not found (identityID:\"%s\", clusterURL:\"%s\")", identityID.String(), identityCluster.Cluster.URL))
+			test.AssertError(t, err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (identity-id:'%s', cluster-url:'%s')`, identityID.String(), identityCluster.Cluster.URL))
 		})
 	})
 }

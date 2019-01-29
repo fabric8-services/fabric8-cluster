@@ -95,7 +95,7 @@ func (s *identityClusterTestSuite) TestDeleteUnknownFails() {
 	id := uuid.NewV4()
 	clusterURL := "http://foo"
 	err := s.repo.Delete(context.Background(), id, clusterURL)
-	test.AssertError(s.T(), err, errors.NotFoundError{}, "nothing to delete: identity cluster not found (identityID:\"%s\", clusterURL:\"%s\")", id, clusterURL)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (cluster with URL '%s' not found)`, "http://foo"))
 }
 
 func (s *identityClusterTestSuite) TestOnDeleteCascade() {
