@@ -78,6 +78,11 @@ func (s clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 
 // CreateOrSaveCluster creates clusters or save updated cluster info
 func (s clusterService) CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error {
+	// check that the token belongs to a user
+	if !auth.IsSpecificServiceAccount(ctx, auth.ToolChainOperator) {
+		log.Error(ctx, nil, "unauthorized access to cluster info")
+		return errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
 	err := s.validate(ctx, clustr)
 	if err != nil {
 		return errs.Wrapf(err, "failed to create or save cluster named '%s'", clustr.Name)
@@ -362,10 +367,14 @@ func (s clusterService) InitializeClusterWatcher() (func() error, error) {
 
 // LinkIdentityToCluster links Identity to Cluster
 func (s clusterService) LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreIfExists bool) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
+		return errors.NewUnauthorizedError("account not authorized to create identity cluster relationship")
+	}
 	if err := validateURL(clusterURL); err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL))
 	}
-	rc, err := s.loadClusterByURL(ctx, clusterURL)
+	rc, err := s.Repositories().Clusters().FindByURL(ctx, clusterURL)
 	if err != nil {
 		return err
 	}
@@ -389,7 +398,7 @@ func (s clusterService) createIdentityCluster(ctx context.Context, identityID, c
 
 	return s.ExecuteInTransaction(func() error {
 		if err := s.Repositories().IdentityClusters().Create(ctx, identityCluster); err != nil {
-			return errors.NewInternalErrorFromString(fmt.Sprintf("failed to link identity %s with cluster %s: %v", identityID, clusterID, err))
+			return errors.NewInternalErrorFromString(fmt.Sprintf("failed to link identity '%s' with cluster '%s': %v", identityID, clusterID, err))
 		}
 		return nil
 	})
@@ -397,32 +406,16 @@ func (s clusterService) createIdentityCluster(ctx context.Context, identityID, c
 
 // RemoveIdentityToClusterLink removes Identity to Cluster link/relation
 func (s clusterService) RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to remove identity cluster relationship")
+		return errors.NewUnauthorizedError("account not authorized to remove identity cluster relationship")
+	}
 	if err := validateURL(clusterURL); err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL))
 	}
-	rc, err := s.loadClusterByURL(ctx, clusterURL)
-	if err != nil {
-		return err
-	}
 	return s.ExecuteInTransaction(func() error {
-		return s.Repositories().IdentityClusters().Delete(ctx, identityID, rc.ClusterID)
+		return s.Repositories().IdentityClusters().Delete(ctx, identityID, clusterURL)
 	})
-}
-
-func (s clusterService) loadClusterByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
-	rc, err := s.Repositories().Clusters().FindByURL(ctx, clusterURL)
-	if err != nil {
-		log.Error(ctx, map[string]interface{}{
-			"cluster_url": clusterURL,
-			"err":         err,
-		}, "failed to load cluster with url %s", clusterURL)
-		if notFound, _ := errors.IsNotFoundError(err); !notFound {
-			// oops, something wrong happened, not just the cluster not found in the db
-			return nil, errs.Wrapf(err, "unable to load cluster")
-		}
-		return nil, errors.NewBadParameterError("cluster-url", fmt.Sprintf("cluster with requested url %s doesn't exist", clusterURL))
-	}
-	return rc, nil
 }
 
 // List lists ALL clusters

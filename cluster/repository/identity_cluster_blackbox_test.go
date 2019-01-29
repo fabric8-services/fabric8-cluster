@@ -70,7 +70,7 @@ func (s *identityClusterTestSuite) TestDeleteOK() {
 	idCluster3 := test.CreateIdentityCluster(s.T(), s.DB, test.WithCluster(idCluster1.Cluster))
 	idCluster4 := test.CreateIdentityCluster(s.T(), s.DB)
 
-	err := s.repo.Delete(context.Background(), idCluster1.IdentityID, idCluster1.ClusterID)
+	err := s.repo.Delete(context.Background(), idCluster1.IdentityID, idCluster1.Cluster.URL)
 	require.NoError(s.T(), err)
 
 	_, err = s.repo.Load(context.Background(), idCluster1.IdentityID, idCluster1.ClusterID)
@@ -93,9 +93,9 @@ func (s *identityClusterTestSuite) TestDeleteOK() {
 
 func (s *identityClusterTestSuite) TestDeleteUnknownFails() {
 	id := uuid.NewV4()
-	cluster := uuid.NewV4()
-	err := s.repo.Delete(context.Background(), id, cluster)
-	test.AssertError(s.T(), err, errors.NotFoundError{}, "nothing to delete: identity cluster not found (identityID:\"%s\", clusterID:\"%s\")", id, cluster)
+	clusterURL := "http://foo"
+	err := s.repo.Delete(context.Background(), id, clusterURL)
+	test.AssertError(s.T(), err, errors.NotFoundError{}, fmt.Sprintf(`nothing to delete: identity cluster not found (cluster with URL '%s' not found)`, "http://foo"))
 }
 
 func (s *identityClusterTestSuite) TestOnDeleteCascade() {

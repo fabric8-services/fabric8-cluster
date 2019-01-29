@@ -154,7 +154,7 @@ func (m *GormClusterRepository) Load(ctx context.Context, id uuid.UUID) (*Cluste
 	return &native, errs.WithStack(err)
 }
 
-// FindByURL returns a single Cluster given its 'url'
+// LoadByURL returns a single Cluster filtered using 'url'
 func (m *GormClusterRepository) FindByURL(ctx context.Context, url string) (*Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "loadClusterByURL"}, time.Now())
 	var native Cluster
