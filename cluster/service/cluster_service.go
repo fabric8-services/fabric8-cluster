@@ -78,6 +78,11 @@ func (s clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 
 // CreateOrSaveCluster creates clusters or save updated cluster info
 func (s clusterService) CreateOrSaveCluster(ctx context.Context, clustr *repository.Cluster) error {
+	// check that the token belongs to a user
+	if !auth.IsSpecificServiceAccount(ctx, auth.ToolChainOperator) {
+		log.Error(ctx, nil, "unauthorized access to cluster info")
+		return errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
 	err := s.validate(ctx, clustr)
 	if err != nil {
 		return errs.Wrapf(err, "failed to create or save cluster named '%s'", clustr.Name)
@@ -310,6 +315,10 @@ func (s clusterService) InitializeClusterWatcher() (func() error, error) {
 
 // LinkIdentityToCluster links Identity to Cluster
 func (s clusterService) LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreIfExists bool) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
+		return errors.NewUnauthorizedError("account not authorized to create identity cluster relationship")
+	}
 	if err := validateURL(clusterURL); err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL))
 	}
@@ -345,6 +354,10 @@ func (s clusterService) createIdentityCluster(ctx context.Context, identityID, c
 
 // RemoveIdentityToClusterLink removes Identity to Cluster link/relation
 func (s clusterService) RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		log.Error(ctx, nil, "the account is not authorized to remove identity cluster relationship")
+		return errors.NewUnauthorizedError("account not authorized to remove identity cluster relationship")
+	}
 	if err := validateURL(clusterURL); err != nil {
 		return errors.NewBadParameterErrorFromString(fmt.Sprintf("cluster-url '%s' is invalid", clusterURL))
 	}

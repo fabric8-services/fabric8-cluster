@@ -4,7 +4,6 @@ import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/application"
 	cluster "github.com/fabric8-services/fabric8-cluster/cluster/repository"
-	"github.com/fabric8-services/fabric8-common/auth"
 	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
@@ -87,11 +86,6 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 
 // Create creates a new cluster configuration for later use
 func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
-	// check that the token belongs to a user
-	if !auth.IsSpecificServiceAccount(ctx, auth.ToolChainOperator) {
-		log.Error(ctx, nil, "unauthorized access to cluster info")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("unauthorized access to cluster info"))
-	}
 	clustr := cluster.Cluster{
 		Name:             ctx.Payload.Data.Name,
 		Type:             ctx.Payload.Data.Type,
@@ -144,11 +138,6 @@ func (c *ClustersController) Delete(ctx *app.DeleteClustersContext) error {
 
 // LinkIdentityToCluster populates Identity Cluster relationship
 func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToClusterClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
-		log.Error(ctx, nil, "the account is not authorized to create identity cluster relationship")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to create identity cluster relationship"))
-	}
-
 	identityID, err := uuid.FromString(ctx.Payload.IdentityID)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
@@ -170,16 +159,10 @@ func (c *ClustersController) LinkIdentityToCluster(ctx *app.LinkIdentityToCluste
 
 // RemoveIdentityToClusterLink removes Identity Cluster relationship
 func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentityToClusterLinkClustersContext) error {
-	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
-		log.Error(ctx, nil, "the account is not authorized to remove identity cluster relationship")
-		return app.JSONErrorResponse(ctx, errors.NewUnauthorizedError("account not authorized to remove identity cluster relationship"))
-	}
-
 	identityID, err := uuid.FromString(ctx.Payload.IdentityID)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, errors.NewBadParameterErrorFromString(fmt.Sprintf("identity-id %s is not a valid UUID", identityID)))
 	}
-
 	if err := c.app.ClusterService().RemoveIdentityToClusterLink(ctx, identityID, ctx.Payload.ClusterURL); err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"error": err,
