@@ -107,9 +107,9 @@ func (m *GormIdentityClusterRepository) Create(ctx context.Context, c *IdentityC
 func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID uuid.UUID, clusterURL string) error {
 	defer goa.MeasureSince([]string{"goa", "db", "identity_cluster", "delete"}, time.Now())
 
-	result := m.db.Exec(fmt.Sprintf(`delete from %[1]s where identity_id = ? 
-		and cluster_id = (select cluster_id from %[2]s where url = ?)`,
-		IdentityCluster{}.TableName(), Cluster{}.TableName()), identityID.String(), clusterURL)
+	result := m.db.Exec(`delete from identity_cluster where identity_id = ? 
+		and cluster_id = (select cluster_id from cluster where url = ?)`,
+		identityID.String(), clusterURL)
 
 	if result.Error != nil {
 		log.Error(ctx, map[string]interface{}{
