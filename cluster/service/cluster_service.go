@@ -138,16 +138,11 @@ func (s clusterService) LoadForAuth(ctx context.Context, clusterID uuid.UUID) (*
 // - Jenkins Proxy
 // returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (s clusterService) FindByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
-	// check the `clusterURL` paraneter to make sure it's a valid URL
-	err := validateURL(clusterURL)
-	if err != nil {
-		return nil, errors.NewBadParameterError("cluster-url", clusterURL)
-	}
 	// check the user token
 	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
 	}
-	result, err := s.Repositories().Clusters().FindByURL(ctx, clusterURL)
+	result, err := s.findByURL(ctx, clusterURL)
 	if err != nil {
 		return nil, err
 	}
@@ -166,19 +161,19 @@ func (s clusterService) FindByURL(ctx context.Context, clusterURL string) (*repo
 // This method is allowed for the 'auth' service account only.
 // returns a NotFoundError error if no cluster with the given ID exists, or an "error with stack" if something wrong happend
 func (s clusterService) FindByURLForAuth(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
-	// check the `clusterURL` paraneter to make sure it's a valid URL
+	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
+		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
+	}
+	return s.findByURL(ctx, clusterURL)
+}
+
+func (s clusterService) findByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error) {
+	// check the `clusterURL` parameter to make sure it's a valid URL
 	err := validateURL(clusterURL)
 	if err != nil {
 		return nil, errors.NewBadParameterError("cluster-url", clusterURL)
 	}
-	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
-		return nil, errors.NewUnauthorizedError("unauthorized access to cluster info")
-	}
-	result, err := s.Repositories().Clusters().FindByURL(ctx, clusterURL)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return s.Repositories().Clusters().FindByURL(ctx, clusterURL)
 }
 
 const (
@@ -454,9 +449,5 @@ func (s clusterService) ListForAuth(ctx context.Context) ([]repository.Cluster, 
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
 	}
-	clusters, err := s.Repositories().Clusters().List(ctx)
-	if err != nil {
-		return []repository.Cluster{}, err
-	}
-	return clusters, nil
+	return s.Repositories().Clusters().List(ctx)
 }
