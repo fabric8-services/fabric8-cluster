@@ -33,8 +33,8 @@ type ClusterService interface {
 	LoadForAuth(ctx context.Context, clusterID uuid.UUID) (*repository.Cluster, error)
 	FindByURL(ctx context.Context, clusterURL string) (*repository.Cluster, error)
 	FindByURLForAuth(ctx context.Context, clusterURL string) (*repository.Cluster, error)
-	List(ctx context.Context) ([]repository.Cluster, error)
-	ListForAuth(ctx context.Context) ([]repository.Cluster, error)
+	List(ctx context.Context, clusterType *string) ([]repository.Cluster, error)
+	ListForAuth(ctx context.Context, clusterType *string) ([]repository.Cluster, error)
 	Delete(ctx context.Context, clusterID uuid.UUID) error
 	LinkIdentityToCluster(ctx context.Context, identityID uuid.UUID, clusterURL string, ignoreError bool) error
 	RemoveIdentityToClusterLink(ctx context.Context, identityID uuid.UUID, clusterURL string) error

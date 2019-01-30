@@ -106,10 +106,14 @@ var _ = a.Resource("clusters", func() {
 		a.Routing(
 			a.GET("/"),
 		)
+		a.Params(func() {
+			a.Param("type", d.String, "the type of the clusters to return ('OSD' or 'OSO')")
+		})
 		a.Description("Get all cluster configurations")
 		a.Response(d.OK, clusterList)
-		a.Response(d.InternalServerError, JSONAPIErrors)
+		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
 	a.Action("listForAuthClient", func() {
@@ -117,10 +121,14 @@ var _ = a.Resource("clusters", func() {
 		a.Routing(
 			a.GET("/auth"),
 		)
+		a.Params(func() {
+			a.Param("type", d.String, "the type of the clusters to return ('OSD' or 'OSO')")
+		})
 		a.Description("Get all cluster configurations (including Auth information)")
 		a.Response(d.OK, fullClusterList)
-		a.Response(d.InternalServerError, JSONAPIErrors)
+		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
 	a.Action("show", func() {
