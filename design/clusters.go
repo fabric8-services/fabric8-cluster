@@ -155,6 +155,40 @@ var _ = a.Resource("clusters", func() {
 		a.Response(d.InternalServerError, JSONAPIErrors)
 	})
 
+	a.Action("findByURL", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.GET("/"),
+		)
+		a.Params(func() {
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
+			a.Required("cluster-url")
+		})
+		a.Description("Get single cluster configuration given its URL")
+		a.Response(d.OK, showSingleCluster)
+		a.Response(d.BadRequest, JSONAPIErrors)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+	})
+
+	a.Action("findByURLForAuth", func() {
+		a.Security("jwt")
+		a.Routing(
+			a.GET("/auth"),
+		)
+		a.Params(func() {
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
+			a.Required("cluster-url")
+		})
+		a.Description("Get single cluster configuration given its URL, with full info")
+		a.Response(d.OK, showSingleCluster)
+		a.Response(d.BadRequest, JSONAPIErrors)
+		a.Response(d.Unauthorized, JSONAPIErrors)
+		a.Response(d.NotFound, JSONAPIErrors)
+		a.Response(d.InternalServerError, JSONAPIErrors)
+	})
+
 	a.Action("create", func() {
 		a.Security("jwt")
 		a.Routing(

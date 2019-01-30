@@ -91,7 +91,7 @@ func (s *ClustersControllerTestSuite) TestShow() {
 		}
 	})
 
-	s.T().Run("failure", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("not found", func(t *testing.T) {
 			// given
@@ -104,7 +104,7 @@ func (s *ClustersControllerTestSuite) TestShow() {
 			test.ShowClustersNotFound(t, svc.Context, svc, ctrl, uuid.NewV4())
 		})
 
-		t.Run("not allowed", func(t *testing.T) {
+		t.Run("unauthorized", func(t *testing.T) {
 			// given
 			sa := &authtestsupport.Identity{
 				Username: "foo",
@@ -115,8 +115,8 @@ func (s *ClustersControllerTestSuite) TestShow() {
 			test.ShowClustersUnauthorized(t, svc.Context, svc, ctrl, uuid.NewV4())
 		})
 	})
-
 }
+
 func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 
 	// given
@@ -140,7 +140,7 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 		testsupport.AssertEqualFullClusterData(t, c, *result.Data)
 	})
 
-	s.T().Run("failure", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("not found", func(t *testing.T) {
 			// given
@@ -168,7 +168,144 @@ func (s *ClustersControllerTestSuite) TestShowForAuthClient() {
 			}
 		})
 	})
+}
 
+func (s *ClustersControllerTestSuite) TestFindByURL() {
+
+	// given
+	c := testsupport.CreateCluster(s.T(), s.DB)
+
+	s.T().Run("ok", func(t *testing.T) {
+		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// when accessing the created cluster with another identity
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+				_, result := test.FindByURLClustersOK(t, svc.Context, svc, ctrl, c.URL)
+				// then
+				require.NotNil(t, result)
+				require.NotNil(t, result.Data)
+				assert.Equal(t, c.Name, result.Data.Name)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.URL), result.Data.APIURL)
+				assert.Equal(t, c.AppDNS, result.Data.AppDNS)
+				assert.Equal(t, false, result.Data.CapacityExhausted)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.ConsoleURL), result.Data.ConsoleURL)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.MetricsURL), result.Data.MetricsURL)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.LoggingURL), result.Data.LoggingURL)
+				assert.Equal(t, c.Type, result.Data.Type)
+			})
+		}
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("bad request", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.Auth,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.FindByURLClustersBadRequest(t, svc.Context, svc, ctrl, "foo.com")
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.Auth,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.FindByURLClustersNotFound(t, svc.Context, svc, ctrl, "http://foo.com")
+		})
+
+		t.Run("unauthorized", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: "foo",
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.FindByURLClustersUnauthorized(t, svc.Context, svc, ctrl, c.URL)
+		})
+	})
+}
+
+func (s *ClustersControllerTestSuite) TestFindByURLForAuth() {
+
+	// given
+	c := testsupport.CreateCluster(s.T(), s.DB)
+
+	s.T().Run("ok", func(t *testing.T) {
+		for _, saName := range []string{"fabric8-auth"} {
+			t.Run(saName, func(t *testing.T) {
+				// when accessing the created cluster with another identity
+				sa := &authtestsupport.Identity{
+					Username: saName,
+					ID:       uuid.NewV4(),
+				}
+				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+				_, result := test.FindByURLForAuthClustersOK(t, svc.Context, svc, ctrl, c.URL)
+				// then
+				require.NotNil(t, result)
+				require.NotNil(t, result.Data)
+				assert.Equal(t, c.Name, result.Data.Name)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.URL), result.Data.APIURL)
+				assert.Equal(t, c.AppDNS, result.Data.AppDNS)
+				assert.Equal(t, false, result.Data.CapacityExhausted)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.ConsoleURL), result.Data.ConsoleURL)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.MetricsURL), result.Data.MetricsURL)
+				assert.Equal(t, httpsupport.AddTrailingSlashToURL(c.LoggingURL), result.Data.LoggingURL)
+				assert.Equal(t, c.Type, result.Data.Type)
+			})
+		}
+	})
+
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("bad request", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.Auth,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.FindByURLForAuthClustersBadRequest(t, svc.Context, svc, ctrl, "foo.com") // missing scheme
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			// given
+			sa := &authtestsupport.Identity{
+				Username: authsupport.Auth,
+				ID:       uuid.NewV4(),
+			}
+			svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+			// when/then
+			test.FindByURLForAuthClustersNotFound(t, svc.Context, svc, ctrl, "http://foo.com")
+		})
+
+		t.Run("unauthorized", func(t *testing.T) {
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy", "foo"} {
+				t.Run(saName, func(t *testing.T) {
+					// given
+					sa := &authtestsupport.Identity{
+						Username: saName,
+						ID:       uuid.NewV4(),
+					}
+					svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+					// when/then
+					test.FindByURLForAuthClustersUnauthorized(t, svc.Context, svc, ctrl, c.URL)
+				})
+			}
+		})
+	})
 }
 
 func (s *ClustersControllerTestSuite) TestList() {
@@ -219,7 +356,7 @@ func (s *ClustersControllerTestSuite) TestListForAuth() {
 	// also add an extra cluster in the DB, to be returned by the endpoint, along with clusters from config file
 	testsupport.CreateCluster(s.T(), s.DB)
 
-	s.T().Run("authorized", func(t *testing.T) {
+	s.T().Run("ok", func(t *testing.T) {
 		t.Run("fabric8-auth", func(t *testing.T) {
 			// given
 			sa := &authtestsupport.Identity{
@@ -238,17 +375,20 @@ func (s *ClustersControllerTestSuite) TestListForAuth() {
 		})
 	})
 
-	s.T().Run("unauthorized", func(t *testing.T) {
-		for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy"} {
-			t.Run(saName, func(t *testing.T) {
-				sa := &authtestsupport.Identity{
-					Username: saName,
-					ID:       uuid.NewV4(),
-				}
-				svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
-				test.ListForAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
-			})
-		}
+	s.T().Run("failures", func(t *testing.T) {
+
+		t.Run("unauthorized", func(t *testing.T) {
+			for _, saName := range []string{"fabric8-oso-proxy", "fabric8-tenant", "fabric8-jenkins-idler", "fabric8-jenkins-proxy"} {
+				t.Run(saName, func(t *testing.T) {
+					sa := &authtestsupport.Identity{
+						Username: saName,
+						ID:       uuid.NewV4(),
+					}
+					svc, ctrl := s.newSecuredControllerWithServiceAccount(sa)
+					test.ListForAuthClientClustersUnauthorized(s.T(), svc.Context, svc, ctrl)
+				})
+			}
+		})
 	})
 }
 
@@ -273,7 +413,7 @@ func (s *ClustersControllerTestSuite) TestCreate() {
 		require.NotEmpty(t, location)
 	})
 
-	s.T().Run("failure", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("invalid token account", func(t *testing.T) {
 			// given
@@ -324,7 +464,7 @@ func (s *ClustersControllerTestSuite) TestDelete() {
 		testsupport.AssertError(t, err, errors.NotFoundError{}, errors.NewNotFoundError("cluster", c.ClusterID.String()).Error())
 	})
 
-	s.T().Run("failure", func(t *testing.T) {
+	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("unauthorized", func(t *testing.T) {
 			// given

@@ -119,7 +119,7 @@ type ClusterRepository interface {
 	CreateOrSave(ctx context.Context, u *Cluster) error
 	Delete(ctx context.Context, ID uuid.UUID) error
 	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
-	LoadByURL(ctx context.Context, url string) (*Cluster, error)
+	FindByURL(ctx context.Context, url string) (*Cluster, error)
 	List(ctx context.Context) ([]Cluster, error)
 }
 
@@ -155,7 +155,7 @@ func (m *GormClusterRepository) Load(ctx context.Context, id uuid.UUID) (*Cluste
 }
 
 // LoadByURL returns a single Cluster filtered using 'url'
-func (m *GormClusterRepository) LoadByURL(ctx context.Context, url string) (*Cluster, error) {
+func (m *GormClusterRepository) FindByURL(ctx context.Context, url string) (*Cluster, error) {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "loadClusterByURL"}, time.Now())
 	var native Cluster
 	// make sure that the URL to use during the search also has a trailing slash (see the Cluster.Normalize() method)
@@ -228,7 +228,7 @@ func (m *GormClusterRepository) update(ctx context.Context, existing, c *Cluster
 
 // CreateOrSave creates cluster or saves cluster if any cluster found using url
 func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) error {
-	existing, err := m.LoadByURL(ctx, c.URL)
+	existing, err := m.FindByURL(ctx, c.URL)
 	if err != nil {
 		if ok, _ := errors.IsNotFoundError(err); ok {
 			return m.Create(ctx, c)

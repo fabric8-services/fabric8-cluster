@@ -121,7 +121,7 @@ func (m *GormIdentityClusterRepository) Delete(ctx context.Context, identityID u
 	}
 	if result.RowsAffected == 0 {
 		// in case no data was remove, let's check if a cluster with the given URL exists:
-		_, err := NewClusterRepository(m.db).LoadByURL(ctx, clusterURL)
+		_, err := NewClusterRepository(m.db).FindByURL(ctx, clusterURL)
 		if notfound, _ := errors.IsNotFoundError(err); notfound {
 			return errors.NewNotFoundErrorFromString(fmt.Sprintf(`nothing to delete: identity cluster not found (cluster with URL '%s' not found)`, clusterURL))
 		}
