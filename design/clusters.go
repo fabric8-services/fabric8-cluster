@@ -107,9 +107,13 @@ var _ = a.Resource("clusters", func() {
 			a.GET("/"),
 		)
 		a.Params(func() {
-			a.Param("type", d.String, "the type of the clusters to return ('OSD' or 'OSO')")
+			a.Param("type", d.String, func() {
+				a.Enum("OCP", "OSD", "OSO")
+				a.Description("the type of the clusters to return")
+			})
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
 		})
-		a.Description("Get all cluster configurations")
+		a.Description("Get all cluster configurations. If the 'cluster-url' query parameter is set, then a single cluster is returned. If the 'type' query parameter is set then only the clusters with the matchin type are returned")
 		a.Response(d.OK, clusterList)
 		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
@@ -126,9 +130,10 @@ var _ = a.Resource("clusters", func() {
 				a.Enum("OCP", "OSD", "OSO")
 				a.Description("the type of the clusters to return ('OSD', 'OCP' or 'OSO'). If none is specified, all types of clusters will be returned")
 			})
+			a.Param("cluster-url", d.String, "the URL of the cluster to show")
 		})
-
-		a.Description("Get all cluster configurations (including Auth information)")
+		a.Description("Get all cluster configurations. If the 'cluster-url' query parameter is set, then a single cluster is returned. If the 'type' query parameter is set then only the clusters with the matchin type are returned")
+		a.Description("Get all cluster configurations unless the 'cluster-url' is specified. This endpoint returns all sensitive information")
 		a.Response(d.OK, fullClusterList)
 		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
@@ -162,40 +167,6 @@ var _ = a.Resource("clusters", func() {
 		})
 		a.Description("Get single cluster configuration (including Auth information)")
 		a.Response(d.OK, showSingleFullCluster)
-		a.Response(d.Unauthorized, JSONAPIErrors)
-		a.Response(d.NotFound, JSONAPIErrors)
-		a.Response(d.InternalServerError, JSONAPIErrors)
-	})
-
-	a.Action("findByURL", func() {
-		a.Security("jwt")
-		a.Routing(
-			a.GET("/"),
-		)
-		a.Params(func() {
-			a.Param("cluster-url", d.String, "the URL of the cluster to show")
-			a.Required("cluster-url")
-		})
-		a.Description("Get single cluster configuration given its URL")
-		a.Response(d.OK, showSingleCluster)
-		a.Response(d.BadRequest, JSONAPIErrors)
-		a.Response(d.Unauthorized, JSONAPIErrors)
-		a.Response(d.NotFound, JSONAPIErrors)
-		a.Response(d.InternalServerError, JSONAPIErrors)
-	})
-
-	a.Action("findByURLForAuth", func() {
-		a.Security("jwt")
-		a.Routing(
-			a.GET("/auth"),
-		)
-		a.Params(func() {
-			a.Param("cluster-url", d.String, "the URL of the cluster to show")
-			a.Required("cluster-url")
-		})
-		a.Description("Get single cluster configuration given its URL, with full info")
-		a.Response(d.OK, showSingleCluster)
-		a.Response(d.BadRequest, JSONAPIErrors)
 		a.Response(d.Unauthorized, JSONAPIErrors)
 		a.Response(d.NotFound, JSONAPIErrors)
 		a.Response(d.InternalServerError, JSONAPIErrors)
