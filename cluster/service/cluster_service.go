@@ -424,7 +424,7 @@ func (s clusterService) List(ctx context.Context, clusterType *string) ([]reposi
 	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
 	}
-	clusters, err := s.list(ctx, clusterType)
+	clusters, err := s.Repositories().Clusters().List(ctx, clusterType)
 	if err != nil {
 		return []repository.Cluster{}, err
 	}
@@ -449,15 +449,5 @@ func (s clusterService) ListForAuth(ctx context.Context, clusterType *string) ([
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
 	}
-	return s.list(ctx, clusterType)
-}
-
-func (s clusterService) list(ctx context.Context, clusterType *string) ([]repository.Cluster, error) {
-	// check the optional `clusterType` argument
-	err := cluster.Validate(clusterType)
-	if err != nil {
-		return []repository.Cluster{}, errors.NewBadParameterErrorFromString(err.Error())
-	}
 	return s.Repositories().Clusters().List(ctx, clusterType)
-
 }

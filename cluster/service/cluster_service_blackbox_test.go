@@ -742,22 +742,6 @@ func (s *ClusterServiceTestSuite) TestList() {
 				})
 			}
 		})
-
-		t.Run("bad parameter", func(t *testing.T) {
-			for _, username := range []string{auth.Auth} {
-				t.Run(username, func(t *testing.T) {
-					// given
-					ctx, err := createContext(username)
-					require.NoError(t, err)
-					clusterType := "foo"
-					// when
-					_, err = s.Application.ClusterService().List(ctx, &clusterType)
-					// then
-					require.Error(t, err)
-					testsupport.AssertError(t, err, errors.BadParameterError{}, "invalid value 'foo'. Expected 'OSD', 'OCP' or 'OSO'")
-				})
-			}
-		})
 	})
 }
 func (s *ClusterServiceTestSuite) TestListForAuth() {
@@ -823,22 +807,6 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 					// then
 					require.Error(t, err)
 					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to clusters info")
-				})
-			}
-		})
-
-		t.Run("bad parameter", func(t *testing.T) {
-			for _, username := range []string{auth.Auth} {
-				t.Run(username, func(t *testing.T) {
-					// given
-					ctx, err := createContext(username)
-					require.NoError(t, err)
-					clusterType := "foo"
-					// when
-					_, err = s.Application.ClusterService().ListForAuth(ctx, &clusterType)
-					// then
-					require.Error(t, err)
-					testsupport.AssertError(t, err, errors.BadParameterError{}, "invalid value 'foo'. Expected 'OSD', 'OCP' or 'OSO'")
 				})
 			}
 		})
