@@ -122,8 +122,12 @@ var _ = a.Resource("clusters", func() {
 			a.GET("/auth"),
 		)
 		a.Params(func() {
-			a.Param("type", d.String, "the type of the clusters to return ('OSD' or 'OSO')")
+			a.Param("type", d.String, func() {
+				a.Enum("OCP", "OSD", "OSO")
+				a.Description("the type of the clusters to return ('OSD', 'OCP' or 'OSO'). If none is specified, all types of clusters will be returned")
+			})
 		})
+
 		a.Description("Get all cluster configurations (including Auth information)")
 		a.Response(d.OK, fullClusterList)
 		a.Response(d.BadRequest, JSONAPIErrors)
