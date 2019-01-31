@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/fabric8-services/fabric8-cluster/app"
 	"github.com/fabric8-services/fabric8-cluster/application"
-	cluster "github.com/fabric8-services/fabric8-cluster/cluster/repository"
+	"github.com/fabric8-services/fabric8-cluster/cluster/repository"
 	"github.com/fabric8-services/fabric8-common/errors"
 	"github.com/fabric8-services/fabric8-common/httpsupport"
 	"github.com/fabric8-services/fabric8-common/log"
@@ -49,7 +49,7 @@ func (c *ClustersController) List(ctx *app.ListClustersContext) error {
 		})
 	}
 	// otherwise, list all clusters
-	clusters, err := c.app.ClusterService().List(ctx)
+	clusters, err := c.app.ClusterService().List(ctx, ctx.Type)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
@@ -83,7 +83,7 @@ func (c *ClustersController) ListForAuthClient(ctx *app.ListForAuthClientCluster
 			Data: []*app.FullClusterData{convertToFullClusterData(*clustr)},
 		})
 	}
-	clusters, err := c.app.ClusterService().ListForAuth(ctx)
+	clusters, err := c.app.ClusterService().ListForAuth(ctx, ctx.Type)
 	if err != nil {
 		return app.JSONErrorResponse(ctx, err)
 	}
@@ -123,7 +123,7 @@ func (c *ClustersController) ShowForAuthClient(ctx *app.ShowForAuthClientCluster
 
 // Create creates a new cluster configuration for later use
 func (c *ClustersController) Create(ctx *app.CreateClustersContext) error {
-	clustr := cluster.Cluster{
+	clustr := repository.Cluster{
 		Name:             ctx.Payload.Data.Name,
 		Type:             ctx.Payload.Data.Type,
 		URL:              ctx.Payload.Data.APIURL,
@@ -210,7 +210,7 @@ func (c *ClustersController) RemoveIdentityToClusterLink(ctx *app.RemoveIdentity
 	return ctx.NoContent()
 }
 
-func convertToClusterData(clustr cluster.Cluster) *app.ClusterData {
+func convertToClusterData(clustr repository.Cluster) *app.ClusterData {
 	return &app.ClusterData{
 		Name:              clustr.Name,
 		APIURL:            httpsupport.AddTrailingSlashToURL(clustr.URL),
@@ -223,7 +223,7 @@ func convertToClusterData(clustr cluster.Cluster) *app.ClusterData {
 	}
 }
 
-func convertToFullClusterData(clustr cluster.Cluster) *app.FullClusterData {
+func convertToFullClusterData(clustr repository.Cluster) *app.FullClusterData {
 	encrypted := clustr.SATokenEncrypted
 	return &app.FullClusterData{
 		Name:                   clustr.Name,

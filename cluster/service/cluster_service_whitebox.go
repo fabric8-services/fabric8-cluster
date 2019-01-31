@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestValidateURL verifies the `cluster.Validate()` func
 func TestValidateURL(t *testing.T) {
 
 	resource.Require(t, resource.UnitTest)

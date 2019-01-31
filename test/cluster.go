@@ -16,9 +16,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type createClusterOption func(*repository.Cluster)
+
+// WithType an option to specify the type of the cluster to create
+func WithType(t string) func(*repository.Cluster) {
+	return func(c *repository.Cluster) {
+		c.Type = t
+	}
+}
+
 // CreateCluster returns a new cluster after saves it in the DB
-func CreateCluster(t *testing.T, db *gorm.DB) repository.Cluster {
-	c := NewCluster()
+func CreateCluster(t *testing.T, db *gorm.DB, options ...createClusterOption) repository.Cluster {
+	c := NewCluster(options...)
 	repo := repository.NewClusterRepository(db)
 	err := repo.Create(context.Background(), &c)
 	require.NoError(t, err)
@@ -30,8 +39,8 @@ func CreateCluster(t *testing.T, db *gorm.DB) repository.Cluster {
 }
 
 // NewCluster returns a new cluster with random values for all fields
-func NewCluster() repository.Cluster {
-	return repository.Cluster{
+func NewCluster(options ...createClusterOption) repository.Cluster {
+	c := repository.Cluster{
 		AppDNS:            uuid.NewV4().String(),
 		AuthClientID:      uuid.NewV4().String(),
 		AuthClientSecret:  uuid.NewV4().String(),
@@ -48,6 +57,10 @@ func NewCluster() repository.Cluster {
 		URL:               "http://" + uuid.NewV4().String() + "/",
 		CapacityExhausted: false,
 	}
+	for _, opt := range options {
+		opt(&c)
+	}
+	return c
 }
 
 // NormalizeCluster a function to normalize one or more field in a given cluster

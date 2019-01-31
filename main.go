@@ -188,6 +188,7 @@ func main() {
 	log.Logger().Infoln("Dev mode:       ", config.DeveloperModeEnabled())
 	log.Logger().Infoln("GOMAXPROCS:     ", runtime.GOMAXPROCS(-1))
 	log.Logger().Infoln("NumCPU:         ", runtime.NumCPU())
+	log.Logger().Infoln("HTTP address:      ", config.GetHTTPAddress())
 
 	http.Handle("/api/", service.Mux)
 	http.Handle("/favicon.ico", http.NotFoundHandler())

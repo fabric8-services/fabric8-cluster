@@ -5,6 +5,6 @@ const (
 	OSD = "OSD"
 	// OCP the OpenShift On-Premise type of Cluster
 	OCP = "OCP"
-	// OSO the OpenShoft online type of cluster
+	// OSO the OpenShift online type of cluster
 	OSO = "OSO"
 )

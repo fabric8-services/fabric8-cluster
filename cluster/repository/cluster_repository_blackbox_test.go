@@ -241,11 +241,23 @@ func (s *clusterRepositoryTestSuite) TestList() {
 	// given
 	cluster1 := test.CreateCluster(s.T(), s.DB)
 	cluster2 := test.CreateCluster(s.T(), s.DB)
-	// when
-	clusters, err := s.repo.List(context.Background())
-	// then
-	require.NoError(s.T(), err)
-	require.Len(s.T(), clusters, 2)
-	test.AssertClusters(s.T(), clusters, cluster1, true)
-	test.AssertClusters(s.T(), clusters, cluster2, true)
+
+	s.T().Run("list all", func(t *testing.T) {
+		// when
+		clusters, err := s.repo.List(context.Background(), nil)
+		// then
+		require.NoError(t, err)
+		require.Len(t, clusters, 2)
+		test.AssertClusters(t, clusters, cluster1, true)
+		test.AssertClusters(t, clusters, cluster2, true)
+	})
+
+	s.T().Run("filter by type", func(t *testing.T) {
+		// when
+		clusters, err := s.repo.List(context.Background(), &cluster1.Type)
+		// then
+		require.NoError(t, err)
+		require.Len(t, clusters, 1)
+		test.AssertClusters(t, clusters, cluster1, true)
+	})
 }

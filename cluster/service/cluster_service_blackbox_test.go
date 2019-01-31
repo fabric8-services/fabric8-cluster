@@ -234,12 +234,12 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("unauthorized", func(t *testing.T) {
-			for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
 					c := newTestCluster()
 					require.Equal(t, uuid.Nil, c.ClusterID)
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
 					err = s.Application.ClusterService().CreateOrSaveCluster(ctx, c)
@@ -439,10 +439,10 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 		// given
 		c := test.CreateCluster(t, s.DB)
 
-		for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
-			t.Run(saName, func(t *testing.T) {
+		for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
+			t.Run(username, func(t *testing.T) {
 				// given
-				ctx, err := createContext(saName)
+				ctx, err := createContext(username)
 				require.NoError(t, err)
 				// when
 				result, err := s.Application.ClusterService().Load(ctx, c.ClusterID)
@@ -460,10 +460,10 @@ func (s *ClusterServiceTestSuite) TestLoad() {
 			// given
 			c := test.CreateCluster(t, s.DB)
 
-			for _, saName := range []string{auth.ToolChainOperator, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.ToolChainOperator, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
 					_, err = s.Application.ClusterService().Load(ctx, c.ClusterID)
@@ -493,10 +493,10 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 		// given
 		c := test.CreateCluster(t, s.DB)
 
-		for _, saName := range []string{auth.Auth} {
-			t.Run(saName, func(t *testing.T) {
+		for _, username := range []string{auth.Auth} {
+			t.Run(username, func(t *testing.T) {
 				// given
-				ctx, err := createContext(saName)
+				ctx, err := createContext(username)
 				require.NoError(t, err)
 				// when
 				result, err := s.Application.ClusterService().LoadForAuth(ctx, c.ClusterID)
@@ -514,9 +514,9 @@ func (s *ClusterServiceTestSuite) TestLoadForAuth() {
 			// given
 			c := test.CreateCluster(t, s.DB)
 
-			for _, saName := range []string{auth.ToolChainOperator, "other"} {
-				t.Run(saName, func(t *testing.T) {
-					ctx, err := createContext(saName)
+			for _, username := range []string{auth.ToolChainOperator, "other"} {
+				t.Run(username, func(t *testing.T) {
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
 					_, err = s.Application.ClusterService().Load(ctx, c.ClusterID)
@@ -551,10 +551,10 @@ func (s *ClusterServiceTestSuite) TestFindByURL() {
 			"using url without trailing slash": httpsupport.RemoveTrailingSlashFromURL(c.URL),
 		} {
 			t.Run(scenario, func(t *testing.T) {
-				for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "fabric8-auth"} {
-					t.Run(saName, func(t *testing.T) {
+				for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
+					t.Run(username, func(t *testing.T) {
 						// given
-						ctx, err := createContext(saName)
+						ctx, err := createContext(username)
 						require.NoError(t, err)
 						// when
 						result, err := s.Application.ClusterService().FindByURL(ctx, url)
@@ -616,9 +616,9 @@ func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 			"using url without trailing slash": httpsupport.RemoveTrailingSlashFromURL(c.URL),
 		} {
 			t.Run(scenario, func(t *testing.T) {
-				for _, saName := range []string{"fabric8-auth"} {
-					t.Run(saName, func(t *testing.T) {
-						ctx, err := createContext(saName)
+				for _, username := range []string{auth.Auth} {
+					t.Run(username, func(t *testing.T) {
+						ctx, err := createContext(username)
 						require.NoError(t, err)
 						// when
 						result, err := s.Application.ClusterService().FindByURLForAuth(ctx, url)
@@ -647,10 +647,10 @@ func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 		})
 
 		t.Run("unauthorized", func(t *testing.T) {
-			for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
 					_, err = s.Application.ClusterService().FindByURLForAuth(ctx, c.URL)
@@ -674,31 +674,53 @@ func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 }
 
 func (s *ClusterServiceTestSuite) TestList() {
-	// given
-	test.CreateCluster(s.T(), s.DB) // add extra cluster
-	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
-	require.NoError(s.T(), err)
 
 	s.T().Run("ok", func(t *testing.T) {
 		// given
+		clusterType := "OSO"
 		for i := 0; i < 3; i++ {
+			if i == 0 {
+				test.CreateCluster(t, s.DB, test.WithType(clusterType))
+				continue
+			}
 			test.CreateCluster(t, s.DB)
 		}
 
-		for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
-			t.Run(saName, func(t *testing.T) {
-				// given
-				ctx, err := createContext(saName)
-				require.NoError(t, err)
-				// when
-				result, err := s.Application.ClusterService().List(ctx)
-				// then
-				require.NoError(t, err)
-				expected, err := repository.NewClusterRepository(s.DB).List(ctx)
-				require.NoError(t, err)
-				test.AssertEqualClusters(t, expected, result, false)
-			})
-		}
+		t.Run("all clusters", func(t *testing.T) {
+			for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
+				t.Run(username, func(t *testing.T) {
+					// given
+					ctx, err := createContext(username)
+					require.NoError(t, err)
+					// when
+					result, err := s.Application.ClusterService().List(ctx, nil)
+					// then
+					require.NoError(t, err)
+					require.Len(t, result, 3)
+					expected, err := repository.NewClusterRepository(s.DB).List(ctx, nil)
+					require.NoError(t, err)
+					test.AssertEqualClusters(t, expected, result, false)
+				})
+			}
+		})
+
+		t.Run("only OSO", func(t *testing.T) {
+			for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth} {
+				t.Run(username, func(t *testing.T) {
+					// given
+					ctx, err := createContext(username)
+					require.NoError(t, err)
+					// when
+					result, err := s.Application.ClusterService().List(ctx, &clusterType)
+					// then
+					require.NoError(t, err)
+					require.Len(t, result, 1)
+					expected, err := repository.NewClusterRepository(s.DB).List(ctx, &clusterType)
+					require.NoError(t, err)
+					test.AssertEqualClusters(t, expected, result, false)
+				})
+			}
+		})
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
@@ -707,15 +729,13 @@ func (s *ClusterServiceTestSuite) TestList() {
 			// given
 			test.CreateCluster(t, s.DB)
 
-			for _, saName := range []string{auth.ToolChainOperator, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.ToolChainOperator, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
-					err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
-					require.NoError(t, err)
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
-					_, err = s.Application.ClusterService().List(ctx)
+					_, err = s.Application.ClusterService().List(ctx, nil)
 					// then
 					require.Error(t, err)
 					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to clusters info")
@@ -725,38 +745,65 @@ func (s *ClusterServiceTestSuite) TestList() {
 	})
 }
 func (s *ClusterServiceTestSuite) TestListForAuth() {
-	// given
-	test.CreateCluster(s.T(), s.DB) // add extra cluster
-	err := s.Application.ClusterService().CreateOrSaveClusterFromConfig(context.Background())
-	require.NoError(s.T(), err)
 
 	s.T().Run("ok", func(t *testing.T) {
-		for _, saName := range []string{auth.Auth} {
-			t.Run(saName, func(t *testing.T) {
-				// given
-				ctx, err := createContext(saName)
-				require.NoError(t, err)
-				// when
-				result, err := s.Application.ClusterService().ListForAuth(ctx)
-				// then
-				require.NoError(t, err)
-				expected, err := repository.NewClusterRepository(s.DB).List(context.Background())
-				require.NoError(t, err)
-				test.AssertEqualClusters(t, expected, result, true)
-			})
+		// given
+		clusterType := "OSO"
+		for i := 0; i < 3; i++ {
+			if i == 0 {
+				test.CreateCluster(t, s.DB, test.WithType(clusterType))
+				continue
+			}
+			test.CreateCluster(t, s.DB)
 		}
+
+		t.Run("all clusters", func(t *testing.T) {
+			for _, username := range []string{auth.Auth} {
+				t.Run(username, func(t *testing.T) {
+					// given
+					ctx, err := createContext(username)
+					require.NoError(t, err)
+					// when
+					result, err := s.Application.ClusterService().ListForAuth(ctx, nil)
+					// then
+					require.NoError(t, err)
+					require.Len(t, result, 3)
+					expected, err := repository.NewClusterRepository(s.DB).List(context.Background(), nil)
+					require.NoError(t, err)
+					test.AssertEqualClusters(t, expected, result, true)
+				})
+			}
+		})
+
+		t.Run("only OSO", func(t *testing.T) {
+			for _, username := range []string{auth.Auth} {
+				t.Run(username, func(t *testing.T) {
+					// given
+					ctx, err := createContext(username)
+					require.NoError(t, err)
+					// when
+					result, err := s.Application.ClusterService().ListForAuth(ctx, &clusterType)
+					// then
+					require.NoError(t, err)
+					require.Len(t, result, 1)
+					expected, err := repository.NewClusterRepository(s.DB).List(context.Background(), &clusterType)
+					require.NoError(t, err)
+					test.AssertEqualClusters(t, expected, result, true)
+				})
+			}
+		})
 	})
 
 	s.T().Run("failures", func(t *testing.T) {
 
 		t.Run("unauthorized", func(t *testing.T) {
-			for _, saName := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
-					_, err = s.Application.ClusterService().ListForAuth(ctx)
+					_, err = s.Application.ClusterService().ListForAuth(ctx, nil)
 					// then
 					require.Error(t, err)
 					testsupport.AssertError(t, err, errors.UnauthorizedError{}, "unauthorized access to clusters info")
@@ -804,10 +851,10 @@ func (s *ClusterServiceTestSuite) TestDelete() {
 			// given
 			c := test.CreateCluster(t, s.DB)
 
-			for _, saName := range []string{auth.Auth, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
-				t.Run(saName, func(t *testing.T) {
+			for _, username := range []string{auth.Auth, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, "other"} {
+				t.Run(username, func(t *testing.T) {
 					// given
-					ctx, err := createContext(saName)
+					ctx, err := createContext(username)
 					require.NoError(t, err)
 					// when
 					err = s.Application.ClusterService().Delete(ctx, c.ClusterID)

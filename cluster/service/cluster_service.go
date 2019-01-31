@@ -420,11 +420,11 @@ func (s clusterService) RemoveIdentityToClusterLink(ctx context.Context, identit
 // - Tenant
 // - Jenkins Idler
 // - Jenkins Proxy
-func (s clusterService) List(ctx context.Context) ([]repository.Cluster, error) {
+func (s clusterService) List(ctx context.Context, clusterType *string) ([]repository.Cluster, error) {
 	if !auth.IsSpecificServiceAccount(ctx, auth.OsoProxy, auth.Tenant, auth.JenkinsIdler, auth.JenkinsProxy, auth.Auth) {
 		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
 	}
-	clusters, err := s.Repositories().Clusters().List(ctx)
+	clusters, err := s.Repositories().Clusters().List(ctx, clusterType)
 	if err != nil {
 		return []repository.Cluster{}, err
 	}
@@ -445,9 +445,9 @@ func (s clusterService) List(ctx context.Context) ([]repository.Cluster, error) 
 
 // List lists ALL clusters, including sensitive information
 // This method is allowed for the `Auth` service account only
-func (s clusterService) ListForAuth(ctx context.Context) ([]repository.Cluster, error) {
+func (s clusterService) ListForAuth(ctx context.Context, clusterType *string) ([]repository.Cluster, error) {
 	if !auth.IsSpecificServiceAccount(ctx, auth.Auth) {
 		return []repository.Cluster{}, errors.NewUnauthorizedError("unauthorized access to clusters info")
 	}
-	return s.Repositories().Clusters().List(ctx)
+	return s.Repositories().Clusters().List(ctx, clusterType)
 }

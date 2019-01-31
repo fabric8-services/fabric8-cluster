@@ -120,7 +120,7 @@ type ClusterRepository interface {
 	Delete(ctx context.Context, ID uuid.UUID) error
 	Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Cluster, error)
 	FindByURL(ctx context.Context, url string) (*Cluster, error)
-	List(ctx context.Context) ([]Cluster, error)
+	List(ctx context.Context, clusterType *string) ([]Cluster, error)
 }
 
 // TableName overrides the table name settings in Gorm to force a specific table name
@@ -280,8 +280,17 @@ func (m *GormClusterRepository) Query(funcs ...func(*gorm.DB) *gorm.DB) ([]Clust
 	return objs, nil
 }
 
-// List lists ALL clusters
-func (m *GormClusterRepository) List(ctx context.Context) ([]Cluster, error) {
-	return m.Query()
+// List lists all clusters (with the given optional type)
+func (m *GormClusterRepository) List(ctx context.Context, clusterType *string) ([]Cluster, error) {
+	funcs := []func(*gorm.DB) *gorm.DB{}
+	if clusterType != nil {
+		funcs = append(funcs, filterByType(*clusterType))
+	}
+	return m.Query(funcs...)
+}
 
+func filterByType(clusterType string) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("type = ?", clusterType)
+	}
 }
