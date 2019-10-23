@@ -26,7 +26,7 @@
 
 required = [
   "github.com/fabric8-services/fabric8-common/goasupport/jsonapi_errors_helpers", # needed by goa generator
-  "github.com/golang/lint/golint",
+  "golang.org/x/lint/golint",
   "github.com/fzipp/gocyclo",
   "github.com/goadesign/goa/cors",
   "github.com/goadesign/goa/encoding/form",
