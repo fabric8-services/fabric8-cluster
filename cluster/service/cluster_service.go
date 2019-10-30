@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/fabric8-services/fabric8-common/auth"
+	"github.com/fabric8-services/fabric8-common/httpsupport"
 
 	"github.com/fabric8-services/fabric8-cluster/application/service"
 	"github.com/fabric8-services/fabric8-cluster/application/service/base"
@@ -46,6 +47,10 @@ func NewClusterService(context servicectx.ServiceContext, loader ConfigLoader) s
 // CreateOrSaveClusterFromConfig creates clusters or save updated cluster info from config
 func (s clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error {
 	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file")
+	toDelete, err := s.Repositories().Clusters().List(ctx, nil)
+	if err != nil {
+		return err
+	}
 	for _, configCluster := range s.loader.GetClusters() {
 		var err error
 		rc := &repository.Cluster{
@@ -65,6 +70,13 @@ func (s clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			AuthClientSecret:  configCluster.AuthClientSecret,
 			AuthDefaultScope:  configCluster.AuthDefaultScope,
 		}
+		for i, c := range toDelete {
+			if httpsupport.AddTrailingSlashToURL(c.URL) == httpsupport.AddTrailingSlashToURL(rc.URL) {
+				// Don't delete the cluster found in the config
+				toDelete = append(toDelete[:i], toDelete[i+1:]...)
+				break
+			}
+		}
 		err = s.ExecuteInTransaction(func() error {
 			return s.Repositories().Clusters().CreateOrSave(ctx, rc)
 		})
@@ -72,7 +84,25 @@ func (s clusterService) CreateOrSaveClusterFromConfig(ctx context.Context) error
 			return err
 		}
 	}
-	log.Warn(ctx, map[string]interface{}{}, "creating/updating clusters from config file has been completed/done")
+	// Clusters which don't exist in the configuration will be deleted from DB
+	for _, c := range toDelete {
+		err = s.ExecuteInTransaction(func() error {
+			err := s.Repositories().Clusters().Delete(ctx, c.ClusterID)
+			notFound, _ := errors.IsNotFoundError(err)
+			if notFound {
+				log.Warn(ctx, map[string]interface{}{
+					"cluster_id":  c.ClusterID.String(),
+					"cluster_url": c.URL,
+					"err":         err,
+				}, "unable to delete the cluster because it doesn't exist")
+				// Just log the error and proceed. The cluster might be already deleted.
+				return nil
+			}
+			return err
+		})
+	}
+
+	log.Info(ctx, map[string]interface{}{}, "creating/updating clusters from config file has been completed/done")
 	return nil
 }
 

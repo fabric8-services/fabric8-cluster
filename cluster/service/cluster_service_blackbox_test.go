@@ -57,6 +57,37 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	verifyClusters(s.T(), s.Configuration.GetClusters(), append(osoClusters, osdClusters...), true)
 }
 
+func (s *ClusterServiceTestSuite) TestUpdateFromConfigOK() {
+	// given the default configuration
+	ctx, err := createContext(auth.Auth)
+	require.NoError(s.T(), err)
+	cd, err := configuration.NewConfigurationData("", "./../../configuration/conf-files/oso-clusters.conf")
+	require.NoError(s.T(), err)
+	db := gormapplication.NewGormDB(s.DB, cd)
+	cs := db.ClusterService()
+	// when
+	err = cs.CreateOrSaveClusterFromConfig(ctx)
+	// then
+	require.NoError(s.T(), err)
+	clusters, err := cs.ListForAuth(ctx, nil)
+	require.NoError(s.T(), err)
+	verifyClusters(s.T(), cd.GetClusters(), clusters, true)
+
+	// now given the updated configuration with some clusters deleted
+	cd, err = configuration.NewConfigurationData("", "./../../configuration/conf-files/tests/oso-clusters-with-removed-clusters.conf")
+	require.NoError(s.T(), err)
+	db = gormapplication.NewGormDB(s.DB, cd)
+	cs = db.ClusterService()
+	// when
+	err = cs.CreateOrSaveClusterFromConfig(ctx)
+	// then
+	require.NoError(s.T(), err)
+	clusters, err = cs.ListForAuth(ctx, nil)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), len(cd.GetClusters()), len(clusters))
+	verifyClusters(s.T(), cd.GetClusters(), clusters, true)
+}
+
 func (s *ClusterServiceTestSuite) TestCreateOrSaveCluster() {
 
 	s.T().Run("ok", func(t *testing.T) {
@@ -674,7 +705,6 @@ func (s *ClusterServiceTestSuite) TestFindByURLForAuth() {
 }
 
 func (s *ClusterServiceTestSuite) TestList() {
-
 	s.T().Run("ok", func(t *testing.T) {
 		// given
 		clusterType := "OSO"
@@ -696,10 +726,9 @@ func (s *ClusterServiceTestSuite) TestList() {
 					result, err := s.Application.ClusterService().List(ctx, nil)
 					// then
 					require.NoError(t, err)
-					require.Len(t, result, 3)
 					expected, err := repository.NewClusterRepository(s.DB).List(ctx, nil)
 					require.NoError(t, err)
-					test.AssertEqualClusters(t, expected, result, false)
+					test.AssertContainsClusters(t, expected, result, false)
 				})
 			}
 		})
@@ -714,10 +743,9 @@ func (s *ClusterServiceTestSuite) TestList() {
 					result, err := s.Application.ClusterService().List(ctx, &clusterType)
 					// then
 					require.NoError(t, err)
-					require.Len(t, result, 1)
 					expected, err := repository.NewClusterRepository(s.DB).List(ctx, &clusterType)
 					require.NoError(t, err)
-					test.AssertEqualClusters(t, expected, result, false)
+					test.AssertContainsClusters(t, expected, result, false)
 				})
 			}
 		})
@@ -767,10 +795,9 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 					result, err := s.Application.ClusterService().ListForAuth(ctx, nil)
 					// then
 					require.NoError(t, err)
-					require.Len(t, result, 3)
 					expected, err := repository.NewClusterRepository(s.DB).List(context.Background(), nil)
 					require.NoError(t, err)
-					test.AssertEqualClusters(t, expected, result, true)
+					test.AssertContainsClusters(t, expected, result, true)
 				})
 			}
 		})
@@ -785,10 +812,9 @@ func (s *ClusterServiceTestSuite) TestListForAuth() {
 					result, err := s.Application.ClusterService().ListForAuth(ctx, &clusterType)
 					// then
 					require.NoError(t, err)
-					require.Len(t, result, 1)
 					expected, err := repository.NewClusterRepository(s.DB).List(context.Background(), &clusterType)
 					require.NoError(t, err)
-					test.AssertEqualClusters(t, expected, result, true)
+					test.AssertContainsClusters(t, expected, result, true)
 				})
 			}
 		})
@@ -902,7 +928,7 @@ func newTestCluster() *repository.Cluster {
 
 func (s *ClusterServiceTestSuite) TestClusterConfigurationWatcher() {
 	t := s.T()
-	// Create a temp file with content from ./conf-files/oso-clusters-custom.conf
+	// Create a temp file with content from ./conf-files/oso-clusters.conf
 	tmpFileName := createTempClusterConfigFile(t)
 	defer os.Remove(tmpFileName)
 
@@ -1183,6 +1209,7 @@ func waitForConfigUpdate(t *testing.T, config *configuration.ConfigurationData, 
 
 func verifyClusters(t *testing.T, expectedClusters map[string]repository.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
 	for _, expectedCluster := range expectedClusters {
+		require.NotEqual(t, repository.Cluster{}, expectedCluster, "cluster not found")
 		err := expectedCluster.Normalize()
 		require.NoError(t, err)
 		verifyCluster(t, expectedCluster, actualClusters, compareSensitiveInfo)
@@ -1191,6 +1218,8 @@ func verifyClusters(t *testing.T, expectedClusters map[string]repository.Cluster
 
 func verifyCluster(t *testing.T, expectedCluster repository.Cluster, actualClusters []repository.Cluster, compareSensitiveInfo bool) {
 	actualCluster, err := test.FilterClusterByURL(expectedCluster.URL, actualClusters)
+	require.NoError(t, err)
+	err = actualCluster.Normalize()
 	require.NoError(t, err)
 	test.AssertEqualClusterDetails(t, expectedCluster, actualCluster, compareSensitiveInfo)
 }

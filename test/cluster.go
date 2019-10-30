@@ -110,6 +110,15 @@ func AssertEqualClusters(t *testing.T, expected, actual []repository.Cluster, ex
 	}
 }
 
+// AssertContainsClusters verifies that all the list of `expected` clusters contains the given list of clusters
+func AssertContainsClusters(t *testing.T, expected, contains []repository.Cluster, expectSensitiveInfo bool) {
+	for _, a := range contains {
+		e, err := FilterClusterByURL(a.URL, expected)
+		require.NoError(t, err, "cluster not found")
+		AssertEqualCluster(t, e, a, expectSensitiveInfo)
+	}
+}
+
 // AssertEqualCluster verifies that the `actual` and `expected` clusters are have the same values
 // including sensitive details if `expectSensitiveInfo` is `true`
 func AssertEqualCluster(t *testing.T, expected, actual repository.Cluster, expectSensitiveInfo bool) {

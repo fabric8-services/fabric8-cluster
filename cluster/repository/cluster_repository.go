@@ -211,7 +211,10 @@ func (m *GormClusterRepository) update(ctx context.Context, existing, c *Cluster
 	if err != nil {
 		return errs.WithStack(err)
 	}
-	err = m.db.Model(existing).Updates(c).Error
+	c.ClusterID = existing.ClusterID
+	c.CreatedAt = existing.CreatedAt
+	c.UpdatedAt = existing.UpdatedAt
+	err = m.db.Save(c).Error
 	if err != nil {
 		log.Error(ctx, map[string]interface{}{
 			"cluster_id": c.ClusterID.String(),
@@ -220,8 +223,9 @@ func (m *GormClusterRepository) update(ctx context.Context, existing, c *Cluster
 		return errs.WithStack(err)
 	}
 
-	log.Debug(ctx, map[string]interface{}{
-		"cluster_id": c.ClusterID.String(),
+	log.Info(ctx, map[string]interface{}{
+		"cluster_id":  c.ClusterID.String(),
+		"cluster_url": c.URL,
 	}, "cluster saved")
 	return nil
 }
@@ -243,9 +247,17 @@ func (m *GormClusterRepository) CreateOrSave(ctx context.Context, c *Cluster) er
 }
 
 // Delete removes a single record. This is a hard delete!
-// Also, remove all identity/cluster relationship associated with this cluster to remove.
+// Also, removes all identity/cluster relationship associated with this cluster.
 func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	defer goa.MeasureSince([]string{"goa", "db", "cluster", "delete"}, time.Now())
+	toDelete, err := m.Load(ctx, id)
+	if err != nil {
+		log.Error(ctx, map[string]interface{}{
+			"cluster_id": id.String(),
+			"err":        err,
+		}, "unable to delete the cluster")
+		return err
+	}
 	obj := Cluster{ClusterID: id}
 	result := m.db.Delete(&obj)
 	if result.Error != nil {
@@ -259,8 +271,9 @@ func (m *GormClusterRepository) Delete(ctx context.Context, id uuid.UUID) error 
 		return errors.NewNotFoundError("cluster", id.String())
 	}
 
-	log.Debug(ctx, map[string]interface{}{
-		"cluster_id": id.String(),
+	log.Info(ctx, map[string]interface{}{
+		"cluster_id":  id.String(),
+		"cluster_url": toDelete.URL,
 	}, "Cluster deleted!")
 
 	return nil
