@@ -57,7 +57,17 @@ func (s *ClusterServiceTestSuite) TestCreateOrSaveClusterFromConfigOK() {
 	verifyClusters(s.T(), s.Configuration.GetClusters(), append(osoClusters, osdClusters...), true)
 }
 
-func (s *ClusterServiceTestSuite) TestUpdateFromConfigOK() {
+func (s *ClusterServiceTestSuite) TestMiddleClusterRemovedFromConfig() {
+	// Remove a cluster form the middle
+	s.checkUpdateFromConfigOK("./../../configuration/conf-files/tests/oso-clusters-with-removed-clusters.conf")
+}
+
+func (s *ClusterServiceTestSuite) TestEdgeClustersRemovedFromConfig() {
+	// Remove the first and the last clusters
+	s.checkUpdateFromConfigOK("./../../configuration/conf-files/tests/oso-clusters-with-removed-edge-clusters.conf")
+}
+
+func (s *ClusterServiceTestSuite) checkUpdateFromConfigOK(configFileWithRemovedClusters string) {
 	// given the default configuration
 	ctx, err := createContext(auth.Auth)
 	require.NoError(s.T(), err)
@@ -74,7 +84,7 @@ func (s *ClusterServiceTestSuite) TestUpdateFromConfigOK() {
 	verifyClusters(s.T(), cd.GetClusters(), clusters, true)
 
 	// now given the updated configuration with some clusters deleted
-	cd, err = configuration.NewConfigurationData("", "./../../configuration/conf-files/tests/oso-clusters-with-removed-clusters.conf")
+	cd, err = configuration.NewConfigurationData("", configFileWithRemovedClusters)
 	require.NoError(s.T(), err)
 	db = gormapplication.NewGormDB(s.DB, cd)
 	cs = db.ClusterService()
