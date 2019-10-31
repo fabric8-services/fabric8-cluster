@@ -130,6 +130,17 @@ func (s *clusterRepositoryTestSuite) TestSaveOKInCreateOrSave() {
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded)
 	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
+
+	// now when we reset the capacity exhausted flag it should be updated in DB
+	cluster.CapacityExhausted = false
+	err = s.repo.CreateOrSave(context.Background(), &cluster)
+	require.NoError(s.T(), err)
+	loaded, err = s.repo.FindByURL(context.Background(), cluster.URL)
+	// then check it's updated
+	require.NoError(s.T(), err)
+	require.NotNil(s.T(), loaded)
+	test.AssertEqualCluster(s.T(), cluster, *loaded, true)
+	assert.False(s.T(), loaded.CapacityExhausted)
 }
 
 func (s *clusterRepositoryTestSuite) TestDelete() {
@@ -201,6 +212,17 @@ func (s *clusterRepositoryTestSuite) TestSaveOK() {
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), loaded2)
 	test.AssertEqualCluster(s.T(), cluster2, *loaded2, true)
+
+	// now when we reset the capacity exhausted flag it should be updated in DB
+	cluster1.CapacityExhausted = false
+	err = s.repo.CreateOrSave(context.Background(), &cluster1)
+	require.NoError(s.T(), err)
+	loaded1, err = s.repo.FindByURL(context.Background(), cluster1.URL)
+	// then check it's updated
+	require.NoError(s.T(), err)
+	require.NotNil(s.T(), loaded1)
+	test.AssertEqualCluster(s.T(), cluster1, *loaded1, true)
+	assert.False(s.T(), loaded1.CapacityExhausted)
 }
 
 func (s *clusterRepositoryTestSuite) TestSaveUnknownFails() {
@@ -247,7 +269,6 @@ func (s *clusterRepositoryTestSuite) TestList() {
 		clusters, err := s.repo.List(context.Background(), nil)
 		// then
 		require.NoError(t, err)
-		require.Len(t, clusters, 2)
 		test.AssertClusters(t, clusters, cluster1, true)
 		test.AssertClusters(t, clusters, cluster2, true)
 	})
